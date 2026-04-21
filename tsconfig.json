@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "target": "es2023",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+
+        "rootDir": "backend",
+        "outDir": "dist",
+
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+
+        "allowImportingTsExtensions": true,
+        "verbatimModuleSyntax": true,
+        "moduleDetection": "force",
+        "noEmit": true,
+
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "erasableSyntaxOnly": true,
+        "noFallthroughCasesInSwitch": true
+    },
+    "include": ["backend"]
+}
