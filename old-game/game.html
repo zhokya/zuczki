@@ -1,0 +1,892 @@
+<html>
+
+<head>
+	<style>
+		::-moz-selection {
+			/* Code for Firefox */
+			background: transparent;
+		}
+
+		::selection {
+			background: transparent;
+		}
+
+		#name::-moz-selection {
+			/* Code for Firefox */
+			background: cyan;
+		}
+
+		#name::selection {
+			background: cyan;
+		}
+
+		#scale {
+			display: none;
+		}
+
+		#mapline1 {
+			height: 100px;
+			width: 2px;
+			background: grey;
+			position: absolute;
+			left: 49px;
+		}
+
+		#mapline2 {
+			height: 2px;
+			width: 100px;
+			background: grey;
+			position: absolute;
+			top: 49px;
+		}
+
+		.sc {
+			width: 50px;
+			height: 50px;
+			border: 8px solid;
+			border-color: black black transparent transparent;
+			transform: rotateZ(45deg);
+			cursor: pointer;
+			position: relative;
+			left: 270px;
+		}
+
+		.sct {
+			transform: rotateZ(-135deg);
+			top: 66px;
+			left: -270px;
+		}
+
+		#scsave {
+			left: -20vw;
+		}
+
+		#scrandom {
+			left: 5vw;
+		}
+
+		.scbtnclick {
+			background: white !important;
+			color: green !important;
+		}
+
+		.scbtn {
+			font-weight: bolder;
+			position: absolute;
+			width: 20vw;
+			height: 64px;
+			font-size: 40px;
+			padding-top: 16px;
+			text-align: center;
+			background: lime;
+			cursor: pointer;
+			top: 65vh;
+			transition-duration: 1s;
+		}
+
+		.scbtn:hover {
+			background: black;
+			color: white;
+		}
+
+		#smallController {
+			position: absolute;
+			z-index: 4;
+			display: none;
+		}
+
+		#small {
+			z-index: 5;
+			position: absolute;
+			top: calc(50vh - 275px);
+			left: calc(50vw - 75px);
+			width: 150px;
+			height: 150px;
+			transition-duration: 0.7s;
+			cursor: pointer;
+			opacity: 0.5;
+		}
+
+		#small:hover {
+			opacity: 1;
+		}
+
+		#warning {
+			color: red;
+			margin-bottom: 10px;
+			font-size: 20px;
+			text-shadow: 0px 0px 7px white;
+			transition-duration: 0.4s;
+			opacity: 0;
+			text-align: center;
+		}
+
+		@keyframes nameError {
+			0% {
+				transform: rotateZ(0deg) scale(1, 1);
+				border-color: black;
+			}
+
+			20% {
+				transform: rotateZ(0deg) scale(1.2, 1.2);
+				border-color: red;
+			}
+
+			40% {
+				transform: rotateZ(-10deg) scale(1.2, 1.2);
+				border-color: red;
+			}
+
+			60% {
+				transform: rotateZ(10deg) scale(1.2, 1.2);
+				border-color: red;
+			}
+
+			80% {
+				transform: rotateZ(0deg) scale(1.2, 1.2);
+				border-color: red;
+			}
+
+			100% {
+				transform: rotateZ(0deg) scale(1, 1);
+				border-color: black;
+			}
+		}
+
+		@keyframes circle-c {
+			0% {
+				transform: rotateZ(0deg);
+				border: 10px solid;
+			}
+
+			50% {
+				transform: rotateZ(360deg);
+				border: 25px solid;
+			}
+
+			100% {
+				transform: rotateZ(710deg);
+				border: 10px solid;
+			}
+		}
+
+		.circle {
+			width: 300px;
+			height: 300px;
+			border: 10px solid black;
+			border-radius: 300px;
+			position: absolute;
+			opacity: 0;
+			transition-duration: 1.5s;
+		}
+
+		.circle-c {
+			width: 300px;
+			height: 300px;
+			border: 10px solid;
+			border-color: white transparent transparent transparent;
+			border-radius: 300px;
+			position: absolute;
+			animation: circle-c 3s infinite;
+			opacity: 0;
+			transition-duration: 1.5s;
+		}
+
+		#start {
+			position: absolute;
+			top: 0px;
+			left: 0px;
+			width: 100vw;
+			height: 100vh;
+			background: gray;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			flex-direction: column;
+			transition-duration: 1s;
+			opacity: 1;
+		}
+
+		#name {
+			z-index: 3;
+			text-align: center;
+			width: 256px;
+			height: 48px;
+			border-radius: 24px;
+			border: none;
+			background: lightgray;
+			color: black;
+			font-weight: bolder;
+			font-size: 32px;
+			border: 2px solid black;
+		}
+
+		.animationNameError {
+			animation: nameError 1s;
+		}
+
+		.opacityOne {
+			opacity: 1 !important;
+		}
+
+		#button-play,
+		#scale {
+			z-index: 4;
+			margin-top: 32px;
+			width: 256px;
+			height: 48px;
+			border-radius: 48px;
+			border: none;
+			background: lightgray;
+			color: black;
+			font-weight: bolder;
+			font-size: 32px;
+			padding-top: 12px;
+			text-align: center;
+			cursor: pointer;
+		}
+
+		#button-play:hover {
+			background: white;
+		}
+
+		#info {
+			color: black;
+			font-weight: bolder;
+			text-shadow: 0px 0px 7px white;
+			font-size: 24px;
+			position: absolute;
+			top: 10px;
+			left: 10px;
+		}
+
+		#info b {
+			color: orange;
+			text-shadow: none;
+		}
+
+		#map {
+			display: none;
+			box-shadow: 0px 0px 10px black;
+			position: absolute;
+			top: 10px;
+			left: calc(100vw - 110px);
+			width: 100px;
+			height: 100px;
+			background: white;
+		}
+
+		#mappointcontainer,
+		#rubinpointcontainer {
+			position: relative;
+			top: 0px;
+			left: 0px;
+		}
+
+		#mappoint,
+		#rubinpoint {
+			width: 10px;
+			height: 10px;
+			background: black;
+			position: relative;
+			top: -5px;
+			left: -5px;
+			box-shadow: 0px 0px 20px white;
+		}
+
+		#rubinpoint {
+			background: #ff12ad;
+			border-radius: 10px;
+		}
+
+		body:selecting {
+			background: transparent;
+		}
+
+		canvas {
+			width: 100vw;
+			height: 100vh;
+		}
+
+		body {
+			font-family: 'Courier New', Courier, monospace;
+			margin: 0;
+			padding: 0;
+			background: lightgray;
+			filter:
+				/*blur(3px)*/
+				none;
+			overflow: hidden;
+		}
+
+		#squareContainer {
+			position: absolute;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			top: 0px;
+			left: 0px;
+			width: 100vw;
+			height: 100vh;
+		}
+
+		#square {
+			display: none;
+			width: 100px;
+			height: 100px;
+			background: rgb(255, 255, 128);
+		}
+
+		#squareTop {
+			position: relative;
+			left: 45px;
+			width: 10px;
+			height: 10px;
+			background: black;
+		}
+
+		#text {
+			width: 100%;
+			text-align: center;
+			margin-top: 8px;
+		}
+	</style>
+	<script src="jquery.js"></script>
+	<script>
+		// odkodowywanie: ((x[0].charCodeAt() - 33) + ((x[1].charCodeAt() - 33) * 94))
+		// zakodowywanie: ((String.fromCharCode((x % 94) + 33)) + (String.fromCharCode(Math.floor(x / 94) + 33)))
+		var websocket;
+		var password;
+		var rotate = 0;
+
+		var players = [];
+		var lastPlayers = [];
+		var points = [];
+		var moveRotatePlayers = 0;
+
+		var pi = Math.PI;
+		var pi2 = Math.PI * 2;
+		var pi3 = Math.PI * 3;
+		var pim2 = Math.PI / 2;
+		var scale = 1;
+		var scaleMinus = 1 / scale;
+		var canScale = false;
+
+		var smallCanvas, smallCtx, smallLook, smallMoveRoate = 1;
+		var antennaelength, antennaecolor;
+		var antennaecolors = ['black', 'lightgray', 'red', 'orange', 'yellow', 'lime', 'green', 'cyan', 'blue', 'magenta', 'pink', 'white'];
+
+		var life = false;
+		var name = '';
+
+		var ArrowUp = false;
+		var ArrowDown = false;
+
+		var rubin = [0, 0, 0, 0];
+		var rubinPoints = [];
+
+		var mapPos = [0, 0];
+
+		function CircleCollision(p1x, p1y, r1, p2x, p2y, r2) {
+			var a;
+			var x;
+			var y;
+
+			a = r1 + r2;
+			x = p1x - p2x;
+			y = p1y - p2y;
+
+			if (a > Math.sqrt((x * x) + (y * y))) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		function randomPassword() {
+			password = '';
+			for (var i = 0; i < 10; i++) {
+				password += String.fromCharCode((Math.round(Math.random() * 20) + 65));
+			}
+			return password;
+		}
+		function setRubinPoints() {
+			rubinPoints = [];
+			var sinElement = radius = Math.random();
+			var count = Math.random() * 3 + 6;
+			var sinPlus = ((Math.PI * 2) / count) * 0.25;
+			for (var i = 0; i < count; i++) {
+				sinElement += sinPlus * (Math.random() + 3.5);
+				radius = Math.random() * 60 + 30;
+				rubinPoints.push([Math.round(Math.sin(sinElement) * radius), Math.round(Math.cos(sinElement) * radius)]);
+			}
+			rubinPoints.push(rubinPoints[0], rubinPoints[1]);
+		}
+
+		var r = function () {
+			if (ArrowUp) {
+				scale *= 1.02;
+			} else if (ArrowDown) {
+				scale /= 1.02;
+			}
+			scale = Math.max(Math.min(scale, 2), 0.1);
+			scaleMinus = 1 / scale;
+			if (Math.random() > 0.9) {
+				//console.log(scale);
+			}
+			if (!canScale) {
+				scale = 1;
+				scaleMinus = 1;
+			}
+			moveRotatePlayers++;
+			window.requestAnimationFrame(r);
+			ctx.fillStyle = 'rgb(150, 150, 150)';
+			var vw = window.innerWidth;
+			var vh = window.innerHeight;
+			var vwt = vw / 2;
+			var vht = vh / 2;
+			ctx.fillRect(0, 0, vw, vh);
+
+			var path;
+
+			ctx.translate(vwt, vht);
+			ctx.scale(scale, scale);
+			ctx.translate((-1000), (-1000));
+
+			ctx.fillStyle = 'rgb(200, 200, 200)';
+			ctx.strokeStyle = 'black';
+			ctx.fillRect(0, 0, 2000, 2000);
+			ctx.strokeRect(1000 - vwt, 1000 - vht, vw, vh);
+			ctx.strokeRect((mapPos[0] - 15) * -50, (mapPos[1] - 15) * -50, 5500, 5500);
+			//render all points
+			for (var i = 0; i < points.length; i++) {
+				ctx.fillStyle = 'hsl(' + ((points[i][0] + points[i][1] - 2000) / 5) + ', 100%, 50%)';
+				ctx.fillRect(points[i][0] - 10, points[i][1] - 10, 20, 20);
+			}
+			//render players
+			for (var i = 0; i < players.length; i++) {
+				ctx.strokeStyle = 'black';
+				ctx.lineWidth = 3;
+
+				//draw inside
+				ctx.fillStyle = 'hsl(' + (players[i][3] * 40) + ', 100%, 50%)';
+				var path = new Path2D();
+				path.arc(players[i][0], players[i][1], players[i][2] * 2, pi, pi3);
+				ctx.fill(path);
+
+				//draw outside
+				ctx.fillStyle = 'hsl(' + (Math.round(players[i][3] / 9) * 40) + ', 100%, 50%)';
+				path = new Path2D();
+				path.moveTo(players[i][0], players[i][1]);
+				path.arc(players[i][0], players[i][1], players[i][2] * (2.3 + (players[i][3] / 250)), Math.PI * (1.01 + (((moveRotatePlayers + i) % 5) / 30)) + players[i][4], Math.PI * (1 - (((moveRotatePlayers + i) % 5) / 30)) + players[i][4]);
+				ctx.fill(path);
+
+				var npx = players[i][0] + (Math.sin(players[i][4] * -1 + 1) * players[i][2] * 2.2);
+				var npy = players[i][1] + (Math.cos(players[i][4] * -1 + 1) * players[i][2] * 2.2);
+				var npxt = players[i][0] + (Math.sin(players[i][4] * -1 + 2) * players[i][2] * 2.2);
+				var npyt = players[i][1] + (Math.cos(players[i][4] * -1 + 2) * players[i][2] * 2.2);
+
+				var mruga = (moveRotatePlayers + (i * 67)) % (100 + players[i][3] / 10) < 5;
+
+				ctx.fillStyle = (mruga ? (players[i][3] * 50) : 'white');
+				path = new Path2D();
+				path.arc(npx, npy, players[i][2] * 0.5 + (players[i][3] / 2000), 0, 2 * Math.PI);
+				path.moveTo(npxt + players[i][2] * 0.5 + (players[i][3] / 2000), npyt);
+				path.arc(npxt, npyt, players[i][2] * 0.5 + (players[i][3] / 2000), 0, 2 * Math.PI);
+				ctx.fill(path);
+				ctx.fillStyle = 'black';
+				ctx.stroke(path);
+
+				if (!mruga) {
+					path = new Path2D();
+					path.arc(npx + Math.cos(players[i][5]) * (players[i][2] * 0.25), npy + Math.sin(players[i][5]) * (players[i][2] * 0.25), players[i][2] * 0.25, 0, 2 * Math.PI);
+					path.arc(npxt + Math.cos(players[i][5]) * (players[i][2] * 0.25), npyt + Math.sin(players[i][5]) * (players[i][2] * 0.25), players[i][2] * 0.25, 0, 2 * Math.PI);
+					ctx.fill(path);
+				}
+
+				/*if(players[i][6] > 0){
+					//console.log('lenght:' + players[i][6] + ' color:' + players[i][7]);
+					path = new Path2D();
+					path.moveTo(pointsOfA[0] + changeX, pointsOfA[1] + changeY);
+					path.quadraticCurveTo(pointsOfA[0] * 0.9 + changeX, pointsOfA[1] * 0.9 + changeY, pointsOfA[0] * 0.9 + changeX, pointsOfA[1] * 0.7 + changeY);
+					//path.moveTo(npxt, npyt);
+					//path.quadraticCurveTo(npxt, npyt - (1.5 * players[i][6] + players[i][2]), npxt - (1.2 * players[i][6] + players[i][2]), npyt - (2.25 * players[i][6] + players[i][2]));
+					path.moveTo(0, 0);
+					path.quadraticCurveTo(0,vw,vw,vh);
+					ctx.strokeStyle = antennaecolors[players[i][7]];
+					ctx.lineCap = 'round';
+					ctx.lineWidth = players[i][2] / 10;
+					canvas.rotate(players[i][4]);
+					canvas.translate(players[i][0]);
+					ctx.stroke(path);
+					/*if(antennaelength == 7){
+						path = new Path2D();
+						path.moveTo(400 - (12 * antennaelength), 200 - (22.5 * antennaelength));
+						path.arc(400 - (12 * antennaelength), 200 - (22.5 * antennaelength), 30, 0, 2 * Math.PI);
+						path.moveTo(600 + (12 * antennaelength), 200 - (22.5 * antennaelength));
+						path.arc(600 + (12 * antennaelength), 200 - (22.5 * antennaelength), 30, 0, 2 * Math.PI);
+						smallCtx.fillStyle = antennaecolors[antennaecolor];
+						smallCtx.fill(path);
+					}
+				}*/
+			}
+
+			path = new Path2D();
+			path.moveTo(rubinPoints[0][0] + rubin[0], rubinPoints[0][1] + rubin[1]);
+			for (var i = 0; i < rubinPoints.length; i++) {
+				path.lineTo(rubinPoints[i][0] + rubin[0], rubinPoints[i][1] + rubin[1]);
+			}
+			if (rubin[2] > 0) {
+				ctx.fillStyle = '#ff12ad';
+				ctx.fill(path);
+				ctx.lineWidth = 10;
+				ctx.strokeStyle = '#ca0d8b';
+				ctx.stroke(path);
+				ctx.fillStyle = 'green';
+				ctx.fillRect(rubin[0] - 50, rubin[1] - 120, 100, 30);
+				ctx.fillStyle = 'lime';
+				ctx.fillRect(rubin[0] - 50, rubin[1] - 120, rubin[2] * 10, 30);
+			}
+
+			ctx.translate((1000), (1000));
+			ctx.scale(scaleMinus, scaleMinus);
+			ctx.translate(vwt * -1, vht * -1);
+
+			if (canScale) {
+				path = new Path2D();
+				path.moveTo(Math.sin(rubin[3]) * (vh * 0.4) + vwt, Math.cos(rubin[3]) * (vh * 0.4) + vht);
+				path.lineTo(Math.sin(rubin[3] + 0.1) * (vh * 0.4) + vwt, Math.cos(rubin[3] + 0.1) * (vh * 0.4) + vht);
+				path.lineTo(Math.sin(rubin[3] + 0.05) * (vh * 0.5) + vwt, Math.cos(rubin[3] + 0.05) * (vh * 0.5) + vht);
+				path.lineTo(Math.sin(rubin[3]) * (vh * 0.4) + vwt, Math.cos(rubin[3]) * (vh * 0.4) + vht);
+				ctx.fillStyle = '#ff12ad';
+				ctx.fill(path);
+				ctx.strokeStyle = '#ca0d8b';
+				ctx.stroke(path);
+			}
+		}
+
+		var mm = function (e) {
+			var obrotRadian = Math.atan2(e.pageX - window.innerWidth / 2, e.pageY - window.innerHeight / 2) * (-1)/*+(Math.PI*0.5)*/;
+			obrotRadian += Math.PI;
+			obrotRadian = Math.round(((obrotRadian + (Math.PI * 2)) % (Math.PI * 2)) * 100);
+			rotate = obrotRadian;
+		}
+		var click = function () {
+			if (life) {
+				websocket.send('s' + password);
+			}
+		}
+		var s = function () {
+			if (life) {
+				websocket.send('m' + password + rotate);
+			} else {
+				$('#map').hide();
+				$('#info').html('');
+			}
+		}
+		var raf = function () {
+			smallMoveRoate++;
+			smallLook = Math.min(Math.max(smallLook, 0), 81);
+
+			antennaelength = Math.min(Math.max(antennaelength, 0), 7);
+			antennaecolor = Math.min(Math.max(antennaecolor, 0), 11);
+			if (!life) {
+				smallCtx.clearRect(0, 0, 1000, 1000);
+				smallCtx.fillStyle = 'hsl(' + (smallLook * 40) + ', 100%, 50%)';
+				smallCtx.strokeStyle = 'black';
+
+				var path = new Path2D();
+				path.arc(500, 500, 300, 0, 2 * Math.PI);
+				smallCtx.fill(path);
+
+				smallCtx.fillStyle = 'hsl(' + (Math.round(smallLook / 9) * (40)) + ', 100%, 50%)';
+				path = new Path2D();
+				path.moveTo(500, 500);
+				path.arc(500, 500, 150 * (2.3 + (smallLook / 250)), Math.PI * (1.01 + ((smallMoveRoate % 5) / 30)) - Math.PI / 2, Math.PI * (1 - ((smallMoveRoate % 5) / 30)) - Math.PI / 2);
+				smallCtx.fill(path);
+
+				var npx = 300;
+				var npy = 250;
+				var npxt = 700;
+				var npyt = 250;
+
+				var mruga = (smallMoveRoate) % (100 + smallLook / 10) < 5;
+
+				smallCtx.fillStyle = (mruga ? (smallLook * 50) : 'white');
+				path = new Path2D();
+				path.arc(npx, npy, 300 * 0.3 + (smallLook / 2000), 0, 2 * Math.PI);
+				path.moveTo(npxt + 300 * 0.3 + (smallLook / 2000), npyt);
+				path.arc(npxt, npyt, 300 * 0.3 + (smallLook / 2000), 0, 2 * Math.PI);
+				smallCtx.fill(path);
+				smallCtx.fillStyle = 'black';
+				smallCtx.lineWidth = 10;
+				smallCtx.stroke(path);
+
+				if (!mruga) {
+					path = new Path2D();
+					path.arc(npx + Math.cos(Math.PI / -2 * (300 * 0.15)), npy + 0 * (300 * 0.15), 300 * 0.15, 0, 2 * Math.PI);
+					path.arc(npxt + Math.cos(Math.PI / -2 * (300 * 0.15)), npyt + 0 * (300 * 0.15), 300 * 0.15, 0, 2 * Math.PI);
+					smallCtx.fill(path);
+				}
+
+				if (antennaelength > 0) {
+					path = new Path2D();
+					path.moveTo(400, 200);
+					path.quadraticCurveTo(400, 200 - (15 * antennaelength), 400 - (12 * antennaelength), 200 - (22.5 * antennaelength));
+					path.moveTo(600, 200);
+					path.quadraticCurveTo(600, 200 - (15 * antennaelength), 600 + (12 * antennaelength), 200 - (22.5 * antennaelength));
+					smallCtx.strokeStyle = antennaecolors[antennaecolor];
+					smallCtx.lineCap = 'round';
+					smallCtx.lineWidth = 20;
+					smallCtx.stroke(path);
+					if (antennaelength == 7) {
+						path = new Path2D();
+						path.moveTo(400 - (12 * antennaelength), 200 - (22.5 * antennaelength));
+						path.arc(400 - (12 * antennaelength), 200 - (22.5 * antennaelength), 30, 0, 2 * Math.PI);
+						path.moveTo(600 + (12 * antennaelength), 200 - (22.5 * antennaelength));
+						path.arc(600 + (12 * antennaelength), 200 - (22.5 * antennaelength), 30, 0, 2 * Math.PI);
+						smallCtx.fillStyle = antennaecolors[antennaecolor];
+						smallCtx.fill(path);
+					}
+				}
+				if (Math.random() > 0.9) {
+					if ($('#name').val() == "unknowhack7") {
+						$('#scale').show();
+						$('#scale').html(localStorage.getItem('scale')[0] == '1' ? 'włączone' : 'wyłączone');
+					} else {
+						$('#scale').hide();
+					}
+				}
+			}
+			requestAnimationFrame(raf);
+		}
+		var kd = function (e) {
+			var keyCode = e.keyCode;
+			if (keyCode == 38) {
+				ArrowUp = true;
+			} else if (keyCode == 40) {
+				ArrowDown = true;
+			} else if (keyCode == 187) {
+				scale = 1;
+			} else if (keyCode == 189) {
+				scale = window.innerHeight / 2010;
+			}
+		}
+		var ku = function (e) {
+			var keyCode = e.keyCode;
+			//alert(keyCode);
+			if (keyCode == 38) {
+				ArrowUp = false;
+			} else if (keyCode == 40) {
+				ArrowDown = false;
+			}
+		}
+
+		var rc = function () {
+			if (localStorage.getItem("scale") != "0" && localStorage.getItem("scale") != "1") {
+				console.log(localStorage.getItem("scale"));
+				localStorage.setItem("scale", "0");
+			}
+			$('body').on('keydown', kd);
+			$('body').on('keyup', ku);
+			$('#scale').on('click', function () {
+				if ($('#name').val() == "unknowhack7") {
+					if (localStorage.getItem("scale")[0] == "0") {
+						localStorage.setItem("scale", "1");
+					} else {
+						localStorage.setItem("scale", "0");
+					}
+				}
+			});
+			var smallControlerComeBack = function () {
+				$('#small').css('opacity', '1');
+				$('#small').css('top', 'calc(50vh - 275px)');
+				$('#small').css('left', 'calc(50vw - 75px)');
+				$('#small').css('width', '150px');
+				$('#small').css('height', '150px');
+				$('#smallController').fadeOut();
+			}
+			smallCanvas = document.getElementById("small");
+			smallCtx = smallCanvas.getContext("2d");
+
+			randomSmallLook = Math.round(Math.random() * 94);
+			if (localStorage.getItem('randomize') == null) {
+				localStorage.setItem('randomize', "1");
+			}
+			if (localStorage.getItem('look') == null) {
+				localStorage.setItem('look', randomSmallLook);
+			}
+			if (localStorage.getItem('antennaelen') == null) {
+				localStorage.setItem('antennaelen', 0);
+			}
+			if (localStorage.getItem('antennaecolor') == null) {
+				localStorage.setItem('antennaecolor', 0);
+			}
+			smallLook = localStorage.getItem('randomize')[0] == "1" ? randomSmallLook : parseInt(localStorage.getItem('look'));
+			antennaelength = parseInt(localStorage.getItem('antennaelen'));
+			antennaecolor = parseInt(localStorage.getItem('antennaecolor'));
+			//antennaelength = Math.round(Math.random() * 7);
+			//antennaecolor = Math.round(Math.random() * 12);
+			raf();
+
+			var lsname = localStorage.getItem('name');
+			$('#name').val(lsname);
+			$('#small').on('click', function () {
+				$('#small').css('opacity', '1');
+				$('#small').css('top', 'calc(50vh - 250px)');
+				$('#small').css('left', 'calc(50vw - 250px)');
+				$('#small').css('width', '500px');
+				$('#small').css('height', '500px');
+				$('#smallController').fadeIn();
+			});
+			$('#sc8').on('click', function () {
+				smallLook += 9;
+			});
+			$('#sc7').on('click', function () {
+				smallLook -= 9;
+			});
+			$('#sc6').on('click', function () {
+				smallLook += 1;
+				if ((smallLook % 9) == 5) {
+					smallLook -= 9;
+				}
+			});
+			$('#sc5').on('click', function () {
+				smallLook -= 1;
+				if ((smallLook % 9) == 4) {
+					smallLook += 9;
+				}
+			});
+			$('#sc4').on('click', function () {
+				antennaelength++;
+			});
+			$('#sc3').on('click', function () {
+				antennaelength--;
+			});
+			$('#sc2').on('click', function () {
+				antennaecolor++;
+			});
+			$('#sc1').on('click', function () {
+				antennaecolor--;
+			});
+			$('#scsave').on('click', function () {
+				$('#scsave').addClass('scbtnclick');
+				localStorage.setItem('look', smallLook);
+				localStorage.setItem('randomize', "0");
+				localStorage.setItem('antennaelen', antennaelength);
+				localStorage.setItem('antennaecolor', antennaecolor);
+				window.setTimeout(function () {
+					smallControlerComeBack()
+					window.setTimeout(function () {
+						$('#scsave').removeClass('scbtnclick');
+					}, 1000);
+				}, 1000);
+			});
+			$('#scrandom').on('click', function () {
+				$('#scrandom').addClass('scbtnclick');
+				localStorage.setItem('look', randomSmallLook);
+				localStorage.setItem('randomize', "1");
+				antennaelength = Math.round(Math.random() * 9);
+				antennaecolor = Math.round(Math.random() * 11);
+				smallLook = randomSmallLook;
+				window.setTimeout(function () {
+					smallControlerComeBack()
+					window.setTimeout(function () {
+						$('#scrandom').removeClass('scbtnclick');
+					}, 1000);
+				}, 1000);
+			});
+			$('#button-play').on('click', function () {
+				if ($('#name').val().length > 2) {
+					var charCode;
+					var errorFound = false;
+					for (var i = 0; i < $('#name').val().length; i++) {
+						charCode = $('#name').val()[i].charCodeAt();
+						if (!((charCode > 64 && charCode < 91) || (charCode > 96 && charCode < 123) || charCode == 58)) {
+							errorFound = true;
+							$('#warning').addClass('animationNameError');
+							$('#warning').addClass('opacityOne');
+							$('#warning').html('Twoje imie musi się składać wyłącznie z<br />małych lub wielkich angielskich liter.');
+							$('#name').addClass('animationNameError');
+							window.setTimeout(function () {
+								$('#warning').removeClass('animationNameError');
+								$('#name').removeClass('animationNameError');
+							}, 1200);
+						}
+					}
+					if (!errorFound) {
+						localStorage.setItem('name', $('#name').val());
+						$('.circle').css('opacity', '1');
+						$('.circle-c').css('opacity', '1');
+						window.location.href = 'pgame.html';
+						name = $('#name').val().replace(' ', '&nbsp');
+					}
+				} else {
+					$('#warning').addClass('animationNameError');
+					$('#warning').addClass('opacityOne');
+					$('#warning').html('Twoje imie musi mieć co najmniej 3 litery.');
+					$('#name').addClass('animationNameError');
+					window.setTimeout(function () {
+						$('#warning').removeClass('animationNameError');
+						$('#name').removeClass('animationNameError');
+					}, 1200);
+				}
+			});
+			$('body').on('mousemove', mm);
+			$('body').on('click', click);
+		}
+
+		$(document).ready(rc);
+
+
+	</script>
+</head>
+
+<body>
+	<div id="start">
+		<div id="smallController">
+			<div id="sc1" class="sc sct"></div>
+			<div id="sc2" class="sc"></div>
+			<div id="sc3" class="sc sct"></div>
+			<div id="sc4" class="sc"></div>
+			<div id="sc5" class="sc sct"></div>
+			<div id="sc6" class="sc"></div>
+			<div id="sc7" class="sc sct"></div>
+			<div id="sc8" class="sc"></div>
+
+			<div id="scsave" class="scbtn">zapisz</div>
+			<div id="scrandom" class="scbtn">losuj</div>
+		</div>
+		<canvas width="1000" height="1000" id="small"></canvas>
+		<h7 id="warning">Twoje imie musi mieć co najmniej 3 litery</h7>
+		<input placeholder="name" maxlength="32" type="text" id="name" />
+		<div id="button-play">GRAJ</div>
+		<div id="scale"></div>
+
+		<div class="circle"></div>
+		<div class="circle-c"></div>
+		<div style="width: 375px; height: 375px;" class="circle"></div>
+		<div style="animation: circle-c 2.3s infinite; border-color: transparent white transparent transparent!important; width: 375px; height: 375px;"
+			class="circle-c"></div>
+		<div style="width: 450px; height: 450px;" class="circle"></div>
+		<div style="animation: circle-c 3.8s infinite; border-color: transparent transparent white transparent!important; width: 450px; height: 450px;"
+			class="circle-c"></div>
+		<div style="width: 525px; height: 525px;" class="circle"></div>
+		<div style="animation: circle-c 3s infinite; border-color: transparent transparent transparent white!important; width: 525px; height: 525px;"
+			class="circle-c"></div>
+	</div>
+	<canvas width="0" height="0" id="canvas"></canvas>
+	<div id="info"></div>
+	<div id="map">
+		<div id="mapline1"></div>
+		<div id="mapline2"></div>
+		<div id="mappointcontainer">
+			<div id="mappoint"></div>
+		</div>
+		<div id="rubinpointcontainer">
+			<div id="rubinpoint"></div>
+		</div>
+	</div>
+</body>
+
+</html>
