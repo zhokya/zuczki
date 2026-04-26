@@ -1,6 +1,7 @@
+import env from "./env.ts";
 import { gameTick } from "./manager.ts";
 
-const TPS = 20;
+const TPS = parseInt(env('TPS'));
 const interval = 1000 / TPS;
 
 let next = performance.now();
