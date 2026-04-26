@@ -1,11 +1,19 @@
-import { WebSocketServer } from 'ws';
+import { gameTick } from "./manager.ts";
 
-const wss = new WebSocketServer({ port: 6767 });
+const TPS = 20;
+const interval = 1000 / TPS;
 
-wss.on('connection', (ws) => {
-    console.log('connected');
+let next = performance.now();
 
-    ws.on('message', (msg) => {
-        console.log(msg.toString());
-    });
-});
+function tick() {
+    const now = performance.now();
+
+    while (now >= next) {
+        gameTick();
+        next += interval;
+    }
+
+    setTimeout(tick, Math.max(0, next - performance.now()));
+}
+
+tick();
