@@ -1,11 +1,13 @@
 import { generateId } from "../../shared";
 
 function getBeetleId(): string {
-    const localStorageId = localStorage.getItem('zuczki_id');
+    // TODO: uncomment to make automatic rejoining work
+    
+    // const localStorageId = localStorage.getItem('zuczki_id');
 
-    if (localStorageId !== null && localStorageId.length === parseInt(import.meta.env.VITE_ID_LENGTH)) {
-        return localStorageId;
-    }
+    // if (localStorageId !== null && localStorageId.length === parseInt(import.meta.env.VITE_ID_LENGTH)) {
+    //     return localStorageId;
+    // }
 
     const newId = generateId(parseInt(import.meta.env.VITE_ID_LENGTH));
     localStorage.setItem('zuczki_id', newId);
