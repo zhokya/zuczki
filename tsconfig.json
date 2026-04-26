@@ -4,7 +4,7 @@
         "module": "NodeNext",
         "moduleResolution": "NodeNext",
 
-        "rootDir": "backend",
+        "rootDir": ".",
         "outDir": "dist",
 
         "strict": true,
@@ -21,5 +21,5 @@
         "erasableSyntaxOnly": true,
         "noFallthroughCasesInSwitch": true
     },
-    "include": ["backend"]
+    "include": ["backend", "shared"]
 }
