@@ -8,6 +8,7 @@ export interface Beetle {
     vsize: number;
     angle: number;
     score: number;
+    irrelevants: {id: string, ticks: number}[];
 
     // decissions
     targetAngle: number;
