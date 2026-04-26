@@ -1,7 +1,15 @@
+import { angleDifference } from "../../shared";
+
+const motionBlurSteps = 10;
+
 const minWingOffset = 0.02;
 const maxWingOffset = 0.4;
 const wingSpeed = 5;
-const motionBlurSteps = 10;
+const wingCenterDistance = 0.1;
+
+const minInsideRadius = 0.78;
+const maxInsideRadius = 0.85;
+const insideBreathingSpeed = 0.25;
 
 const eyeFromCenterDistance = 0.85;
 const eyeSeparationAngle = 1.2;
@@ -9,18 +17,24 @@ const eyeSize = 0.22;
 const eyeBorderSize = 0.035;
 const pupilFromEyeDistance = 0.07;
 const pupilSize = 0.11;
-const dotsSize = 0.12;
+
 const antennaSeparation = 0.18;
+const antennaDotsSize = 0.12;
 
 function getBeetleWingOffset(timestep: number) {
-    const sn = (Math.sin(timestep * wingSpeed / 1000 * Math.PI * 2) + 1) / 2;
-    return sn * (maxWingOffset - minWingOffset) + minWingOffset;
+    let t = Math.sin(timestep * wingSpeed / 1000 * Math.PI * 2);
+    t = (t + 1) / 2;
+    return t * maxWingOffset + (1 - t) * minWingOffset;
+}
+function getBeetleWingPeriod(timestep: number) {
+    return Math.round(2 * timestep * wingSpeed / 1000);
 }
 function insideSize(timestep: number) {
-    let x = Math.sin(timestep * 0.5 / 1000 * Math.PI * 2);
-    x = Math.pow(Math.abs(x), 0.7) * (x > 0 ? 1 : -1);
-    x = (x + 1) / 2
-    return x * 0.05 + 0.78;
+    let t = Math.sin(timestep * insideBreathingSpeed / 1000 * Math.PI * 2);
+    t = Math.sin(t * Math.PI / 2);
+    t = (t + 1) / 2;
+    const area = t * maxInsideRadius * maxInsideRadius + (1 - t) * minInsideRadius * minInsideRadius;
+    return Math.sqrt(area);
 }
 
 export default function renderBeetle(
@@ -53,9 +67,9 @@ export default function renderBeetle(
         if (antennaDots) {
             path = new Path2D();
             path.moveTo(cx, cy);
-            path.arc(cx, cy, size * dotsSize, 0, 2 * Math.PI);
+            path.arc(cx, cy, size * antennaDotsSize, 0, 2 * Math.PI);
             path.moveTo(cx, -cy);
-            path.arc(cx, -cy, size * dotsSize, 0, 2 * Math.PI);
+            path.arc(cx, -cy, size * antennaDotsSize, 0, 2 * Math.PI);
             ctx.fillStyle = antennaColor;
             ctx.fill(path);
         }
@@ -75,12 +89,24 @@ export default function renderBeetle(
     if(offsetTo > offsetFrom) {
         [offsetFrom, offsetTo] = [offsetTo, offsetFrom];
     }
+    if(getBeetleWingPeriod(prevTimestep) !== getBeetleWingPeriod(timestep)) {
+        // Either maxWingOffset or minWingOffset
+        // Fix animation by putting offset range to max range
+        if(offsetTo > (maxWingOffset + minWingOffset) / 2) {
+            offsetFrom = maxWingOffset;
+        } else {
+            offsetTo = minWingOffset;
+        }
+    }
+
+    const cpx = x - Math.cos(angle) * size * wingCenterDistance;
+    const cpy = y - Math.sin(angle) * size * wingCenterDistance;
 
     ctx.fillStyle = mainColor;
     ctx.beginPath();
-    ctx.moveTo(x, y);
+    ctx.moveTo(cpx, cpy);
     ctx.arc(x, y, size, angle - Math.PI + Math.max(offsetFrom, offsetTo), angle + Math.PI - Math.max(offsetFrom, offsetTo));
-    ctx.lineTo(x, y);
+    ctx.lineTo(cpx, cpy);
     ctx.fill();
     
     // main body motion blur
@@ -89,15 +115,15 @@ export default function renderBeetle(
         let o = offsetFrom + (offsetTo - offsetFrom) * (i / motionBlurSteps);
 
         ctx.beginPath();
-        ctx.moveTo(x, y);
+        ctx.moveTo(cpx, cpy);
         ctx.arc(x, y, size, angle - Math.PI + o, angle - Math.PI + offsetFrom);
-        ctx.lineTo(x, y);
+        ctx.lineTo(cpx, cpy);
         ctx.fill();
 
         ctx.beginPath();
-        ctx.moveTo(x, y);
+        ctx.moveTo(cpx, cpy);
         ctx.arc(x, y, size, angle + Math.PI - offsetFrom, angle + Math.PI - o);
-        ctx.lineTo(x, y);
+        ctx.lineTo(cpx, cpy);
         ctx.fill();
     }
     ctx.globalAlpha = 1;
@@ -119,7 +145,7 @@ export default function renderBeetle(
     ctx.stroke(path);
 
     // pupils
-    const diff = Math.min(Math.abs(angle - targetAngle - Math.PI * 2), Math.abs(angle - targetAngle), Math.abs(angle - targetAngle + Math.PI * 2));
+    const diff = angleDifference(angle, targetAngle);
     const effectiveDist = pupilFromEyeDistance * ((diff / Math.PI) / 2 + 0.5);
     ctx.fillStyle = 'black';
     path = new Path2D();
