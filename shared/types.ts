@@ -2,10 +2,12 @@ export interface Beetle {
     // state
     x: number;
     y: number;
-    angle: number;
     size: number;
+    vx: number;
+    vy: number;
+    vsize: number;
+    angle: number;
     score: number;
-    vectors: { x: number, y: number, size: number }[]
 
     // decissions
     targetAngle: number;
@@ -39,4 +41,17 @@ export interface MessageBeetle {
 export interface Message {
     looks?: { [k: string]: Looks },
     beetles: MessageBeetle[]
+}
+
+export function isLooks(obj: any): obj is Looks {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        typeof obj.mainColor === "string" &&
+        typeof obj.insideColor === "string" &&
+        typeof obj.antennaColor === "string" &&
+        typeof obj.antennaSize === "number" &&
+        typeof obj.antennaDots === "boolean" &&
+        typeof obj.nickname === "string"
+    );
 }

@@ -18,8 +18,8 @@ export function smallCanvasRenderLoop(t: number) {
 
     renderBeetle(
         t, prevT, ctx,
-        w / 2, h / 2, -Math.PI / 2, -Math.PI / 2, w / 4,
-        'red', 'blue', 'yellow', 0.3, true
+        w * 0.5, h * 0.64, -Math.PI / 2, -Math.PI / 2, w * 0.33,
+        '#da2345', 'blue', 'yellow', 0.3, true
     )
 
     prevT = t;

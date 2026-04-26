@@ -1,20 +1,8 @@
 import { WebSocketServer } from "ws";
 import { beetles, looksMap } from "./manager.ts";
-import { generateId, type Looks, type Message } from "../shared/index.ts";
+import { generateId, isLooks, moduloAngle, type Message } from "../shared/index.ts";
 import env from "./env.ts";
 import { initializeBeetle } from "./logic.ts";
-
-export function isLooks(obj: any): obj is Looks {
-    return (
-        typeof obj === "object" &&
-        obj !== null &&
-        typeof obj.mainColor === "string" &&
-        typeof obj.insideColor === "string" &&
-        typeof obj.antennaColor === "string" &&
-        typeof obj.antennaSize === "number" &&
-        typeof obj.nickname === "string"
-    );
-}
 
 var looksMapGlobalRev = 0;
 const wss = new WebSocketServer({ port: 6767 });
@@ -71,10 +59,7 @@ wss.on('connection', (ws) => {
                 if (!Number.isFinite(targetAngle)) {
                     return;
                 }
-                targetAngle = targetAngle % (Math.PI * 2);
-                if (targetAngle < 0) {
-                    targetAngle += Math.PI * 2;
-                }
+                targetAngle = moduloAngle(targetAngle);
 
                 beetle.lastBrainActive = performance.now();
                 beetle.targetAngle = targetAngle;
@@ -86,23 +71,20 @@ wss.on('connection', (ws) => {
             }
 
             const data = JSON.parse(rawData.toString());
+            
             if (data.type === 'register') {
                 const id = data.id;
-                if (typeof (id) == 'string' && id.length === parseInt(env('ID_LENGTH'))) {
+                if (typeof (id) == 'string' && id.length === parseInt(env('VITE_ID_LENGTH'))) {
                     beetleId = id;
                 }
-            } else if (data.type === 'looks') {
-                if (beetleId === null) return;
-                const looks = data.looks;
-                if (isLooks(looks)) {
-                    looksMap.set(beetleId, looks);
-                    looksMapGlobalRev = (looksMapGlobalRev + 1) % 1000000000;
-                }
-            } else if (data.type === 'play') {
-                if (beetleId === null) return;
-                if (beetles.has(beetleId)) return;
+            } else if (data.type === 'play' && beetleId !== null && !beetles.has(beetleId)) {
                 const beetle = initializeBeetle(beetleId, false);
                 beetles.set(beetleId, beetle);
+            }
+
+            if(isLooks(data.looks) && beetleId !== null) {
+                looksMap.set(resolveGlobalId(beetleId), data.looks);
+                looksMapGlobalRev = (looksMapGlobalRev + 1) % 1000000000;
             }
         } catch { }
     });
