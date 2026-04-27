@@ -146,6 +146,10 @@ export function mainCanvasRenderLoop(t: number) {
     ctx.arc(0, 0, parseInt(import.meta.env.VITE_MAP_SIZE), 0, Math.PI * 2);
     ctx.stroke();
 
+    const texts: {x: number, y: number, text: string}[] = [];
+    const matrix = ctx.getTransform();
+
+
     localBeetles.forEach(b => {
         const look = looks.get(b.globId) as Looks;
         renderBeetle(
@@ -153,9 +157,22 @@ export function mainCanvasRenderLoop(t: number) {
             b.x.value, b.y.value, b.angle.value, b.targetAngle.value, b.size.value, 
             look.mainColor, look.insideColor, look.antennaColor, look.antennaSize, look.antennaDots
         );
+        texts.push({
+            x: Math.round(matrix.a * b.x.value + matrix.c * (b.y.value + b.size.value * 1.2) + matrix.e),
+            y: Math.round(matrix.b * b.x.value + matrix.d * (b.y.value + b.size.value * 1.2) + matrix.f),
+            text: look.nickname + ' (' + b.score + ')'
+        });
     });
 
     ctx.restore();
+
+    ctx.fillStyle = 'black';
+    ctx.font = '14px arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    texts.forEach(t => {
+        ctx.fillText(t.text, t.x, t.y);
+    });
 
     prevT = t;
 }
