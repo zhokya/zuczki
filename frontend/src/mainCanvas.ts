@@ -1,4 +1,4 @@
-import type { Looks, Message, MessageBeetle } from "../../shared";
+import { lerp, type Looks, type Message, type MessageBeetle } from "../../shared";
 import { Interpolator } from "./interpolator";
 import renderBeetle from "./renderBeetle";
 import { onMessage } from "./wsManager";
@@ -17,6 +17,12 @@ let prevT = -1;
 export let isAlive = false;
 let prevIsAlive: boolean | null = null;
 let selfGlobId = '';
+
+let prevSelfScore = 0;
+let scoreUpdateValue = 0;
+let scoreUpdateOpacity = 0;
+let scoreUpdateY = 0;
+let scoreUpdateUpdates = 0;
 
 class LocalBeetle {
     x: Interpolator;
@@ -149,7 +155,6 @@ export function mainCanvasRenderLoop(t: number) {
     const texts: {x: number, y: number, text: string}[] = [];
     const matrix = ctx.getTransform();
 
-
     localBeetles.forEach(b => {
         const look = looks.get(b.globId) as Looks;
         renderBeetle(
@@ -173,6 +178,31 @@ export function mainCanvasRenderLoop(t: number) {
     texts.forEach(t => {
         ctx.fillText(t.text, t.x, t.y);
     });
+    
+    if(selfBeetle !== undefined) {
+        if(selfBeetle.score != prevSelfScore) {
+            if(scoreUpdateOpacity < 0) {
+                scoreUpdateY = -16;
+                scoreUpdateValue = 0;
+                scoreUpdateUpdates = 0;
+            }
+            scoreUpdateOpacity = 1;
+            scoreUpdateValue += selfBeetle.score - prevSelfScore;
+            scoreUpdateUpdates ++;
+            prevSelfScore = selfBeetle.score;
+        }
+        scoreUpdateY = lerp(scoreUpdateY, 16, 0.2);
+        scoreUpdateOpacity = scoreUpdateOpacity * 0.99 - 0.002;
+        if(scoreUpdateOpacity > 0) {
+            ctx.fillStyle = 'rgba(45,234,78,' + scoreUpdateOpacity + ')';
+            ctx.font = (scoreUpdateUpdates * 4 + 14) + 'px arial';
+            ctx.fillText(
+                '+' + scoreUpdateValue, 
+                Math.round(matrix.a * selfBeetle.x.value + matrix.c * (selfBeetle.y.value - selfBeetle.size.value * 1.2) + matrix.e), 
+                Math.round(matrix.b * selfBeetle.x.value + matrix.d * (selfBeetle.y.value - selfBeetle.size.value * 1.2) + matrix.f) - scoreUpdateY
+            );
+        }
+    }
 
     prevT = t;
 }

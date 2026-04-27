@@ -3,10 +3,12 @@ export interface Beetle {
     x: number;
     y: number;
     size: number;
+    angle: number;
+
     vx: number;
     vy: number;
     vsize: number;
-    angle: number;
+
     score: number;
     irrelevants: {id: string, ticks: number}[];
 
