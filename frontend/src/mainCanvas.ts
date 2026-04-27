@@ -13,7 +13,7 @@ let prevW = -1;
 let prevH = -1;
 let prevT = -1;
 
-let isAlive = false;
+export let isAlive = false;
 let prevIsAlive: boolean | null = null;
 let looks = new Map<string, Looks>();
 let beetles: MessageBeetle[] = [];

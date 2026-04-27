@@ -1,5 +1,5 @@
 import { moduloAngle } from '../../shared';
-import { mainCanvasRenderLoop } from './mainCanvas';
+import { isAlive, mainCanvasRenderLoop } from './mainCanvas';
 import { smallCanvasRenderLoop } from './smallCanvas';
 import { rejoin, sendJson, sendUpdate } from './wsManager';
 
@@ -16,7 +16,9 @@ window.addEventListener('mousemove', (ev) => {
     targetAngle = moduloAngle(Math.atan2(y, x));
 });
 window.addEventListener('click', () => {
-    click = true;
+    if(isAlive) {
+        click = true;
+    }
 });
 
 document.getElementById('play')?.addEventListener('click', () => {
