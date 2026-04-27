@@ -71,7 +71,7 @@ wss.on('connection', (ws) => {
             }
 
             const data = JSON.parse(rawData.toString());
-            
+
             if (data.type === 'register') {
                 const id = data.id;
                 if (typeof (id) == 'string' && id.length === parseInt(env('VITE_ID_LENGTH'))) {
@@ -82,14 +82,18 @@ wss.on('connection', (ws) => {
                 beetles.set(beetleId, beetle);
             }
 
-            if(isLooks(data.looks) && beetleId !== null) {
+            if (isLooks(data.looks) && beetleId !== null) {
                 looksMap.set(resolveGlobalId(beetleId), data.looks);
                 looksMapGlobalRev = (looksMapGlobalRev + 1) % 1000000000;
             }
-        } catch { }
+        } catch (e) {
+            console.log(e);
+        }
     });
 
     const updateFn = () => {
+        const beetle = beetleId === null ? undefined : beetles.get(beetleId);
+
         const msg: Message = {
             beetles: Array.from(beetles.values()).map(b => {
                 return {
@@ -99,10 +103,10 @@ wss.on('connection', (ws) => {
                     size: b.size,
                     score: b.score,
                     targetAngle: b.targetAngle,
-                    globId: resolveGlobalId(b.id),
-                    self: b.id === beetleId
+                    globId: resolveGlobalId(b.id)
                 }
-            })
+            }),
+            globId: beetle ? resolveGlobalId(beetle.id) : ''
         };
 
         if (looksMapRev !== looksMapGlobalRev) {

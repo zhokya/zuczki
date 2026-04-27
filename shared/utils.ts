@@ -22,17 +22,37 @@ export function angleDifference(a1: number, a2: number) {
     )
 }
 
+// returns true if adding to a1 will make it closer to a2, otherwise return false
+// TODO: make it smarter
+export function isPositiveRotationCloser(a1: number, a2: number): boolean {
+    a1 = moduloAngle(a1);
+    a2 = moduloAngle(a2);
+    const h = 0.0001;
+    return angleDifference(a1 + h, a2) < angleDifference(a1 - h, a2);
+}
+
 export function rotateAngleTowards(angle: number, targetAngle: number, delta: number) {
     angle = moduloAngle(angle);
     targetAngle = moduloAngle(targetAngle);
 
     if(angleDifference(angle, targetAngle) <= delta) return targetAngle;
 
-    let a1 = moduloAngle(angle + delta);
-    let a2 = moduloAngle(angle - delta);
-    if(angleDifference(a1, targetAngle) < angleDifference(a2, targetAngle)) {
-        return a1;
+    if(isPositiveRotationCloser(angle, targetAngle)) {
+        return moduloAngle(angle + delta);
     } else {
-        return a2;
+        return moduloAngle(angle - delta);
+    }
+}
+
+export function lerp(a: number, b: number, t: number) {
+    return a + (b - a) * t;
+}
+export function lerpAngle(a1: number, a2: number, t: number) {
+    const delta = angleDifference(a1, a2) * t;
+
+    if(isPositiveRotationCloser(a1, a2)) {
+        return moduloAngle(a1 + delta);
+    } else {
+        return moduloAngle(a2 - delta);
     }
 }

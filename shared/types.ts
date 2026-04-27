@@ -35,13 +35,13 @@ export interface MessageBeetle {
     size: number,
     score: number,
     targetAngle: number,
-    globId: string,
-    self: boolean
+    globId: string
 }
 
 export interface Message {
     looks?: { [k: string]: Looks },
-    beetles: MessageBeetle[]
+    beetles: MessageBeetle[],
+    globId: string
 }
 
 export function isLooks(obj: any): obj is Looks {
