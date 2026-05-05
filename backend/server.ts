@@ -23,7 +23,7 @@ export class GameServer {
     }
 
     getGameFromUrl(url: string): Game | null {
-        for(let i = 0; i < this.games.length; i ++) {
+        for (let i = 0; i < this.games.length; i++) {
             if (this.games[i].url === url) {
                 return this.games[i];
             }
@@ -118,19 +118,33 @@ export class GameServer {
                         globId: game.resolveGlobalId(b.id)
                     }
                 }),
+                newPoints: game.pointIdCreations.map(id => {
+                    const pos = game.points.get(id) as [number, number];
+                    return [id, pos[0], pos[1]];
+                }),
+                removedPoints: game.pointIdRemovals.map(el => {
+                    return [el.id, el.animation[0], el.animation[1]];
+                }),
                 globId: beetle ? game.resolveGlobalId(beetle.id) : ''
             };
 
             if (!sentFirstMessage) {
-                msg['looks'] = Object.fromEntries(game.looksMap);
+                msg.looks = Object.fromEntries(game.looksMap);
+
+                msg.newPoints = [];
+                msg.removedPoints = [];
+
+                game.points.forEach((pos, id) => {
+                    msg.newPoints.push([id, pos[0], pos[1]])
+                });
             } else if (game.looksMapIdEdits.length > 0) {
-                msg['looks'] = {};
+                msg.looks = {};
 
                 for (let i = 0; i < game.looksMapIdEdits.length; i++) {
                     const idd = game.looksMapIdEdits[i];
                     const look = game.looksMap.get(idd);
                     if (look !== undefined) {
-                        msg['looks'][idd] = look;
+                        msg.looks[idd] = look;
                     }
                 }
             }

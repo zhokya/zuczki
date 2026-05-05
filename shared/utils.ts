@@ -6,6 +6,12 @@ export function generateId(id_length: number): string {
     return res;
 }
 
+export function samplePointInCircle(radius: number): [number, number] {
+    const theta = Math.random() * 2 * Math.PI;
+    const r = radius * Math.max(Math.random(), Math.random());
+    return [r * Math.cos(theta), r * Math.sin(theta)];
+}
+
 const pi2 = Math.PI * 2;
 
 export function moduloAngle(angle: number) {
@@ -16,8 +22,8 @@ export function angleDifference(a1: number, a2: number) {
     a1 = moduloAngle(a1);
     a2 = moduloAngle(a2);
     return Math.min(
-        Math.abs(a1 - a2 - pi2), 
-        Math.abs(a1 - a2), 
+        Math.abs(a1 - a2 - pi2),
+        Math.abs(a1 - a2),
         Math.abs(a1 - a2 + pi2)
     )
 }
@@ -35,9 +41,9 @@ export function rotateAngleTowards(angle: number, targetAngle: number, delta: nu
     angle = moduloAngle(angle);
     targetAngle = moduloAngle(targetAngle);
 
-    if(angleDifference(angle, targetAngle) <= delta) return targetAngle;
+    if (angleDifference(angle, targetAngle) <= delta) return targetAngle;
 
-    if(isPositiveRotationCloser(angle, targetAngle)) {
+    if (isPositiveRotationCloser(angle, targetAngle)) {
         return moduloAngle(angle + delta);
     } else {
         return moduloAngle(angle - delta);
@@ -50,9 +56,12 @@ export function lerp(a: number, b: number, t: number) {
 export function lerpAngle(a1: number, a2: number, t: number) {
     const delta = angleDifference(a1, a2) * t;
 
-    if(isPositiveRotationCloser(a1, a2)) {
+    if (isPositiveRotationCloser(a1, a2)) {
         return moduloAngle(a1 + delta);
     } else {
         return moduloAngle(a2 - delta);
     }
+}
+export function expLerp(a: number, b: number, t: number, decay: number) {
+    return b + (a - b) * Math.exp(-decay * t);
 }

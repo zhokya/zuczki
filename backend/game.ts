@@ -6,23 +6,32 @@ export class Game {
     beetles: Map<string, Beetle>;
     looksMap: Map<string, Looks>;
     globIdMap: Map<string, string>;
+    points: Map<number, [number, number]>;
+    currentPointId = 0;
 
     looksMapIdEdits: string[];
+    pointIdCreations: number[];
+    pointIdRemovals: { id: number, animation: [number, number] }[];
 
     url: string;
 
     constructor(url: string) {
-        this.beetles = new Map<string, Beetle>();
-        this.looksMap = new Map<string, Looks>();
-        this.globIdMap = new Map<string, string>();
+        this.beetles = new Map();
+        this.looksMap = new Map();
+        this.globIdMap = new Map();
+        this.points = new Map();
 
         this.looksMapIdEdits = [];
+        this.pointIdCreations = [];
+        this.pointIdRemovals = []
 
         this.url = url;
     }
 
     afterSendingMessages() {
         this.looksMapIdEdits = [];
+        this.pointIdCreations = [];
+        this.pointIdRemovals = [];
     }
 
     resolveGlobalId(id: string): string {

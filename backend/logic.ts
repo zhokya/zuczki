@@ -1,9 +1,10 @@
 import type { Beetle } from "../shared/types.ts";
-import { angleDifference, rotateAngleTowards } from "../shared/utils.ts";
+import { angleDifference, rotateAngleTowards, samplePointInCircle } from "../shared/utils.ts";
 import env from "./env.ts";
 import type { Game } from "./game.ts";
 
-const mapSize = parseInt(env('VITE_MAP_SIZE'))
+const mapSize = parseInt(env('VITE_MAP_SIZE'));
+const targetNumPoints = parseFloat(env('TARGET_POINT_DENSITY')) * Math.PI * mapSize * mapSize;
 
 export function initializeBeetle(id: string, isBot: boolean): Beetle {
     // TODO: check for collisions before initializing position
@@ -49,9 +50,10 @@ export function updateGameLogic(game: Game) {
         const vectorDecay = 0.9;
         const irrelevanceTicks = 40;
         const minPossibleSize = 0.75;
+        const pointEatingMargin = 2;
         const vectorMagnitudes = {
-            beetleCollision: { size: 0.0, position: 0.6 },  // 0.04
-            mapEdgeCollision: { size: 0.0, position: 0.5 }   // 0.03
+            beetleCollision: { size: 0.04, position: 0.6 },  // 0.04
+            mapEdgeCollision: { size: 0.03, position: 0.5 }   // 0.03
         }
 
         b.angle = rotateAngleTowards(b.angle, b.targetAngle, rotationSpeed);
@@ -63,6 +65,10 @@ export function updateGameLogic(game: Game) {
         b.vx *= vectorDecay;
         b.vy *= vectorDecay;
         b.vsize *= vectorDecay;
+
+        if (b.size > 4) {
+            game.beetles.delete(b.id);
+        }
 
         const maxr = mapSize - b.size;
         if (b.x * b.x + b.y * b.y > maxr * maxr) {
@@ -136,8 +142,36 @@ export function updateGameLogic(game: Game) {
             }
         });
 
-        if (b.size > 4) {
-            game.beetles.delete(b.id);
+        game.points.forEach((pos, id) => {
+            const dx = b.x - pos[0];
+            const dy = b.y - pos[1];
+            if (dx * dx + dy * dy < b.size * b.size * pointEatingMargin) {
+                b.score++;
+                game.pointIdRemovals.push({
+                    id: id,
+                    animation: [b.x - dx * 0.7, b.y - dy * 0.7]
+                });
+                game.points.delete(id);
+            }
+        });
+    });
+
+    for (let i = 0; i < 4; i++) {
+        if (game.points.size < targetNumPoints) {
+            const pos = samplePointInCircle(mapSize - 2);
+            let isCorrect = true;
+            game.beetles.forEach(b => {
+                const dx = b.x - pos[0];
+                const dy = b.y - pos[1];
+                if (dx * dx + dy * dy < b.size * b.size * 1.1) {
+                    isCorrect = false;
+                }
+            });
+            if (isCorrect) {
+                game.currentPointId = (game.currentPointId + 1) % 1000000000;
+                game.points.set(game.currentPointId, pos);
+                game.pointIdCreations.push(game.currentPointId);
+            }
         }
-    })
+    }
 }

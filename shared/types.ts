@@ -43,6 +43,8 @@ export interface MessageBeetle {
 export interface Message {
     looks?: { [k: string]: Looks },
     beetles: MessageBeetle[],
+    newPoints: [number, number, number][],
+    removedPoints: [number, number, number][],
     globId: string
 }
 

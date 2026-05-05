@@ -1,4 +1,4 @@
-import { lerp, type Looks, type Message, type MessageBeetle } from "../../shared";
+import { expLerp, lerp, type Looks, type Message, type MessageBeetle } from "../../shared";
 import { Interpolator } from "./interpolator";
 import renderBeetle from "./renderBeetle";
 import { onMessage } from "./wsManager";
@@ -61,8 +61,49 @@ class LocalBeetle {
         this.targetAngle.onRender();
     }
 }
+class LocalPoint {
+    id: number;
+    tx: number;
+    ty: number;
+    x: number;
+    y: number;
+    removed = false;
+    removedTime = 0;
+    
+    constructor(el: [number, number, number]) {
+        this.id = el[0];
+        this.tx = el[1];
+        this.ty = el[2];
+
+        const ang = Math.random() * Math.PI * 2;
+        this.x = this.tx + Math.cos(ang) * 1.2;
+        this.y = this.ty + Math.sin(ang) * 1.2;
+    }
+
+    remove(el: [number, number, number]) {
+        this.tx = el[1];
+        this.ty = el[2];
+        this.removed = true;
+    }
+    
+    render(prevTimestep: number, timestep: number, ctx: CanvasRenderingContext2D): boolean {
+        const dt = timestep - prevTimestep;
+
+        this.x = expLerp(this.x, this.tx, dt, 0.005);
+        this.y = expLerp(this.y, this.ty, dt, 0.005);
+
+        ctx.fillStyle = 'orange';
+        ctx.fillRect(this.x - 0.1, this.y - 0.1, 0.2, 0.2);
+
+        if(this.removed) {
+            this.removedTime += dt;
+        }
+        return this.removedTime > 200;
+    }
+}
 let looks = new Map<string, Looks>();
 let localBeetles = new Map<string, LocalBeetle>();
+let points = new Map<number, LocalPoint>();
 
 onMessage((data) => {
     const d: Message = JSON.parse(data);
@@ -105,6 +146,17 @@ onMessage((data) => {
             looks.set(k, d.looks[k]);
         }
     }
+
+    d.newPoints.forEach(el => {
+        points.set(el[0], new LocalPoint(el));
+    });
+
+    d.removedPoints.forEach(el => {
+        const point = points.get(el[0]);
+        if(point !== undefined) {
+            point.remove(el);
+        }
+    })
 });
 
 export function mainCanvasRenderLoop(t: number) {
@@ -153,6 +205,12 @@ export function mainCanvasRenderLoop(t: number) {
 
     const texts: {x: number, y: number, text: string}[] = [];
     const matrix = ctx.getTransform();
+
+    points.forEach(p => {
+        if(p.render(prevT, t, ctx)) {
+            points.delete(p.id);
+        }
+    });
 
     localBeetles.forEach(b => {
         let look = looks.get(b.globId);
@@ -205,15 +263,15 @@ export function mainCanvasRenderLoop(t: number) {
         }
         scoreUpdateY = lerp(scoreUpdateY, 16, 0.2);
         scoreUpdateOpacity = scoreUpdateOpacity * 0.99 - 0.002;
-        if(scoreUpdateOpacity > 0) {
-            ctx.fillStyle = 'rgba(45,234,78,' + scoreUpdateOpacity + ')';
-            ctx.font = (scoreUpdateUpdates * 4 + 14) + 'px arial';
-            ctx.fillText(
-                '+' + scoreUpdateValue, 
-                Math.round(matrix.a * selfBeetle.x.value + matrix.c * (selfBeetle.y.value - selfBeetle.size.value * 1.2) + matrix.e), 
-                Math.round(matrix.b * selfBeetle.x.value + matrix.d * (selfBeetle.y.value - selfBeetle.size.value * 1.2) + matrix.f) - scoreUpdateY
-            );
-        }
+        // if(scoreUpdateOpacity > 0) {
+        //     ctx.fillStyle = 'rgba(45,234,78,' + scoreUpdateOpacity + ')';
+        //     ctx.font = (scoreUpdateUpdates * 4 + 14) + 'px arial';
+        //     ctx.fillText(
+        //         '+' + scoreUpdateValue, 
+        //         Math.round(matrix.a * selfBeetle.x.value + matrix.c * (selfBeetle.y.value - selfBeetle.size.value * 1.2) + matrix.e), 
+        //         Math.round(matrix.b * selfBeetle.x.value + matrix.d * (selfBeetle.y.value - selfBeetle.size.value * 1.2) + matrix.f) - scoreUpdateY
+        //     );
+        // }
     }
 
     prevT = t;
