@@ -123,7 +123,6 @@ export class GameServer {
 
             if (!sentFirstMessage) {
                 msg['looks'] = Object.fromEntries(game.looksMap);
-                console.log('sent all');
             } else if (game.looksMapIdEdits.length > 0) {
                 msg['looks'] = {};
 
@@ -134,7 +133,6 @@ export class GameServer {
                         msg['looks'][idd] = look;
                     }
                 }
-                console.log(msg['looks']);
             }
 
             sentFirstMessage = true;
