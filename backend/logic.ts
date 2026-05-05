@@ -127,6 +127,10 @@ export function updateGameLogic(game: Game) {
                 }
             }
 
+            if(numPoints > 100) {
+                numPoints = 100 + 5 * Math.sqrt(numPoints - 100);
+            }
+
             for (let i = 0; i < Math.max(0, numPoints) + 10; i++) {
                 const [px, py] = samplePointInCircle(b.size);
                 game.currentPointId = (game.currentPointId + 1) % 1000000000;
