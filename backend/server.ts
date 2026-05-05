@@ -1,133 +1,159 @@
-import { WebSocketServer } from "ws";
-import { beetles, looksMap } from "./manager.ts";
-import { generateId, isLooks, moduloAngle, type Message } from "../shared/index.ts";
+import WebSocket, { WebSocketServer } from "ws";
+import { isLooks, moduloAngle, type Message } from "../shared/index.ts";
 import env from "./env.ts";
 import { initializeBeetle } from "./logic.ts";
+import type { Game } from "./game.ts";
+import type { IncomingMessage } from "http";
 
-var looksMapGlobalRev = 0;
-const wss = new WebSocketServer({ port: 6767 });
+export class GameServer {
+    port: number;
+    games: Game[];
+    wss: WebSocketServer;
+    updateFns: (() => void)[] = [];
 
-const updateFns: (() => void)[] = [];
-const globIdMap = new Map<string, string>();
+    constructor(port: number, games: Game[]) {
+        this.port = port;
+        this.games = games;
+        this.wss = new WebSocketServer({ port: 6767 });
+        this.updateFns = [];
 
-function resolveGlobalId(id: string): string {
-    let globId = globIdMap.get(id);
-    if (globId === undefined) {
-        globId = generateId(parseInt(env('VITE_ID_LENGTH')));
-        globIdMap.set(id, globId);
-    }
-    if (!looksMap.has(globId)) {
-        looksMap.set(globId, {
-            mainColor: 'red',
-            insideColor: 'blue',
-            antennaColor: 'green',
-            antennaSize: 0.5,
-            antennaDots: true,
-            nickname: id + '-' + globId
+        this.wss.on('connection', (ws, request) => {
+            this.onConnection(ws, request);
         });
-        looksMapGlobalRev = (looksMapGlobalRev + 1) % 1000000000;
     }
-    return globId;
-}
 
-wss.on('connection', (ws) => {
-    var beetleId: string | null = null;
-    var looksMapRev = -1;
+    getGameFromUrl(url: string): Game | null {
+        for(let i = 0; i < this.games.length; i ++) {
+            if (this.games[i].url === url) {
+                return this.games[i];
+            }
+        }
+        return null;
+    }
 
-    ws.on('message', (rawData, isBinary) => {
-        try {
-            if (isBinary) {
-                if (beetleId === null) return;
-                const beetle = beetles.get(beetleId);
-                if (beetle === undefined) return;
+    onConnection(ws: WebSocket, request: IncomingMessage) {
+        if (request.url === undefined) {
+            ws.close(1008, 'Invalid path');
+            return;
+        }
+        var game_ = this.getGameFromUrl(request.url);
+        if (game_ === null) {
+            ws.close(1008, 'Invalid path');
+            return;
+        }
+        var game = game_;
 
-                let buffer: Buffer;
-                if (Buffer.isBuffer(rawData)) {
-                    buffer = rawData;
-                } else if (rawData instanceof ArrayBuffer) {
-                    buffer = Buffer.from(rawData);
-                } else if (Array.isArray(rawData)) {
-                    buffer = Buffer.concat(rawData);
-                } else {
+        var beetleId: string | null = null;
+
+        ws.on('message', (rawData, isBinary) => {
+            try {
+                if (isBinary) {
+                    if (beetleId === null) return;
+                    const beetle = game.beetles.get(beetleId);
+                    if (beetle === undefined) return;
+
+                    let buffer: Buffer;
+                    if (Buffer.isBuffer(rawData)) {
+                        buffer = rawData;
+                    } else if (rawData instanceof ArrayBuffer) {
+                        buffer = Buffer.from(rawData);
+                    } else if (Array.isArray(rawData)) {
+                        buffer = Buffer.concat(rawData);
+                    } else {
+                        return;
+                    }
+
+                    const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+                    const uint8 = view.getUint8(0);
+                    let targetAngle = view.getFloat32(1, true);
+
+                    if (!Number.isFinite(targetAngle)) {
+                        return;
+                    }
+                    targetAngle = moduloAngle(targetAngle);
+
+                    beetle.lastBrainActive = performance.now();
+                    beetle.targetAngle = targetAngle;
+                    if (uint8 == 1) {
+                        beetle.clicked = true;
+                    }
+
                     return;
                 }
 
-                const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
-                const uint8 = view.getUint8(0);
-                let targetAngle = view.getFloat32(1, true);
+                const data = JSON.parse(rawData.toString());
 
-                if (!Number.isFinite(targetAngle)) {
-                    return;
-                }
-                targetAngle = moduloAngle(targetAngle);
-
-                beetle.lastBrainActive = performance.now();
-                beetle.targetAngle = targetAngle;
-                if (uint8 == 1) {
-                    beetle.clicked = true;
+                if (data.type === 'register') {
+                    const id = data.id;
+                    if (typeof (id) == 'string' && id.length === parseInt(env('VITE_ID_LENGTH'))) {
+                        beetleId = id;
+                    }
+                } else if (data.type === 'play' && beetleId !== null && !game.beetles.has(beetleId)) {
+                    const beetle = initializeBeetle(beetleId, false);
+                    game.beetles.set(beetleId, beetle);
                 }
 
-                return;
-            }
-
-            const data = JSON.parse(rawData.toString());
-
-            if (data.type === 'register') {
-                const id = data.id;
-                if (typeof (id) == 'string' && id.length === parseInt(env('VITE_ID_LENGTH'))) {
-                    beetleId = id;
+                if (isLooks(data.looks) && beetleId !== null) {
+                    game.looksMap.set(game.resolveGlobalId(beetleId), data.looks);
+                    game.looksMapIdEdits.push(game.resolveGlobalId(beetleId));
                 }
-            } else if (data.type === 'play' && beetleId !== null && !beetles.has(beetleId)) {
-                const beetle = initializeBeetle(beetleId, false);
-                beetles.set(beetleId, beetle);
+            } catch (e) {
+                console.log(e);
+            }
+        });
+
+        let sentFirstMessage: boolean = false;
+        const updateFn = () => {
+            const beetle = beetleId === null ? undefined : game.beetles.get(beetleId);
+
+            const msg: Message = {
+                beetles: Array.from(game.beetles.values()).map(b => {
+                    return {
+                        x: b.x,
+                        y: b.y,
+                        angle: b.angle,
+                        size: b.size,
+                        score: b.score,
+                        targetAngle: b.targetAngle,
+                        globId: game.resolveGlobalId(b.id)
+                    }
+                }),
+                globId: beetle ? game.resolveGlobalId(beetle.id) : ''
+            };
+
+            if (!sentFirstMessage) {
+                msg['looks'] = Object.fromEntries(game.looksMap);
+                console.log('sent all');
+            } else if (game.looksMapIdEdits.length > 0) {
+                msg['looks'] = {};
+
+                for (let i = 0; i < game.looksMapIdEdits.length; i++) {
+                    const idd = game.looksMapIdEdits[i];
+                    const look = game.looksMap.get(idd);
+                    if (look !== undefined) {
+                        msg['looks'][idd] = look;
+                    }
+                }
+                console.log(msg['looks']);
             }
 
-            if (isLooks(data.looks) && beetleId !== null) {
-                looksMap.set(resolveGlobalId(beetleId), data.looks);
-                looksMapGlobalRev = (looksMapGlobalRev + 1) % 1000000000;
-            }
-        } catch (e) {
-            console.log(e);
+            sentFirstMessage = true;
+
+            ws.send(JSON.stringify(msg));
         }
-    });
+        this.updateFns.push(updateFn);
 
-    const updateFn = () => {
-        const beetle = beetleId === null ? undefined : beetles.get(beetleId);
-
-        const msg: Message = {
-            beetles: Array.from(beetles.values()).map(b => {
-                return {
-                    x: b.x,
-                    y: b.y,
-                    angle: b.angle,
-                    size: b.size,
-                    score: b.score,
-                    targetAngle: b.targetAngle,
-                    globId: resolveGlobalId(b.id)
-                }
-            }),
-            globId: beetle ? resolveGlobalId(beetle.id) : ''
-        };
-
-        if (looksMapRev !== looksMapGlobalRev) {
-            looksMapRev = looksMapGlobalRev;
-            msg['looks'] = Object.fromEntries(looksMap);
-        }
-
-        ws.send(JSON.stringify(msg));
+        ws.on('close', () => {
+            const index = this.updateFns.findIndex(fn => fn === updateFn);
+            if (index !== -1) {
+                this.updateFns.splice(index, 1);
+            }
+        });
     }
-    updateFns.push(updateFn);
 
-    ws.on('close', () => {
-        const index = updateFns.findIndex(fn => fn === updateFn);
-        if (index !== -1) {
-            updateFns.splice(index, 1);
-        }
-    });
-});
-
-export function sendMessages() {
-    updateFns.forEach(fn => {
-        fn();
-    })
+    sendMessages() {
+        this.updateFns.forEach(fn => {
+            fn();
+        });
+    }
 }

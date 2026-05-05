@@ -1,7 +1,7 @@
 import type { Beetle } from "../shared/types.ts";
 import { angleDifference, rotateAngleTowards } from "../shared/utils.ts";
 import env from "./env.ts";
-import { beetles } from "./manager.ts";
+import type { Game } from "./game.ts";
 
 const mapSize = parseInt(env('VITE_MAP_SIZE'))
 
@@ -33,12 +33,12 @@ export function initializeBeetle(id: string, isBot: boolean): Beetle {
     };
 }
 
-function getHitQuality(dot) {
+function getHitQuality(dot: number) {
     return 1 - Math.acos(dot) / Math.PI * 2;
 }
 
-export function updateGameLogic() {
-    beetles.forEach(b => {
+export function updateGameLogic(game: Game) {
+    game.beetles.forEach(b => {
         const magnitude = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
         const magnitude1 = 0.1;
         const magnitude2 = 0.01;
@@ -97,7 +97,7 @@ export function updateGameLogic() {
             }
         }
 
-        beetles.forEach(o => {
+        game.beetles.forEach(o => {
             if (o.id >= b.id) return;
 
             const dx = o.x - b.x;
@@ -137,7 +137,7 @@ export function updateGameLogic() {
         });
 
         if (b.size > 4) {
-            beetles.delete(b.id);
+            game.beetles.delete(b.id);
         }
     })
 }

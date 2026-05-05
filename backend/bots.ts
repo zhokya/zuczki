@@ -1,10 +1,10 @@
 import env from "./env.ts";
-import { beetles } from "./manager.ts";
+import type { Game } from "./game.ts";
 
-export function updateBots() {
+export function updateBots(game: Game) {
     const t = performance.now();
-    beetles.forEach(beetle => {
-        if(t - beetle.lastBrainActive > parseInt(env("INACTIVE_TIME_TO_PLAY_AS_BOT"))) {
+    game.beetles.forEach(b => {
+        if(t - b.lastBrainActive > parseInt(env("INACTIVE_TIME_TO_PLAY_AS_BOT"))) {
 
         }
     })
