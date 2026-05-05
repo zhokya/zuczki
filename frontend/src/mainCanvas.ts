@@ -101,7 +101,6 @@ onMessage((data) => {
     }
 
     if(d.looks !== undefined) {
-        looks = new Map<string, Looks>();
         for(const k in d.looks) {
             looks.set(k, d.looks[k]);
         }
@@ -156,7 +155,20 @@ export function mainCanvasRenderLoop(t: number) {
     const matrix = ctx.getTransform();
 
     localBeetles.forEach(b => {
-        const look = looks.get(b.globId) as Looks;
+        let look = looks.get(b.globId);
+
+        if(look === undefined) {
+            // server skill issue, this should never happen
+            look = {
+                mainColor: t % 1000 > 500 ? 'black' : 'cyan',
+                insideColor: 'white',
+                antennaColor: 'black',
+                antennaDots: false,
+                antennaSize: 0,
+                nickname: ''
+            };
+        }
+
         renderBeetle(
             prevT, t, ctx,
             b.x.value, b.y.value, b.angle.value, b.targetAngle.value, b.size.value, 
