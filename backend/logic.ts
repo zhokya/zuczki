@@ -50,6 +50,7 @@ const vectorMagnitudes = {
 };
 const magnitude1 = 0.12;
 const magnitude2 = 0.01;
+const maxDashDirectionChange = Math.PI / 5;
 
 (() => {
     const numTicks = 10000;
@@ -134,7 +135,7 @@ export function updateGameLogic(game: Game) {
                 const jumpAngle = rotateAngleTowards(
                     b.angle,
                     b.targetAngle,
-                    angleDifference(b.angle, b.targetAngle) / 3
+                    Math.min(angleDifference(b.angle, b.targetAngle), maxDashDirectionChange)
                 );
                 b.vx += Math.cos(jumpAngle) * vectorMagnitudes.click.position;
                 b.vy += Math.sin(jumpAngle) * vectorMagnitudes.click.position;
