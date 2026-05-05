@@ -38,23 +38,60 @@ function getHitQuality(dot: number) {
     return 1 - Math.acos(dot) / Math.PI * 2;
 }
 
+const baseSpeed = 0.35;
+const sizeIncreaseSpeed = 0.001;
+const vectorDecay = 0.92;
+const irrelevanceTicks = 40;
+const minPossibleSize = 0.75;
+const vectorMagnitudes = {
+    beetleCollision: { size: 0.04, position: 0.6 },  // 0.04
+    mapEdgeCollision: { size: 0.03, position: 0.5 },   // 0.03
+    click: { size: 0, position: 0.65 }
+};
+const magnitude1 = 0.12;
+const magnitude2 = 0.01;
+
+(() => {
+    const numTicks = 10000;
+
+    let x = 0;
+    let vx = 0;
+    for (let i = 0; i < numTicks; i++) {
+        const speed = baseSpeed * Math.max(0, Math.min(1, (vx - magnitude1) / (magnitude2 - magnitude1)));
+        x += speed + vx;
+        vx *= vectorDecay;
+        if (vx < magnitude1) {
+            vx += vectorMagnitudes.click.position;
+        }
+    }
+
+    console.log('Speed without clicking: ' + baseSpeed.toFixed(4));
+    console.log('Speed with constant clicking: ' + (x / numTicks).toFixed(4));
+})();
+
 export function updateGameLogic(game: Game) {
     game.beetles.forEach(b => {
-        const magnitude = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
-        const magnitude1 = 0.1;
-        const magnitude2 = 0.01;
-
-        const rotationSpeed = 0.1 / b.size;
-        const speed = 0.3 * Math.max(0, Math.min(1, (magnitude - magnitude1) / (magnitude2 - magnitude1)));
-        const sizeIncreaseSpeed = 0.001;
-        const vectorDecay = 0.9;
-        const irrelevanceTicks = 40;
-        const minPossibleSize = 0.75;
         const pointEatingMargin = 2;
-        const vectorMagnitudes = {
-            beetleCollision: { size: 0.04, position: 0.6 },  // 0.04
-            mapEdgeCollision: { size: 0.03, position: 0.5 }   // 0.03
-        }
+
+        game.points.forEach((pos, id) => {
+            const dx = b.x - pos[0];
+            const dy = b.y - pos[1];
+            if (dx * dx + dy * dy < b.size * b.size * pointEatingMargin) {
+                b.score++;
+                game.pointIdRemovals.push({
+                    id: id,
+                    animation: [b.x - dx * 0.7, b.y - dy * 0.7]
+                });
+                game.points.delete(id);
+            }
+        });
+    });
+
+    game.beetles.forEach(b => {
+        const magnitude = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+
+        const rotationSpeed = 0.12 / b.size;
+        const speed = baseSpeed * Math.max(0, Math.min(1, (magnitude - magnitude1) / (magnitude2 - magnitude1)));
 
         b.angle = rotateAngleTowards(b.angle, b.targetAngle, rotationSpeed);
 
@@ -67,6 +104,14 @@ export function updateGameLogic(game: Game) {
         b.vsize *= vectorDecay;
 
         if (b.size > 4) {
+            const numPoints = Math.floor(b.score * 0.6 + 10);
+            for (let i = 0; i < numPoints; i++) {
+                const [px, py] = samplePointInCircle(b.size);
+                game.currentPointId = (game.currentPointId + 1) % 1000000000;
+                game.points.set(game.currentPointId, [px + b.x, py + b.y]);
+                game.pointIdCreations.push(game.currentPointId);
+            }
+
             game.beetles.delete(b.id);
         }
 
@@ -91,8 +136,9 @@ export function updateGameLogic(game: Game) {
                     b.targetAngle,
                     angleDifference(b.angle, b.targetAngle) / 3
                 );
-                b.vx += Math.cos(jumpAngle);
-                b.vy += Math.sin(jumpAngle);
+                b.vx += Math.cos(jumpAngle) * vectorMagnitudes.click.position;
+                b.vy += Math.sin(jumpAngle) * vectorMagnitudes.click.position;
+                b.vsize += vectorMagnitudes.click.size;
             }
         }
 
@@ -139,19 +185,6 @@ export function updateGameLogic(game: Game) {
                 const qb = getHitQuality(Math.cos(b.angle) * (-ndx) + Math.sin(b.angle) * (-ndy));
                 o.vsize -= vectorMagnitudes.beetleCollision.size * qb;
                 o.score += Math.max(0, Math.round(67.4 * qb));
-            }
-        });
-
-        game.points.forEach((pos, id) => {
-            const dx = b.x - pos[0];
-            const dy = b.y - pos[1];
-            if (dx * dx + dy * dy < b.size * b.size * pointEatingMargin) {
-                b.score++;
-                game.pointIdRemovals.push({
-                    id: id,
-                    animation: [b.x - dx * 0.7, b.y - dy * 0.7]
-                });
-                game.points.delete(id);
             }
         });
     });
