@@ -73,7 +73,7 @@ export class TickRunner {
         this.server.sendMessages();
 
         const t4 = performance.now();
-        
+
         // We could measure time of afterSendingMessages(), but it takes no time at all
         this.games.forEach(game => {
             game.afterSendingMessages();
@@ -93,7 +93,7 @@ export class TickRunner {
                 (this.botTotalTime / this.ticksSincePrint).toFixed(1) + 'ms bots + ' +
                 (this.logicTotalTime / this.ticksSincePrint).toFixed(1) + 'ms logic + ' +
                 (this.msgTotalTime / this.ticksSincePrint).toFixed(1) + 'ms messages, ' +
-                this.totalTicks + 'ticks'
+                this.totalTicks + ' ticks'
             );
 
             this.lastStatPrint += printLogsEvery;
