@@ -1,4 +1,4 @@
-import { expLerp, lerp, type Looks, type Message, type MessageBeetle } from "../../shared";
+import { expLerp, lerp, type Looks, type Message, type MessageBeetle, type MessageRuby } from "../../shared";
 import { Interpolator } from "./interpolator";
 import renderBeetle from "./renderBeetle";
 import { onMessage } from "./wsManager";
@@ -48,7 +48,7 @@ class LocalBeetle {
         this.size.update(b.size);
         this.angle.update(b.angle);
         this.targetAngle.update(b.targetAngle);
-        
+
         this.score = b.score;
         this.globId = b.globId;
     }
@@ -63,7 +63,7 @@ class LocalBeetle {
 }
 class LocalPoint {
     id: number;
-    
+
     tx: number;
     ty: number;
     to: number;
@@ -74,7 +74,7 @@ class LocalPoint {
 
     removed = false;
     removedTime = 0;
-    
+
     constructor(el: [number, number, number]) {
         this.id = el[0];
         this.tx = el[1];
@@ -93,8 +93,8 @@ class LocalPoint {
         this.to = 0;
         this.removed = true;
     }
-    
-    render(prevTimestep: number, timestep: number, ctx: CanvasRenderingContext2D): boolean {
+
+    render(prevTimestep: number, timestep: number, ctx: CanvasRenderingContext2D) {
         const dt = timestep - prevTimestep;
 
         this.x = expLerp(this.x, this.tx, dt, 0.005);
@@ -104,14 +104,73 @@ class LocalPoint {
         ctx.fillStyle = 'rgba(192, 64, 0, ' + this.o + ')';
         ctx.fillRect(this.x - 0.1, this.y - 0.1, 0.2, 0.2);
 
-        if(this.removed) {
+        if (this.removed) {
             this.removedTime += dt;
         }
-        return this.removedTime > 2000;
     }
 }
+class LocalRuby {
+    id: number;
+
+    x: Interpolator;
+    y: Interpolator;
+    protection: Interpolator;
+
+    hp: number;
+    visibleHp: number;
+    baseSize: number;
+    removed = false;
+
+    constructor(el: MessageRuby) {
+        this.id = el.id;
+
+        this.x = new Interpolator(el.x, false);
+        this.y = new Interpolator(el.y, false);
+        this.protection = new Interpolator(el.protection, false);
+
+        this.hp = el.hp;
+        this.visibleHp = el.hp;
+        this.baseSize = el.baseSize;
+    }
+
+    update(el: MessageRuby) {
+        this.x.update(el.x);
+        this.y.update(el.y);
+        this.protection.update(el.protection);
+
+        this.hp = el.hp;
+        this.baseSize = el.baseSize;
+    }
+
+    render(prevTimestep: number, timestep: number, ctx: CanvasRenderingContext2D) {
+        if(this.removed) {
+            this.hp = 0;
+        }
+
+        this.x.onRender();
+        this.y.onRender();
+        this.protection.onRender();
+        this.visibleHp = expLerp(this.visibleHp, this.hp, timestep - prevTimestep, 0.004);
+        
+        const path = new Path2D();
+        path.arc(this.x.value, this.y.value, this.baseSize * this.visibleHp, 0, Math.PI * 2);
+
+        ctx.fillStyle = 'red';
+        ctx.fill(path);
+
+        console.log(this.protection.value);
+
+        if (this.protection.value > 0.001) {
+            ctx.lineWidth = this.protection.value * 0.15;
+            ctx.strokeStyle = 'cyan';
+            ctx.stroke(path);
+        }
+    }
+}
+
 let looks = new Map<string, Looks>();
 let localBeetles = new Map<string, LocalBeetle>();
+let localRubys = new Map<number, LocalRuby>();
 let points = new Map<number, LocalPoint>();
 
 onMessage((data) => {
@@ -121,13 +180,13 @@ onMessage((data) => {
 
     isAlive = false;
     d.beetles.forEach(b => {
-        if(b.globId === selfGlobId) {
+        if (b.globId === selfGlobId) {
             isAlive = true;
         }
     });
 
-    if(isAlive !== prevIsAlive) {
-        if(isAlive) {
+    if (isAlive !== prevIsAlive) {
+        if (isAlive) {
             c.style = 'filter: none; opacity: 1;';
             menu.style = 'opacity: 0; pointer-events: none;'
         } else {
@@ -138,20 +197,34 @@ onMessage((data) => {
 
     const updatedIds = new Set();
     d.beetles.forEach(b => {
-        if(!localBeetles.has(b.globId)) {
+        if (!localBeetles.has(b.globId)) {
             localBeetles.set(b.globId, new LocalBeetle(b));
         }
         localBeetles.get(b.globId)?.update(b);
         updatedIds.add(b.globId);
     });
-    for(const globId of localBeetles.keys()) {
-        if(!updatedIds.has(globId)) {
+    for (const globId of localBeetles.keys()) {
+        if (!updatedIds.has(globId)) {
             localBeetles.delete(globId);
         }
     }
+    
+    const updatedRubyIds = new Set();
+    d.rubys.forEach(r => {
+        if (!localRubys.has(r.id)) {
+            localRubys.set(r.id, new LocalRuby(r));
+        }
+        localRubys.get(r.id)?.update(r);
+        updatedRubyIds.add(r.id);
+    });
+    for (const rubyId of localRubys.keys()) {
+        if (!updatedRubyIds.has(rubyId)) {
+            (localRubys.get(rubyId) as LocalRuby).removed = true;
+        }
+    }
 
-    if(d.looks !== undefined) {
-        for(const k in d.looks) {
+    if (d.looks !== undefined) {
+        for (const k in d.looks) {
             looks.set(k, d.looks[k]);
         }
     }
@@ -162,7 +235,7 @@ onMessage((data) => {
 
     d.removedPoints.forEach(el => {
         const point = points.get(el[0]);
-        if(point !== undefined) {
+        if (point !== undefined) {
             point.remove(el);
         }
     });
@@ -173,20 +246,20 @@ export function mainCanvasRenderLoop(t: number) {
 
     const w = window.innerWidth * window.devicePixelRatio;
     const h = window.innerHeight * window.devicePixelRatio;
-    if(prevW != w || prevH != h) {
+    if (prevW != w || prevH != h) {
         c.width = w;
         c.height = h;
         prevW = w;
         prevH = h;
     }
 
-    if(prevT === -1) {
+    if (prevT === -1) {
         prevT = t;
     }
-    
+
     ctx.clearRect(0, 0, w, h);
-    
-    for(const b of localBeetles.values()) {
+
+    for (const b of localBeetles.values()) {
         b.onRender();
     }
 
@@ -194,7 +267,7 @@ export function mainCanvasRenderLoop(t: number) {
     let centerY = 0;
     let visibleArea = baseVisibleArea;
     const selfBeetle = localBeetles.get(selfGlobId);
-    if(selfBeetle !== undefined) {
+    if (selfBeetle !== undefined) {
         centerX = selfBeetle.x.value;
         centerY = selfBeetle.y.value;
         visibleArea = Math.pow(selfBeetle.size.value, visibleAreaExponent) * baseVisibleArea;
@@ -202,7 +275,7 @@ export function mainCanvasRenderLoop(t: number) {
     const scale = (window.innerWidth + window.innerHeight) / 2 / visibleArea;
 
     ctx.save();
-    ctx.translate(w/2, h/2);
+    ctx.translate(w / 2, h / 2);
     ctx.scale(scale, scale);
     ctx.translate(-centerX, -centerY);
 
@@ -212,19 +285,27 @@ export function mainCanvasRenderLoop(t: number) {
     ctx.arc(0, 0, parseInt(import.meta.env.VITE_MAP_SIZE), 0, Math.PI * 2);
     ctx.stroke();
 
-    const texts: {x: number, y: number, text: string}[] = [];
+    const texts: { x: number, y: number, text: string }[] = [];
     const matrix = ctx.getTransform();
 
     points.forEach(p => {
-        if(p.render(prevT, t, ctx)) {
+        p.render(prevT, t, ctx);
+        if (p.removedTime > 1000) {
             points.delete(p.id);
         }
     });
 
+    localRubys.forEach(r => {
+        r.render(prevT, t, ctx);
+        if(r.removed && r.visibleHp < 0.01) {
+            localRubys.delete(r.id);
+        }
+    })
+
     localBeetles.forEach(b => {
         let look = looks.get(b.globId);
 
-        if(look === undefined) {
+        if (look === undefined) {
             // server skill issue, this should never happen
             look = {
                 mainColor: t % 1000 > 500 ? 'black' : 'cyan',
@@ -238,7 +319,7 @@ export function mainCanvasRenderLoop(t: number) {
 
         renderBeetle(
             prevT, t, ctx,
-            b.x.value, b.y.value, b.angle.value, b.targetAngle.value, b.size.value, 
+            b.x.value, b.y.value, b.angle.value, b.targetAngle.value, b.size.value,
             look.mainColor, look.insideColor, look.antennaColor, look.antennaSize, look.antennaDots
         );
         texts.push({
@@ -257,17 +338,17 @@ export function mainCanvasRenderLoop(t: number) {
     texts.forEach(t => {
         ctx.fillText(t.text, t.x, t.y);
     });
-    
-    if(selfBeetle !== undefined) {
-        if(selfBeetle.score != prevSelfScore) {
-            if(scoreUpdateOpacity < 0) {
+
+    if (selfBeetle !== undefined) {
+        if (selfBeetle.score != prevSelfScore) {
+            if (scoreUpdateOpacity < 0) {
                 scoreUpdateY = -16;
                 scoreUpdateValue = 0;
                 scoreUpdateUpdates = 0;
             }
             scoreUpdateOpacity = 1;
             scoreUpdateValue += selfBeetle.score - prevSelfScore;
-            scoreUpdateUpdates ++;
+            scoreUpdateUpdates++;
             prevSelfScore = selfBeetle.score;
         }
         scoreUpdateY = lerp(scoreUpdateY, 16, 0.2);

@@ -62,6 +62,6 @@ export function lerpAngle(a1: number, a2: number, t: number) {
         return moduloAngle(a2 - delta);
     }
 }
-export function expLerp(a: number, b: number, t: number, decay: number) {
-    return b + (a - b) * Math.exp(-decay * t);
+export function expLerp(a: number, b: number, dt: number, decay: number) {
+    return b + (a - b) * Math.exp(-decay * dt);
 }

@@ -3,6 +3,23 @@ import { angleDifference, rotateAngleTowards, samplePointInCircle } from "../sha
 import env from "./env.ts";
 import type { Game } from "./game.ts";
 
+const baseSpeed = 0.35;
+const sizeIncreaseSpeed = 0.001;
+const vectorDecay = 0.92;
+const irrelevanceTicks = 40;
+const minPossibleSize = 0.75;
+const vectorMagnitudes = {
+    beetleCollision: { size: 0.04, position: 0.6 },
+    mapEdgeCollision: { size: 0.03, position: 0.5 },
+    click: { size: 0.001, position: 0.65 },
+    ruby: { size: -0.1, position: 3 }  // scaled by fraction of hp taken
+};
+const magnitude1 = 0.12;
+const magnitude2 = 0.01;
+const maxDashDirectionChange = Math.PI / 5;
+export const rubyProtectionTicks = 15;
+const rubyVectorMagnitude = 0.1;
+
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
 const targetNumPoints = parseFloat(env('TARGET_POINT_DENSITY')) * Math.PI * mapSize * mapSize;
 
@@ -37,20 +54,6 @@ export function initializeBeetle(id: string, isBot: boolean): Beetle {
 function getHitQuality(dot: number) {
     return 1 - Math.acos(dot) / Math.PI * 2;
 }
-
-const baseSpeed = 0.35;
-const sizeIncreaseSpeed = 0.001;
-const vectorDecay = 0.92;
-const irrelevanceTicks = 40;
-const minPossibleSize = 0.75;
-const vectorMagnitudes = {
-    beetleCollision: { size: 0.04, position: 0.6 },  // 0.04
-    mapEdgeCollision: { size: 0.03, position: 0.5 },   // 0.03
-    click: { size: 0, position: 0.65 }
-};
-const magnitude1 = 0.12;
-const magnitude2 = 0.01;
-const maxDashDirectionChange = Math.PI / 5;
 
 (() => {
     const numTicks = 10000;
@@ -105,8 +108,26 @@ export function updateGameLogic(game: Game) {
         b.vsize *= vectorDecay;
 
         if (b.size > 4) {
-            const numPoints = Math.floor(b.score * 0.6 + 10);
-            for (let i = 0; i < numPoints; i++) {
+            let numPoints = Math.floor(b.score * 0.9);
+
+            if (numPoints > 40) {
+                if (Math.random() < numPoints / 200) {
+                    numPoints -= 80;
+                    game.currentRubyId = (game.currentRubyId + 1) % 1000000000;
+                    game.rubys.set(game.currentRubyId, {
+                        id: game.currentRubyId,
+                        x: b.x,
+                        y: b.y,
+                        vx: Math.cos(b.angle) * 0.05,
+                        vy: Math.sin(b.angle) * 0.05,
+                        hp: 1,
+                        baseSize: Math.random() * 0.5 + 0.3,
+                        protectionTicks: rubyProtectionTicks
+                    });
+                }
+            }
+
+            for (let i = 0; i < Math.max(0, numPoints) + 10; i++) {
                 const [px, py] = samplePointInCircle(b.size);
                 game.currentPointId = (game.currentPointId + 1) % 1000000000;
                 game.points.set(game.currentPointId, [px + b.x, py + b.y]);
@@ -114,6 +135,8 @@ export function updateGameLogic(game: Game) {
             }
 
             game.beetles.delete(b.id);
+
+            return;
         }
 
         const maxr = mapSize - b.size;
@@ -188,6 +211,62 @@ export function updateGameLogic(game: Game) {
                 o.score += Math.max(0, Math.round(67.4 * qb));
             }
         });
+
+        game.rubys.forEach(r => {
+            const dx = r.x - b.x;
+            const dy = r.y - b.y;
+            const ds = r.baseSize * r.hp + b.size;
+
+            if (dx * dx + dy * dy <= ds * ds) {
+                const norm = Math.sqrt(dx * dx + dy * dy);
+                const ndx = dx / norm;
+                const ndy = dy / norm;
+
+                b.x -= ndx * (ds - norm) / 2;
+                b.y -= ndy * (ds - norm) / 2;
+                r.x += ndx * (ds - norm) / 2;
+                r.y += ndy * (ds - norm) / 2;
+
+                if (r.protectionTicks > 0) return;
+
+                let hp = Math.random() * 0.35 + 0.05;
+
+                if (r.hp - hp < 0.04) {
+                    game.rubys.delete(r.id);
+                    hp = r.hp;
+                } else {
+                    r.vx += ndx * rubyVectorMagnitude;
+                    r.vy += ndx * rubyVectorMagnitude;
+                    r.hp -= hp;
+                    r.protectionTicks = rubyProtectionTicks;
+                }
+
+                b.vx -= ndx * vectorMagnitudes.ruby.position * hp;
+                b.vy -= ndy * vectorMagnitudes.ruby.position * hp;
+                b.vsize += vectorMagnitudes.ruby.size * hp;
+                b.score += Math.round(hp * 100);
+            }
+        });
+    });
+
+    game.rubys.forEach(r => {
+        r.x += r.vx;
+        r.y += r.vy;
+        r.vx *= vectorDecay;
+        r.vy *= vectorDecay;
+        r.protectionTicks = Math.max(0, r.protectionTicks - 1);
+
+        const maxr = mapSize - r.baseSize * r.hp;
+        if (r.x * r.x + r.y * r.y > maxr * maxr) {
+            const norm = Math.sqrt(r.x * r.x + r.y * r.y);
+            const normx = r.x / norm;
+            const normy = r.y / norm;
+            r.x = normx * maxr;
+            r.y = normy * maxr;
+
+            r.vx = -vectorMagnitudes.mapEdgeCollision.position * normx;
+            r.vy = -vectorMagnitudes.mapEdgeCollision.position * normy;
+        }
     });
 
     for (let i = 0; i < Math.ceil((targetNumPoints - game.points.size) * 0.1); i++) {

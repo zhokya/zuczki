@@ -1,7 +1,7 @@
 import WebSocket, { WebSocketServer } from "ws";
 import { isLooks, moduloAngle, type Message } from "../shared/index.ts";
 import env from "./env.ts";
-import { initializeBeetle } from "./logic.ts";
+import { initializeBeetle, rubyProtectionTicks } from "./logic.ts";
 import type { Game } from "./game.ts";
 import type { IncomingMessage } from "http";
 
@@ -116,6 +116,16 @@ export class GameServer {
                         score: b.score,
                         targetAngle: b.targetAngle,
                         globId: game.resolveGlobalId(b.id)
+                    }
+                }),
+                rubys: Array.from(game.rubys.values()).map(r => {
+                    return {
+                        id: r.id,
+                        x: r.x,
+                        y: r.y,
+                        baseSize: r.baseSize,
+                        hp: r.hp,
+                        protection: r.protectionTicks / rubyProtectionTicks
                     }
                 }),
                 newPoints: game.pointIdCreations.map(id => {

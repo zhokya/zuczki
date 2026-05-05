@@ -30,6 +30,17 @@ export interface Looks {
     nickname: string;
 }
 
+export interface Ruby {
+    id: number,
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    baseSize: number;
+    hp: number;
+    protectionTicks: number;
+}
+
 export interface MessageBeetle {
     x: number,
     y: number,
@@ -40,9 +51,19 @@ export interface MessageBeetle {
     globId: string
 }
 
+export interface MessageRuby {
+    id: number,
+    x: number;
+    y: number;
+    baseSize: number;
+    hp: number;
+    protection: number;
+}
+
 export interface Message {
     looks?: { [k: string]: Looks },
     beetles: MessageBeetle[],
+    rubys: MessageRuby[],
     newPoints: [number, number, number][],
     removedPoints: [number, number, number][],
     globId: string

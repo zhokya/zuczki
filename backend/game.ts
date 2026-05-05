@@ -1,17 +1,21 @@
-import type { Beetle, Looks } from "../shared/types.ts";
+import type { Beetle, Looks, Ruby } from "../shared/types.ts";
 import { generateId } from "../shared/utils.ts";
 import env from "./env.ts";
 
 export class Game {
     beetles: Map<string, Beetle>;
-    looksMap: Map<string, Looks>;
     globIdMap: Map<string, string>;
+
+    looksMap: Map<string, Looks>;
+    looksMapIdEdits: string[];
+
     points: Map<number, [number, number]>;
     currentPointId = 0;
-
-    looksMapIdEdits: string[];
     pointIdCreations: number[];
     pointIdRemovals: { id: number, animation: [number, number] }[];
+
+    rubys: Map<number, Ruby>;
+    currentRubyId = 0;
 
     url: string;
 
@@ -20,10 +24,11 @@ export class Game {
         this.looksMap = new Map();
         this.globIdMap = new Map();
         this.points = new Map();
+        this.rubys = new Map();
 
         this.looksMapIdEdits = [];
         this.pointIdCreations = [];
-        this.pointIdRemovals = []
+        this.pointIdRemovals = [];
 
         this.url = url;
     }
