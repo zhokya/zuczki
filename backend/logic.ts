@@ -156,7 +156,7 @@ export function updateGameLogic(game: Game) {
         });
     });
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < Math.ceil((targetNumPoints - game.points.size) * 0.1); i++) {
         if (game.points.size < targetNumPoints) {
             const pos = samplePointInCircle(mapSize - 2);
             let isCorrect = true;

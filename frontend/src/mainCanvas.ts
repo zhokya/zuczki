@@ -63,10 +63,15 @@ class LocalBeetle {
 }
 class LocalPoint {
     id: number;
+    
     tx: number;
     ty: number;
+    to: number;
+
     x: number;
     y: number;
+    o: number;
+
     removed = false;
     removedTime = 0;
     
@@ -74,15 +79,18 @@ class LocalPoint {
         this.id = el[0];
         this.tx = el[1];
         this.ty = el[2];
+        this.to = 1;
 
         const ang = Math.random() * Math.PI * 2;
         this.x = this.tx + Math.cos(ang) * 1.2;
         this.y = this.ty + Math.sin(ang) * 1.2;
+        this.o = 0;
     }
 
     remove(el: [number, number, number]) {
         this.tx = el[1];
         this.ty = el[2];
+        this.to = 0;
         this.removed = true;
     }
     
@@ -91,14 +99,15 @@ class LocalPoint {
 
         this.x = expLerp(this.x, this.tx, dt, 0.005);
         this.y = expLerp(this.y, this.ty, dt, 0.005);
+        this.o = expLerp(this.o, this.to, dt, 0.02);
 
-        ctx.fillStyle = 'orange';
+        ctx.fillStyle = 'rgba(192, 64, 0, ' + this.o + ')';
         ctx.fillRect(this.x - 0.1, this.y - 0.1, 0.2, 0.2);
 
         if(this.removed) {
             this.removedTime += dt;
         }
-        return this.removedTime > 200;
+        return this.removedTime > 2000;
     }
 }
 let looks = new Map<string, Looks>();
@@ -156,7 +165,7 @@ onMessage((data) => {
         if(point !== undefined) {
             point.remove(el);
         }
-    })
+    });
 });
 
 export function mainCanvasRenderLoop(t: number) {
