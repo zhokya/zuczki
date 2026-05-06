@@ -234,7 +234,7 @@ export function updateGameLogic(game: Game) {
 
                 let hp = Math.random() * 0.35 + 0.05;
 
-                if (r.hp - hp < 0.04) {
+                if (r.hp - hp < 0.15) {
                     game.rubys.delete(r.id);
                     hp = r.hp;
                 } else {

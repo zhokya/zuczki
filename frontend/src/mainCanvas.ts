@@ -117,8 +117,10 @@ class LocalRuby {
     protection: Interpolator;
 
     hp: number;
-    visibleHp: number;
     baseSize: number;
+
+    visibleHp: number;
+    opacity = 1;
     removed = false;
 
     constructor(el: MessageRuby) {
@@ -145,6 +147,7 @@ class LocalRuby {
     render(prevTimestep: number, timestep: number, ctx: CanvasRenderingContext2D) {
         if(this.removed) {
             this.hp = 0;
+            this.opacity -= (timestep - prevTimestep) * 0.005;
         }
 
         this.x.onRender();
@@ -155,16 +158,25 @@ class LocalRuby {
         const path = new Path2D();
         path.arc(this.x.value, this.y.value, this.baseSize * this.visibleHp, 0, Math.PI * 2);
 
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = 'rgba(255,0,0,' + this.opacity + ')';
         ctx.fill(path);
-
-        console.log(this.protection.value);
 
         if (this.protection.value > 0.001) {
             ctx.lineWidth = this.protection.value * 0.15;
             ctx.strokeStyle = 'cyan';
             ctx.stroke(path);
         }
+    }
+
+    renderHpBar(ctx: CanvasRenderingContext2D) {
+        const w = 0.7;
+        const h = 0.2;
+
+        ctx.fillStyle = 'rgba(128,128,128,' + this.opacity + ')';
+        ctx.fillRect(this.x.value - w / 2, this.y.value - this.baseSize * this.visibleHp - h * 1.5, w, h);
+
+        ctx.fillStyle = 'rgba(0,255,0,' + this.opacity + ')';
+        ctx.fillRect(this.x.value - w / 2, this.y.value - this.baseSize * this.visibleHp - h * 1.5, w * this.visibleHp, h);
     }
 }
 
@@ -322,11 +334,16 @@ export function mainCanvasRenderLoop(t: number) {
             b.x.value, b.y.value, b.angle.value, b.targetAngle.value, b.size.value,
             look.mainColor, look.insideColor, look.antennaColor, look.antennaSize, look.antennaDots
         );
+
         texts.push({
             x: Math.round(matrix.a * b.x.value + matrix.c * (b.y.value + b.size.value * 1.2) + matrix.e),
             y: Math.round(matrix.b * b.x.value + matrix.d * (b.y.value + b.size.value * 1.2) + matrix.f),
             text: look.nickname + ' (' + b.score + ')'
         });
+    });
+
+    localRubys.forEach(r => {
+        r.renderHpBar(ctx);
     });
 
     ctx.restore();
