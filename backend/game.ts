@@ -1,3 +1,4 @@
+import { getRandomLook, getRandomNickname } from "../shared/looks.ts";
 import type { Beetle, Looks, Ruby } from "../shared/types.ts";
 import { generateId } from "../shared/utils.ts";
 import env from "./env.ts";
@@ -46,14 +47,7 @@ export class Game {
             this.globIdMap.set(id, globId);
         }
         if (!this.looksMap.has(globId)) {
-            this.looksMap.set(globId, {
-                mainColor: 'red',
-                insideColor: 'blue',
-                antennaColor: 'green',
-                antennaSize: 0.5,
-                antennaDots: true,
-                nickname: id + '-' + globId
-            });
+            this.looksMap.set(globId, getRandomLook(getRandomNickname()));
             this.looksMapIdEdits.push(globId);
         }
         return globId;

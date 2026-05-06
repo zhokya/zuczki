@@ -92,3 +92,22 @@ export function getRandomLook(nickname: string): Looks {
         nickname: nickname
     };
 }
+
+export const randomNicknames = [
+    'Anyomi', 'Bsosyo', 'Chugyj', 'Dhubyu', 'Emikya', 'Frutya', 'Gtomyg', 'Hrusya', 'Imuryx', 'Jwahya', 'Kratyw', 'Lyosya',
+    'Mryate', 'Nmehyo', 'Osihyl', 'Pkepya', 'Ryazya', 'Spyose', 'Thahyu', 'Unogya', 'Wsyura', 'Ymumya', 'Zhyore',
+    // 'Ayutya', 'Atapya', 'Atosyo', 'Akyahiki', 'Bsohabya', 'Bkakebyu', 'Bmyayeta', 'Bmikubys', 'Btayonya', 'Bsotagya', 
+    // 'Csisagya', 'Cwoyezyo', 'Cryukonu', 'Dkehosyf', 'Dsipyana', 'Dtatoryu', 'Dwokyoro', 'Dsanimyo', 'Esyakyaa'
+
+    'Akyoro', 'Bsyune', 'Cratyn', 'Dhyavo', 'Elyra', 'Fsyoko', 'Gryune', 'Hkaryo', 'Izyra',
+    'Jsyeth', 'Kryavo', 'Lhyune', 'Msyaro', 'Nkyeth', 'Oryune', 'Psyavo', 'Qyreno', 'Rhyavo',
+    'Sratyn', 'Tkyaro', 'Ulyeth', 'Vsyune', 'Wryavo', 'Xyreno', 'Ysyaro', 'Zkryen',
+
+    'Avenyx', 'Brakalo', 'Cythera', 'Druvok', 'Elandir', 'Fexori', 'Garnyx', 'Hovira', 'Iskelo', 'Jandrix',
+    'Kovari', 'Luneth', 'Morvax', 'Nysera', 'Orikesh', 'Paldro', 'Quenari', 'Rivox', 'Solari', 'Tenvyx',
+    'Ulthra', 'Voreli', 'Wexari', 'Xandor', 'Ylmeri', 'Zorvyn'
+];
+
+export function getRandomNickname(): string {
+    return randomNicknames[Math.floor(randomNicknames.length * Math.random())];
+}
