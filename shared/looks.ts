@@ -89,6 +89,6 @@ export function getRandomLook(nickname: string): Looks {
         antennaColor: colors[Math.floor(Math.random() * colors.length)],
         mainColor: colors[Math.floor(Math.random() * colors.length)],
         insideColor: colors[Math.floor(Math.random() * colors.length)],
-        nickname: nickname === undefined ? '' : nickname
+        nickname: nickname
     };
 }
