@@ -9,7 +9,7 @@ const ctx = c.getContext('2d') as CanvasRenderingContext2D;
 const w = c.width;
 const h = c.height;
 
-export let chosenLooks: Looks = getRandomLook();
+export let chosenLooks: Looks = getRandomLook('');
 try {
     const savedLooksString = localStorage.getItem('zuczki_looks');
     if (typeof (savedLooksString) === 'string') {
