@@ -4,7 +4,7 @@ import { LocalBeetle } from "./entities/beetle";
 import { LocalPoint } from "./entities/point";
 import { LocalRuby } from "./entities/ruby";
 
-const baseVisibleArea = 20;
+const baseVisibleArea = 25;
 const visibleAreaExponent = 0.4;
 
 const c = document.getElementById('c') as HTMLCanvasElement;
@@ -122,7 +122,7 @@ export function mainCanvasRenderLoop(t: number) {
 
     let centerX = 0;
     let centerY = 0;
-    let visibleArea = baseVisibleArea;
+    let visibleArea = 2 * baseVisibleArea;
     const selfBeetle = localBeetles.get(selfGlobId);
     if (selfBeetle !== undefined) {
         centerX = selfBeetle.x.value;
