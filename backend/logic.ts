@@ -26,13 +26,12 @@ const targetNumPoints = parseFloat(env('TARGET_POINT_DENSITY')) * Math.PI * mapS
 export function initializeBeetle(id: string, isBot: boolean): Beetle {
     // TODO: check for collisions before initializing position
     // also consider other initializations, like uniform of circle
-    const initialPositionRadius = Math.random() * (mapSize - 4);
-    const initialPositionAngle = Math.random() * Math.PI * 2;
+    const [x, y] = samplePointInCircle(mapSize - 5);
     const initialAngle = Math.random() * Math.PI * 2;
 
     return {
-        x: initialPositionRadius * Math.cos(initialPositionAngle),
-        y: initialPositionRadius * Math.sin(initialPositionAngle),
+        x: x,
+        y: y,
         size: 1,
         angle: initialAngle,
 
@@ -47,7 +46,7 @@ export function initializeBeetle(id: string, isBot: boolean): Beetle {
         clicked: false,
 
         id: id,
-        lastBrainActive: isBot ? -1 : performance.now()
+        lastBrainActive: isBot ? -1e9 : performance.now()
     };
 }
 
