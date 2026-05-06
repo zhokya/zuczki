@@ -3,6 +3,7 @@ import { onMessage } from "./wsManager";
 import { LocalBeetle } from "./entities/beetle";
 import { LocalPoint } from "./entities/point";
 import { LocalRuby } from "./entities/ruby";
+import { onDead } from "./menu";
 
 const baseVisibleArea = 25;
 const visibleAreaExponent = 0.4;
@@ -16,7 +17,7 @@ let prevH = -1;
 let prevT = -1;
 
 export let isAlive = false;
-let prevIsAlive: boolean | null = null;
+let prevIsAlive = false;
 let selfGlobId = '';
 
 let prevSelfScore = 0;
@@ -49,8 +50,10 @@ onMessage((data) => {
         } else {
             c.style = 'filter: blur(10px); opacity: 0.5;';
             menu.style = 'opacity: 1; pointer-events: all;';
+            onDead();
         }
     }
+    prevIsAlive = isAlive;
 
     const updatedIds = new Set();
     d.beetles.forEach(b => {

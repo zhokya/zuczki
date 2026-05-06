@@ -1,14 +1,14 @@
 import { moduloAngle } from '../../shared';
 import { isAlive, mainCanvasRenderLoop } from './mainCanvas';
-import { smallCanvasRenderLoop } from './smallCanvas';
+import { chosenLooks, menuRenderLoop } from './menu';
 import { rejoin, sendJson, sendUpdate } from './wsManager';
 
 rejoin();
 
-requestAnimationFrame(smallCanvasRenderLoop);
+requestAnimationFrame(menuRenderLoop);
 requestAnimationFrame(mainCanvasRenderLoop);
 
-let targetAngle = 0;
+let targetAngle = Math.random() * Math.PI * 2;
 let click = false;
 window.addEventListener('mousemove', (ev) => {
     let x = ev.pageX - window.innerWidth / 2;
@@ -22,16 +22,10 @@ window.addEventListener('click', () => {
 });
 
 document.getElementById('play')?.addEventListener('click', () => {
+    chosenLooks.nickname = (document.getElementById('nickname') as HTMLInputElement).value;
     sendJson({
         type: 'play',
-        looks: {
-            mainColor: '#4398bd',
-            insideColor: '#5330b1',
-            antennaColor: '#c25b97',
-            antennaSize: 0.5,
-            antennaDots: true,
-            nickname: (document.getElementById('nickname') as HTMLInputElement).value
-        }
+        looks: chosenLooks
     });
 });
 
