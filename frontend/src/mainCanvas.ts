@@ -1,7 +1,8 @@
-import { expLerp, lerp, type Looks, type Message, type MessageBeetle, type MessageRuby } from "../../shared";
-import { Interpolator } from "./interpolator";
-import renderBeetle from "./renderBeetle";
+import { lerp, type Looks, type Message } from "../../shared";
 import { onMessage } from "./wsManager";
+import { LocalBeetle } from "./entities/beetle";
+import { LocalPoint } from "./entities/point";
+import { LocalRuby } from "./entities/ruby";
 
 const baseVisibleArea = 20;
 const visibleAreaExponent = 0.4;
@@ -23,162 +24,6 @@ let scoreUpdateValue = 0;
 let scoreUpdateOpacity = 0;
 let scoreUpdateY = 0;
 let scoreUpdateUpdates = 0;
-
-class LocalBeetle {
-    x: Interpolator;
-    y: Interpolator;
-    size: Interpolator;
-    angle: Interpolator;
-    targetAngle: Interpolator;
-
-    score: number = 0;
-    globId: string = '';
-
-    constructor(b: MessageBeetle) {
-        this.x = new Interpolator(b.x, false);
-        this.y = new Interpolator(b.y, false);
-        this.size = new Interpolator(b.size, false);
-        this.angle = new Interpolator(b.angle, true);
-        this.targetAngle = new Interpolator(b.targetAngle, true);
-    }
-
-    update(b: MessageBeetle) {
-        this.x.update(b.x);
-        this.y.update(b.y);
-        this.size.update(b.size);
-        this.angle.update(b.angle);
-        this.targetAngle.update(b.targetAngle);
-
-        this.score = b.score;
-        this.globId = b.globId;
-    }
-
-    onRender() {
-        this.x.onRender();
-        this.y.onRender();
-        this.size.onRender();
-        this.angle.onRender();
-        this.targetAngle.onRender();
-    }
-}
-class LocalPoint {
-    id: number;
-
-    tx: number;
-    ty: number;
-    to: number;
-
-    x: number;
-    y: number;
-    o: number;
-
-    removed = false;
-    removedTime = 0;
-
-    constructor(el: [number, number, number]) {
-        this.id = el[0];
-        this.tx = el[1];
-        this.ty = el[2];
-        this.to = 1;
-
-        const ang = Math.random() * Math.PI * 2;
-        this.x = this.tx + Math.cos(ang) * 1.2;
-        this.y = this.ty + Math.sin(ang) * 1.2;
-        this.o = 0;
-    }
-
-    remove(el: [number, number, number]) {
-        this.tx = el[1];
-        this.ty = el[2];
-        this.to = 0;
-        this.removed = true;
-    }
-
-    render(prevTimestep: number, timestep: number, ctx: CanvasRenderingContext2D) {
-        const dt = timestep - prevTimestep;
-
-        this.x = expLerp(this.x, this.tx, dt, 0.005);
-        this.y = expLerp(this.y, this.ty, dt, 0.005);
-        this.o = expLerp(this.o, this.to, dt, 0.02);
-
-        ctx.fillStyle = 'rgba(192, 64, 0, ' + this.o + ')';
-        ctx.fillRect(this.x - 0.1, this.y - 0.1, 0.2, 0.2);
-
-        if (this.removed) {
-            this.removedTime += dt;
-        }
-    }
-}
-class LocalRuby {
-    id: number;
-
-    x: Interpolator;
-    y: Interpolator;
-    protection: Interpolator;
-
-    hp: number;
-    baseSize: number;
-
-    visibleHp: number;
-    opacity = 1;
-    removed = false;
-
-    constructor(el: MessageRuby) {
-        this.id = el.id;
-
-        this.x = new Interpolator(el.x, false);
-        this.y = new Interpolator(el.y, false);
-        this.protection = new Interpolator(el.protection, false);
-
-        this.hp = el.hp;
-        this.visibleHp = el.hp;
-        this.baseSize = el.baseSize;
-    }
-
-    update(el: MessageRuby) {
-        this.x.update(el.x);
-        this.y.update(el.y);
-        this.protection.update(el.protection);
-
-        this.hp = el.hp;
-        this.baseSize = el.baseSize;
-    }
-
-    render(prevTimestep: number, timestep: number, ctx: CanvasRenderingContext2D) {
-        if(this.removed) {
-            this.hp = 0;
-            this.opacity -= (timestep - prevTimestep) * 0.005;
-        }
-
-        this.x.onRender();
-        this.y.onRender();
-        this.protection.onRender();
-        this.visibleHp = expLerp(this.visibleHp, this.hp, timestep - prevTimestep, 0.004);
-        
-        const path = new Path2D();
-        path.arc(this.x.value, this.y.value, this.baseSize * this.visibleHp, 0, Math.PI * 2);
-
-        ctx.fillStyle = 'rgba(255,0,0,' + this.opacity + ')';
-        ctx.fill(path);
-
-        if (this.protection.value > 0.001) {
-            ctx.lineWidth = this.protection.value * 0.15;
-            ctx.strokeStyle = 'cyan';
-            ctx.stroke(path);
-        }
-    }
-
-    renderHpBar(ctx: CanvasRenderingContext2D) {
-        const w = 0.7;
-        const h = 0.2;
-
-        ctx.fillStyle = 'rgba(128,128,128,' + this.opacity + ')';
-        ctx.fillRect(this.x.value - w / 2, this.y.value - this.baseSize * this.visibleHp - h * 1.5, w, h);
-
-        ctx.fillStyle = 'rgba(0,255,0,' + this.opacity + ')';
-        ctx.fillRect(this.x.value - w / 2, this.y.value - this.baseSize * this.visibleHp - h * 1.5, w * this.visibleHp, h);
-    }
-}
 
 let looks = new Map<string, Looks>();
 let localBeetles = new Map<string, LocalBeetle>();
@@ -220,7 +65,7 @@ onMessage((data) => {
             localBeetles.delete(globId);
         }
     }
-    
+
     const updatedRubyIds = new Set();
     d.rubys.forEach(r => {
         if (!localRubys.has(r.id)) {
@@ -309,7 +154,7 @@ export function mainCanvasRenderLoop(t: number) {
 
     localRubys.forEach(r => {
         r.render(prevT, t, ctx);
-        if(r.removed && r.visibleHp < 0.01) {
+        if (r.removed && r.visibleHp < 0.01) {
             localRubys.delete(r.id);
         }
     })
@@ -317,28 +162,12 @@ export function mainCanvasRenderLoop(t: number) {
     localBeetles.forEach(b => {
         let look = looks.get(b.globId);
 
-        if (look === undefined) {
-            // server skill issue, this should never happen
-            look = {
-                mainColor: t % 1000 > 500 ? 'black' : 'cyan',
-                insideColor: 'white',
-                antennaColor: 'black',
-                antennaDots: false,
-                antennaSize: 0,
-                nickname: ''
-            };
-        }
-
-        renderBeetle(
-            prevT, t, ctx,
-            b.x.value, b.y.value, b.angle.value, b.targetAngle.value, b.size.value,
-            look.mainColor, look.insideColor, look.antennaColor, look.antennaSize, look.antennaDots
-        );
+        b.render(prevT, t, ctx, look);
 
         texts.push({
             x: Math.round(matrix.a * b.x.value + matrix.c * (b.y.value + b.size.value * 1.2) + matrix.e),
             y: Math.round(matrix.b * b.x.value + matrix.d * (b.y.value + b.size.value * 1.2) + matrix.f),
-            text: look.nickname + ' (' + b.score + ')'
+            text: (look === undefined || look.nickname === '' ? '' : look.nickname + ' ') + '(' + b.score + ')'
         });
     });
 
@@ -381,7 +210,7 @@ export function mainCanvasRenderLoop(t: number) {
         // }
     }
 
-    if(selfBeetle !== undefined) {
+    if (selfBeetle !== undefined) {
         ctx.strokeStyle = 'black';
         ctx.fillStyle = 'rgba(0,0,0,.3)'
         ctx.lineWidth = 2;
@@ -401,7 +230,7 @@ export function mainCanvasRenderLoop(t: number) {
         ctx.fillStyle = 'red';
         ctx.beginPath();
         ctx.arc(
-            w - minimapMargin + selfBeetle.x.value / parseInt(import.meta.env.VITE_MAP_SIZE) * (minimapSize - dotSize), 
+            w - minimapMargin + selfBeetle.x.value / parseInt(import.meta.env.VITE_MAP_SIZE) * (minimapSize - dotSize),
             minimapMargin + selfBeetle.y.value / parseInt(import.meta.env.VITE_MAP_SIZE) * (minimapSize - dotSize),
             dotSize, 0, Math.PI * 2
         );

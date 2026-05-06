@@ -1,4 +1,5 @@
-import { angleDifference } from "../../shared";
+import { angleDifference, type Looks, type MessageBeetle } from "../../../shared";
+import { Interpolator } from "../interpolator";
 
 const motionBlurSteps = 10;
 
@@ -37,7 +38,7 @@ function insideSize(timestep: number) {
     return Math.sqrt(area);
 }
 
-export default function renderBeetle(
+export function renderBeetle(
     prevTimestep: number, timestep: number,
     ctx: CanvasRenderingContext2D,
     x: number, y: number, angle: number, targetAngle: number, size: number,
@@ -86,13 +87,13 @@ export default function renderBeetle(
     // main body
     let offsetFrom = getBeetleWingOffset(prevTimestep);
     let offsetTo = getBeetleWingOffset(timestep);
-    if(offsetTo > offsetFrom) {
+    if (offsetTo > offsetFrom) {
         [offsetFrom, offsetTo] = [offsetTo, offsetFrom];
     }
-    if(getBeetleWingPeriod(prevTimestep) !== getBeetleWingPeriod(timestep)) {
+    if (getBeetleWingPeriod(prevTimestep) !== getBeetleWingPeriod(timestep)) {
         // Either maxWingOffset or minWingOffset
         // Fix animation by putting offset range to max range
-        if(offsetTo > (maxWingOffset + minWingOffset) / 2) {
+        if (offsetTo > (maxWingOffset + minWingOffset) / 2) {
             offsetFrom = maxWingOffset;
         } else {
             offsetTo = minWingOffset;
@@ -108,7 +109,7 @@ export default function renderBeetle(
     ctx.arc(x, y, size, angle - Math.PI + Math.max(offsetFrom, offsetTo), angle + Math.PI - Math.max(offsetFrom, offsetTo));
     ctx.lineTo(cpx, cpy);
     ctx.fill();
-    
+
     // main body motion blur
     for (let i = 1; i <= motionBlurSteps; i++) {
         ctx.globalAlpha = 1 / (i + 1);
@@ -129,8 +130,8 @@ export default function renderBeetle(
     ctx.globalAlpha = 1;
 
     // eyes
-    let npx =  x + Math.cos(angle - eyeSeparationAngle / 2) * size * eyeFromCenterDistance;
-    let npy =  y + Math.sin(angle - eyeSeparationAngle / 2) * size * eyeFromCenterDistance;
+    let npx = x + Math.cos(angle - eyeSeparationAngle / 2) * size * eyeFromCenterDistance;
+    let npy = y + Math.sin(angle - eyeSeparationAngle / 2) * size * eyeFromCenterDistance;
     let npxt = x + Math.cos(angle + eyeSeparationAngle / 2) * size * eyeFromCenterDistance;
     let npyt = y + Math.sin(angle + eyeSeparationAngle / 2) * size * eyeFromCenterDistance;
 
@@ -150,16 +151,74 @@ export default function renderBeetle(
     ctx.fillStyle = 'black';
     path = new Path2D();
     path.arc(
-        npx + Math.cos(targetAngle) * size * effectiveDist, 
-        npy + Math.sin(targetAngle) * size * effectiveDist, 
-        size * pupilSize, 
+        npx + Math.cos(targetAngle) * size * effectiveDist,
+        npy + Math.sin(targetAngle) * size * effectiveDist,
+        size * pupilSize,
         0, 2 * Math.PI
     );
     path.arc(
-        npxt + Math.cos(targetAngle) * size * effectiveDist, 
-        npyt + Math.sin(targetAngle) * size * effectiveDist, 
-        size * pupilSize, 
+        npxt + Math.cos(targetAngle) * size * effectiveDist,
+        npyt + Math.sin(targetAngle) * size * effectiveDist,
+        size * pupilSize,
         0, 2 * Math.PI
     );
     ctx.fill(path);
+}
+
+export class LocalBeetle {
+    x: Interpolator;
+    y: Interpolator;
+    size: Interpolator;
+    angle: Interpolator;
+    targetAngle: Interpolator;
+
+    score: number = 0;
+    globId: string = '';
+
+    constructor(b: MessageBeetle) {
+        this.x = new Interpolator(b.x, false);
+        this.y = new Interpolator(b.y, false);
+        this.size = new Interpolator(b.size, false);
+        this.angle = new Interpolator(b.angle, true);
+        this.targetAngle = new Interpolator(b.targetAngle, true);
+    }
+
+    update(b: MessageBeetle) {
+        this.x.update(b.x);
+        this.y.update(b.y);
+        this.size.update(b.size);
+        this.angle.update(b.angle);
+        this.targetAngle.update(b.targetAngle);
+
+        this.score = b.score;
+        this.globId = b.globId;
+    }
+
+    onRender() {
+        this.x.onRender();
+        this.y.onRender();
+        this.size.onRender();
+        this.angle.onRender();
+        this.targetAngle.onRender();
+    }
+
+    render(prevTimestep: number, timestep: number, ctx: CanvasRenderingContext2D, look: Looks | undefined) {
+        if (look === undefined) {
+            // server skill issue, this should never happen
+            look = {
+                mainColor: timestep % 1000 > 500 ? 'black' : 'cyan',
+                insideColor: 'white',
+                antennaColor: 'black',
+                antennaDots: false,
+                antennaSize: 0,
+                nickname: ''
+            };
+        }
+
+        renderBeetle(
+            prevTimestep, timestep, ctx,
+            this.x.value, this.y.value, this.angle.value, this.targetAngle.value, this.size.value,
+            look.mainColor, look.insideColor, look.antennaColor, look.antennaSize, look.antennaDots
+        );
+    }
 }

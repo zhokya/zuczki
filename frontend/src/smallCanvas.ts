@@ -1,4 +1,4 @@
-import renderBeetle from "./renderBeetle";
+import { renderBeetle } from "./entities/beetle";
 
 const c = document.getElementById('s') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
@@ -10,7 +10,7 @@ let prevT: number | null = null;
 export function smallCanvasRenderLoop(t: number) {
     requestAnimationFrame(smallCanvasRenderLoop);
 
-    if(prevT === null) {
+    if (prevT === null) {
         prevT = t;
     }
 
