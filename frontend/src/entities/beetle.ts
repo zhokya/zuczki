@@ -44,39 +44,37 @@ export function renderBeetle(
     x: number, y: number, angle: number, targetAngle: number, size: number,
     mainColor: string, insideColor: string, antennaColor: string, antennaSize: number, antennaDots: boolean
 ) {
-    if (antennaSize > 0) {
-        ctx.save();
+    const ax = size;
+    const ay = -size * antennaSeparation;
+    const bx = ax + size * antennaSize * 1.2;
+    const by = ay - size * antennaSize * 0.1;
+    const cx = ax + size * antennaSize * 1.5;
+    const cy = ay - size * antennaSize * 0.8;
 
-        ctx.translate(x, y);
-        ctx.rotate(angle);
-        let path = new Path2D();
-        let ax = size;
-        let ay = -size * antennaSeparation;
-        let bx = ax + size * antennaSize * 1.2;
-        let by = ay - size * antennaSize * 0.1;
-        let cx = ax + size * antennaSize * 1.5;
-        let cy = ay - size * antennaSize * 0.8;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    ctx.strokeStyle = antennaColor;
+    ctx.lineCap = 'round';
+    ctx.lineWidth = size / 10;
+    if (antennaSize > 0) {
+        const path = new Path2D();
         path.moveTo(ax, ay);
         path.quadraticCurveTo(bx, by, cx, cy);
         path.moveTo(ax, -ay);
         path.quadraticCurveTo(bx, -by, cx, -cy);
-        ctx.strokeStyle = antennaColor;
-        ctx.lineCap = 'round';
-        ctx.lineWidth = size / 10;
         ctx.stroke(path);
-
-        if (antennaDots) {
-            path = new Path2D();
-            path.moveTo(cx, cy);
-            path.arc(cx, cy, size * antennaDotsSize, 0, 2 * Math.PI);
-            path.moveTo(cx, -cy);
-            path.arc(cx, -cy, size * antennaDotsSize, 0, 2 * Math.PI);
-            ctx.fillStyle = antennaColor;
-            ctx.fill(path);
-        }
-
-        ctx.restore();
     }
+    if (antennaDots) {
+        const path = new Path2D();
+        path.moveTo(cx, cy);
+        path.arc(cx, cy, size * antennaDotsSize, 0, 2 * Math.PI);
+        path.moveTo(cx, -cy);
+        path.arc(cx, -cy, size * antennaDotsSize, 0, 2 * Math.PI);
+        ctx.fillStyle = antennaColor;
+        ctx.fill(path);
+    }
+    ctx.restore();
 
     // inside body
     ctx.fillStyle = insideColor;
