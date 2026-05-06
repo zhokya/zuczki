@@ -1,13 +1,16 @@
 import { lerp } from "../../../shared";
+import type { RenderInfo } from "../types";
 
 const maxSize = parseFloat(import.meta.env.VITE_MAX_SIZE);
-const minSize = maxSize - 1;
+const minSize = maxSize - 0.6;
 
 let warningT = 0;
-export function renderSizeWarning(prevT: number, t: number, ctx: CanvasRenderingContext2D, w: number, h: number, size: number) {
-    if(size <= minSize) return;
+export function renderSizeWarning(renderInfo: RenderInfo, size: number) {
+    const { ctx, w, h, t, prevT } = renderInfo;
+
+    if (size <= minSize) return;
     const amtt = (size - minSize) / (maxSize - minSize);
-    const am = (Math.pow(amtt, 5) + Math.pow(amtt, 1 / 5)) / 2;
+    const am = (Math.pow(amtt, 4) + Math.pow(amtt, 1 / 4)) / 2;
 
     const speed = lerp(0.001, 0.04, am);
     warningT += speed * (t - prevT);

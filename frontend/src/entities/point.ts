@@ -1,4 +1,5 @@
 import { expLerp } from "../../../shared";
+import type { RenderInfo } from "../types";
 
 export class LocalPoint {
     id: number;
@@ -33,8 +34,10 @@ export class LocalPoint {
         this.removed = true;
     }
 
-    render(prevTimestep: number, timestep: number, ctx: CanvasRenderingContext2D) {
-        const dt = timestep - prevTimestep;
+    render(renderInfo: RenderInfo) {
+        const { ctx, prevT, t } = renderInfo;
+        
+        const dt = t - prevT;
 
         this.x = expLerp(this.x, this.tx, dt, 0.005);
         this.y = expLerp(this.y, this.ty, dt, 0.005);

@@ -1,5 +1,6 @@
 import { angleDifference, type Looks, type MessageBeetle } from "../../../shared";
 import { Interpolator } from "../interpolator";
+import type { RenderInfo } from "../types";
 
 const motionBlurSteps = 10;
 
@@ -38,26 +39,23 @@ function insideSize(timestep: number) {
     return Math.sqrt(area);
 }
 
-export function renderBeetle(
-    prevTimestep: number, timestep: number,
-    ctx: CanvasRenderingContext2D,
-    x: number, y: number, angle: number, targetAngle: number, size: number,
-    mainColor: string, insideColor: string, antennaColor: string, antennaSize: number, antennaDots: boolean
-) {
+export function renderBeetle(renderInfo: RenderInfo, x: number, y: number, angle: number, targetAngle: number, size: number, looks: Looks) {
+    const { ctx, prevT, t } = renderInfo;
+
     const ax = size;
     const ay = -size * antennaSeparation;
-    const bx = ax + size * antennaSize * 1.2;
-    const by = ay - size * antennaSize * 0.1;
-    const cx = ax + size * antennaSize * 1.5;
-    const cy = ay - size * antennaSize * 0.8;
+    const bx = ax + size * looks.antennaSize * 1.2;
+    const by = ay - size * looks.antennaSize * 0.1;
+    const cx = ax + size * looks.antennaSize * 1.5;
+    const cy = ay - size * looks.antennaSize * 0.8;
 
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
-    ctx.strokeStyle = antennaColor;
+    ctx.strokeStyle = looks.antennaColor;
     ctx.lineCap = 'round';
     ctx.lineWidth = size / 10;
-    if (antennaSize > 0) {
+    if (looks.antennaSize > 0) {
         const path = new Path2D();
         path.moveTo(ax, ay);
         path.quadraticCurveTo(bx, by, cx, cy);
@@ -65,30 +63,30 @@ export function renderBeetle(
         path.quadraticCurveTo(bx, -by, cx, -cy);
         ctx.stroke(path);
     }
-    if (antennaDots) {
+    if (looks.antennaDots) {
         const path = new Path2D();
         path.moveTo(cx, cy);
         path.arc(cx, cy, size * antennaDotsSize, 0, 2 * Math.PI);
         path.moveTo(cx, -cy);
         path.arc(cx, -cy, size * antennaDotsSize, 0, 2 * Math.PI);
-        ctx.fillStyle = antennaColor;
+        ctx.fillStyle = looks.antennaColor;
         ctx.fill(path);
     }
     ctx.restore();
 
     // inside body
-    ctx.fillStyle = insideColor;
+    ctx.fillStyle = looks.insideColor;
     ctx.beginPath();
-    ctx.arc(x, y, size * insideSize(timestep), 0, Math.PI * 2);
+    ctx.arc(x, y, size * insideSize(t), 0, Math.PI * 2);
     ctx.fill();
 
     // main body
-    let offsetFrom = getBeetleWingOffset(prevTimestep);
-    let offsetTo = getBeetleWingOffset(timestep);
+    let offsetFrom = getBeetleWingOffset(prevT);
+    let offsetTo = getBeetleWingOffset(t);
     if (offsetTo > offsetFrom) {
         [offsetFrom, offsetTo] = [offsetTo, offsetFrom];
     }
-    if (getBeetleWingPeriod(prevTimestep) !== getBeetleWingPeriod(timestep)) {
+    if (getBeetleWingPeriod(prevT) !== getBeetleWingPeriod(t)) {
         // Either maxWingOffset or minWingOffset
         // Fix animation by putting offset range to max range
         if (offsetTo > (maxWingOffset + minWingOffset) / 2) {
@@ -101,7 +99,7 @@ export function renderBeetle(
     const cpx = x - Math.cos(angle) * size * wingCenterDistance;
     const cpy = y - Math.sin(angle) * size * wingCenterDistance;
 
-    ctx.fillStyle = mainColor;
+    ctx.fillStyle = looks.mainColor;
     ctx.beginPath();
     ctx.moveTo(cpx, cpy);
     ctx.arc(x, y, size, angle - Math.PI + Math.max(offsetFrom, offsetTo), angle + Math.PI - Math.max(offsetFrom, offsetTo));
@@ -200,11 +198,11 @@ export class LocalBeetle {
         this.targetAngle.onRender();
     }
 
-    render(prevTimestep: number, timestep: number, ctx: CanvasRenderingContext2D, look: Looks | undefined) {
+    render(renderInfo: RenderInfo, look: Looks | undefined) {
         if (look === undefined) {
             // server skill issue, this should never happen
             look = {
-                mainColor: timestep % 1000 > 500 ? 'black' : 'cyan',
+                mainColor: renderInfo.t % 1000 > 500 ? 'black' : 'cyan',
                 insideColor: 'white',
                 antennaColor: 'black',
                 antennaDots: false,
@@ -213,10 +211,6 @@ export class LocalBeetle {
             };
         }
 
-        renderBeetle(
-            prevTimestep, timestep, ctx,
-            this.x.value, this.y.value, this.angle.value, this.targetAngle.value, this.size.value,
-            look.mainColor, look.insideColor, look.antennaColor, look.antennaSize, look.antennaDots
-        );
+        renderBeetle(renderInfo, this.x.value, this.y.value, this.angle.value, this.targetAngle.value, this.size.value, look);
     }
 }

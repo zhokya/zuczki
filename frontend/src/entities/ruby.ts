@@ -1,5 +1,6 @@
 import { expLerp, type MessageRuby } from "../../../shared";
 import { Interpolator } from "../interpolator";
+import type { RenderInfo } from "../types";
 
 export class LocalRuby {
     id: number;
@@ -36,16 +37,18 @@ export class LocalRuby {
         this.baseSize = el.baseSize;
     }
 
-    render(prevTimestep: number, timestep: number, ctx: CanvasRenderingContext2D) {
+    render(renderInfo: RenderInfo) {
+        const { ctx, t, prevT } = renderInfo;
+
         if (this.removed) {
             this.hp = 0;
-            this.opacity -= (timestep - prevTimestep) * 0.005;
+            this.opacity -= (t - prevT) * 0.005;
         }
 
         this.x.onRender();
         this.y.onRender();
         this.protection.onRender();
-        this.visibleHp = expLerp(this.visibleHp, this.hp, timestep - prevTimestep, 0.004);
+        this.visibleHp = expLerp(this.visibleHp, this.hp, t - prevT, 0.004);
 
         const path = new Path2D();
         path.arc(this.x.value, this.y.value, this.baseSize * this.visibleHp, 0, Math.PI * 2);
@@ -60,7 +63,9 @@ export class LocalRuby {
         }
     }
 
-    renderHpBar(ctx: CanvasRenderingContext2D) {
+    renderHpBar(renderInfo: RenderInfo) {
+        const { ctx } = renderInfo;
+
         const w = 0.7;
         const h = 0.2;
 

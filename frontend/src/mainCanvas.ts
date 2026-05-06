@@ -1,10 +1,13 @@
-import { lerp, type Looks, type Message } from "../../shared";
+import { type Looks, type Message } from "../../shared";
 import { onMessage } from "./wsManager";
 import { LocalBeetle } from "./entities/beetle";
 import { LocalPoint } from "./entities/point";
 import { LocalRuby } from "./entities/ruby";
 import { onDead } from "./menu";
 import { renderSizeWarning } from "./visuals/sizeWarning";
+import { renderMinimap } from "./visuals/minimap";
+import type { RenderInfo } from "./types";
+import { renderEnvironment } from "./visuals/environment";
 
 const baseVisibleArea = 25;
 const visibleAreaExponent = 0.4;
@@ -20,12 +23,6 @@ let prevT = -1;
 export let isAlive = false;
 let prevIsAlive = false;
 let selfGlobId = '';
-
-let prevSelfScore = 0;
-let scoreUpdateValue = 0;
-let scoreUpdateOpacity = 0;
-let scoreUpdateY = 0;
-let scoreUpdateUpdates = 0;
 
 let looks = new Map<string, Looks>();
 let localBeetles = new Map<string, LocalBeetle>();
@@ -118,6 +115,8 @@ export function mainCanvasRenderLoop(t: number) {
         prevT = t;
     }
 
+    const renderInfo: RenderInfo = { w, h, ctx, t, prevT };
+
     ctx.clearRect(0, 0, w, h);
 
     for (const b of localBeetles.values()) {
@@ -140,33 +139,29 @@ export function mainCanvasRenderLoop(t: number) {
     ctx.scale(scale, scale);
     ctx.translate(-centerX, -centerY);
 
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 0.1;
-    ctx.beginPath();
-    ctx.arc(0, 0, parseInt(import.meta.env.VITE_MAP_SIZE), 0, Math.PI * 2);
-    ctx.stroke();
-
     const texts: { x: number, y: number, text: string }[] = [];
     const matrix = ctx.getTransform();
 
+    renderEnvironment(renderInfo);
+
     points.forEach(p => {
-        p.render(prevT, t, ctx);
+        p.render(renderInfo);
         if (p.removedTime > 1000) {
             points.delete(p.id);
         }
     });
 
     localRubys.forEach(r => {
-        r.render(prevT, t, ctx);
+        r.render(renderInfo);
         if (r.removed && r.visibleHp < 0.01) {
             localRubys.delete(r.id);
         }
-    })
+    });
 
     localBeetles.forEach(b => {
         let look = looks.get(b.globId);
 
-        b.render(prevT, t, ctx, look);
+        b.render(renderInfo, look);
 
         texts.push({
             x: Math.round(matrix.a * b.x.value + matrix.c * (b.y.value + b.size.value * 1.2) + matrix.e),
@@ -176,7 +171,7 @@ export function mainCanvasRenderLoop(t: number) {
     });
 
     localRubys.forEach(r => {
-        r.renderHpBar(ctx);
+        r.renderHpBar(renderInfo);
     });
 
     ctx.restore();
@@ -190,57 +185,8 @@ export function mainCanvasRenderLoop(t: number) {
     });
 
     if (selfBeetle !== undefined) {
-        if (selfBeetle.score != prevSelfScore) {
-            if (scoreUpdateOpacity < 0) {
-                scoreUpdateY = -16;
-                scoreUpdateValue = 0;
-                scoreUpdateUpdates = 0;
-            }
-            scoreUpdateOpacity = 1;
-            scoreUpdateValue += selfBeetle.score - prevSelfScore;
-            scoreUpdateUpdates++;
-            prevSelfScore = selfBeetle.score;
-        }
-        scoreUpdateY = lerp(scoreUpdateY, 16, 0.2);
-        scoreUpdateOpacity = scoreUpdateOpacity * 0.99 - 0.002;
-        // if(scoreUpdateOpacity > 0) {
-        //     ctx.fillStyle = 'rgba(45,234,78,' + scoreUpdateOpacity + ')';
-        //     ctx.font = (scoreUpdateUpdates * 4 + 14) + 'px arial';
-        //     ctx.fillText(
-        //         '+' + scoreUpdateValue, 
-        //         Math.round(matrix.a * selfBeetle.x.value + matrix.c * (selfBeetle.y.value - selfBeetle.size.value * 1.2) + matrix.e), 
-        //         Math.round(matrix.b * selfBeetle.x.value + matrix.d * (selfBeetle.y.value - selfBeetle.size.value * 1.2) + matrix.f) - scoreUpdateY
-        //     );
-        // }
-    }
-
-    if (selfBeetle !== undefined) {
-        ctx.strokeStyle = 'black';
-        ctx.fillStyle = 'rgba(0,0,0,.3)'
-        ctx.lineWidth = 2;
-
-        const minimapSize = 40;
-        const minimapMargin = 50;
-        const dotSize = 4;
-
-        ctx.beginPath();
-        ctx.arc(w - minimapMargin, minimapMargin, minimapSize, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.arc(w - minimapMargin, minimapMargin, minimapSize, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = 'red';
-        ctx.beginPath();
-        ctx.arc(
-            w - minimapMargin + selfBeetle.x.value / parseInt(import.meta.env.VITE_MAP_SIZE) * (minimapSize - dotSize),
-            minimapMargin + selfBeetle.y.value / parseInt(import.meta.env.VITE_MAP_SIZE) * (minimapSize - dotSize),
-            dotSize, 0, Math.PI * 2
-        );
-        ctx.fill();
-
-        renderSizeWarning(prevT, t, ctx, w, h, selfBeetle.size.value);
+        renderMinimap(renderInfo, selfBeetle);
+        renderSizeWarning(renderInfo, selfBeetle.size.value);
     }
 
     prevT = t;
