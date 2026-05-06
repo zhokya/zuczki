@@ -19,6 +19,7 @@ const magnitude2 = 0.01;
 const maxDashDirectionChange = Math.PI / 5;
 export const rubyProtectionTicks = 15;
 const rubyVectorMagnitude = 0.1;
+const maxSize = parseFloat(env('VITE_MAX_SIZE'));
 
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
 const targetNumPoints = parseFloat(env('TARGET_POINT_DENSITY')) * Math.PI * mapSize * mapSize;
@@ -106,7 +107,7 @@ export function updateGameLogic(game: Game) {
         b.vy *= vectorDecay;
         b.vsize *= vectorDecay;
 
-        if (b.size > 4) {
+        if (b.size > maxSize) {
             let numPoints = Math.floor(b.score * 0.9);
 
             if (numPoints > 40) {

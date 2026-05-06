@@ -4,6 +4,7 @@ import { LocalBeetle } from "./entities/beetle";
 import { LocalPoint } from "./entities/point";
 import { LocalRuby } from "./entities/ruby";
 import { onDead } from "./menu";
+import { renderSizeWarning } from "./visuals/sizeWarning";
 
 const baseVisibleArea = 25;
 const visibleAreaExponent = 0.4;
@@ -238,6 +239,8 @@ export function mainCanvasRenderLoop(t: number) {
             dotSize, 0, Math.PI * 2
         );
         ctx.fill();
+
+        renderSizeWarning(prevT, t, ctx, w, h, selfBeetle.size.value);
     }
 
     prevT = t;
