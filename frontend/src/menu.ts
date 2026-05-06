@@ -107,7 +107,7 @@ looksSave.addEventListener('click', () => {
 looksRandom.addEventListener('click', () => {
     randomize = !randomize;
     if (randomize) {
-        chosenLooks = getRandomLook();
+        chosenLooks = getRandomLook(chosenLooks.nickname);
         initializeInputs();
     }
     updateRandomizationButton();
@@ -123,7 +123,7 @@ nicknameElement.addEventListener('input', () => {
 
 export function onDead() {
     if (randomize) {
-        chosenLooks = getRandomLook();
+        chosenLooks = getRandomLook(chosenLooks.nickname);
         initializeInputs();
         saveToStorage();
     }

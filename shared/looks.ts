@@ -82,7 +82,7 @@ export const colors = [
     "#ad1457",
 ];
 
-export function getRandomLook(nickname: string | undefined): Looks {
+export function getRandomLook(nickname: string): Looks {
     return {
         antennaDots: Math.random() < 0.5,
         antennaSize: Math.random() * 0.5,
