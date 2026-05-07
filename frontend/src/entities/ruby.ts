@@ -1,4 +1,4 @@
-import { expLerp, type MessageRuby } from "../../../shared";
+import { expLerp, lerp, type MessageRuby } from "../../../shared";
 import { Interpolator } from "../interpolator";
 import type { RenderInfo } from "../types";
 
@@ -52,12 +52,13 @@ export class LocalRuby {
     }
 
     render(renderInfo: RenderInfo) {
-        const { ctx, t, prevT } = renderInfo;
+        const { ctx, t, prevT, scale } = renderInfo;
 
         if (this.removed) {
             this.hp = 0;
             this.opacity -= (t - prevT) * 0.005;
         }
+        ctx.globalAlpha = this.opacity;
 
         this.x.onRender();
         this.y.onRender();
@@ -73,18 +74,26 @@ export class LocalRuby {
             path.lineTo(this.points[i][0] * radius + x, this.points[i][1] * radius + y);
         }
 
-        if (this.protection.value > 0.001) {
-            ctx.lineWidth = radius * 0.2 + this.protection.value * (radius + 0.4) * 0.2;
-            ctx.strokeStyle = 'rgba(10,187,211,' + this.opacity + ')';
+        const prot = this.protection.value;
+        if (prot > 0.001) {
+            ctx.lineWidth = radius * 0.2 + prot * (radius + 0.4) * 0.2;
+            ctx.strokeStyle = 'rgb(166, 171, 233)';
             ctx.stroke(path);
         }
 
-        ctx.fillStyle = 'rgba(255,18,173,' + this.opacity + ')';
+        ctx.shadowColor = 'rgb(' + lerp(202, 70, prot) + ',' + lerp(49, 180, prot) + ',' + lerp(140, 240, prot) + ')';
+        ctx.shadowBlur = scale * 0.8;
+        ctx.fillStyle = 'rgb(255,18,173)';
         ctx.fill(path);
+        ctx.fill(path);
+        ctx.shadowColor = 'rgba(0,0,0,0)';
+        ctx.shadowBlur = 0;
         
-        ctx.lineWidth = radius * 0.2;
-        ctx.strokeStyle = 'rgba(202,13,139,' + this.opacity + ')';
+        ctx.lineWidth = radius * 0.2 * (1 - prot);
+        ctx.strokeStyle = 'rgba(202,13,139)';
         ctx.stroke(path);
+
+        ctx.globalAlpha = 1;
     }
 
     renderHpBar(renderInfo: RenderInfo) {

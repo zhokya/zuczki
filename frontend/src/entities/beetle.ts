@@ -40,8 +40,37 @@ function insideSize(timestep: number) {
 }
 
 export function renderBeetle(renderInfo: RenderInfo, x: number, y: number, angle: number, targetAngle: number, size: number, looks: Looks) {
-    const { ctx, prevT, t } = renderInfo;
+    const { ctx, prevT, t, scale } = renderInfo;
 
+    const cpx = x - Math.cos(angle) * size * wingCenterDistance;
+    const cpy = y - Math.sin(angle) * size * wingCenterDistance;
+    let offsetFrom = getBeetleWingOffset(prevT);
+    let offsetTo = getBeetleWingOffset(t);
+    if (offsetTo > offsetFrom) {
+        [offsetFrom, offsetTo] = [offsetTo, offsetFrom];
+    }
+    if (getBeetleWingPeriod(prevT) !== getBeetleWingPeriod(t)) {
+        // Either maxWingOffset or minWingOffset
+        // Fix animation by putting offset range to max range
+        if (offsetTo > (maxWingOffset + minWingOffset) / 2) {
+            offsetFrom = maxWingOffset;
+        } else {
+            offsetTo = minWingOffset;
+        }
+    }
+
+    // shadow
+    ctx.shadowBlur = scale * 0.1 * size;
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.fillStyle = 'rgb(0,0,0)';
+    ctx.beginPath();
+    ctx.arc(x, y, size * 0.99, angle - Math.PI + Math.max(offsetFrom, offsetTo), angle + Math.PI - Math.max(offsetFrom, offsetTo));
+    ctx.arc(x, y, size * insideSize(t) * 0.99, angle + Math.PI - Math.max(offsetFrom, offsetTo), angle - Math.PI + Math.max(offsetFrom, offsetTo));
+    ctx.fill();
+    ctx.shadowColor = 'rgba(0,0,0,0)';
+    ctx.shadowBlur = 0;
+
+    // antenna
     const ax = size;
     const ay = -size * antennaSeparation;
     const bx = ax + size * looks.antennaSize * 1.2;
@@ -81,24 +110,6 @@ export function renderBeetle(renderInfo: RenderInfo, x: number, y: number, angle
     ctx.fill();
 
     // main body
-    let offsetFrom = getBeetleWingOffset(prevT);
-    let offsetTo = getBeetleWingOffset(t);
-    if (offsetTo > offsetFrom) {
-        [offsetFrom, offsetTo] = [offsetTo, offsetFrom];
-    }
-    if (getBeetleWingPeriod(prevT) !== getBeetleWingPeriod(t)) {
-        // Either maxWingOffset or minWingOffset
-        // Fix animation by putting offset range to max range
-        if (offsetTo > (maxWingOffset + minWingOffset) / 2) {
-            offsetFrom = maxWingOffset;
-        } else {
-            offsetTo = minWingOffset;
-        }
-    }
-
-    const cpx = x - Math.cos(angle) * size * wingCenterDistance;
-    const cpy = y - Math.sin(angle) * size * wingCenterDistance;
-
     ctx.fillStyle = looks.mainColor;
     ctx.beginPath();
     ctx.moveTo(cpx, cpy);

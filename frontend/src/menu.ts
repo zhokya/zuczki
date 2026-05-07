@@ -107,7 +107,7 @@ looksSave.addEventListener('click', () => {
     saveToStorage();
 });
 looksRandom.addEventListener('click', () => {
-    randomize = !randomize;
+    randomize = true;
     if (randomize) {
         chosenLooks = getRandomLook(chosenLooks.nickname);
         initializeInputs();
@@ -147,8 +147,8 @@ export function menuRenderLoop(t: number) {
     }
     if(aliveT < 1000) {
         ctx.clearRect(0, 0, w, h);
-        
-        const renderInfo: RenderInfo = { ctx, w, h, prevT, t };
+
+        const renderInfo: RenderInfo = { ctx, w, h, prevT, t, scale: 1 };
         renderBeetle(renderInfo, w * 0.5, h * 0.64, -Math.PI / 2, -Math.PI / 2, w * 0.33, chosenLooks);
     }
 

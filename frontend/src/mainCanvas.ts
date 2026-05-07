@@ -118,9 +118,8 @@ export function mainCanvasRenderLoop(t: number) {
         prevT = t;
     }
 
-    const renderInfo: RenderInfo = { w, h, ctx, t, prevT };
-
-    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, w, h);
 
     for (const b of localBeetles.values()) {
         b.onRender();
@@ -144,7 +143,8 @@ export function mainCanvasRenderLoop(t: number) {
 
     const texts: { x: number, y: number, text: string }[] = [];
     const matrix = ctx.getTransform();
-
+    const renderInfo: RenderInfo = { w, h, ctx, t, prevT, scale };
+    
     renderEnvironment(renderInfo);
 
     points.forEach(p => {

@@ -4,4 +4,5 @@ export interface RenderInfo {
     t: number;
     w: number;
     h: number;
+    scale: number;
 }
