@@ -24,8 +24,20 @@ export class TickRunner {
         this.lastStatPrint = performance.now();
     }
 
-    start(TPS: number) {
+    start(TPS: number, warmupTicks: number) {
         this.TPS = TPS;
+
+        const startT = performance.now();
+        for (let i = 0; i < warmupTicks; i++) {
+            this.runTickVerbose();
+        }
+        this.logMessage();
+        this.lastStatPrint = performance.now();
+        console.log(
+            'Running ' + warmupTicks + ' warmup ticks ' +
+            '(equivalent to ' + (warmupTicks / this.TPS).toFixed(2) + 's of gameplay) ' +
+            'took ' + Math.round(performance.now() - startT) + 'ms'
+        );
 
         const interval = 1000 / TPS;
         let next = performance.now();
@@ -58,6 +70,24 @@ export class TickRunner {
         });
     }
 
+    logMessage() {
+        const totalTime = ((this.botTotalTime + this.logicTotalTime + this.msgTotalTime) / this.ticksSincePrint).toFixed(1);
+        console.log(
+            (this.ticksSincePrint / (performance.now() - this.lastStatPrint) * 1000).toFixed(3) + 'TPS, ' +
+            totalTime + (this.TPS === undefined ? '' : '/' + (1000 / this.TPS).toFixed(1) + 'ms total') + ' = ' +
+            (this.botTotalTime / this.ticksSincePrint).toFixed(1) + 'ms bots + ' +
+            (this.logicTotalTime / this.ticksSincePrint).toFixed(1) + 'ms logic + ' +
+            (this.msgTotalTime / this.ticksSincePrint).toFixed(1) + 'ms messages, ' +
+            this.totalTicks + ' ticks, ' +
+            this.games.reduce((n, g) => n + g.beetles.size, 0) + ' total players'
+        );
+
+        this.botTotalTime = 0;
+        this.logicTotalTime = 0;
+        this.msgTotalTime = 0;
+        this.ticksSincePrint = 0;
+    }
+
     runTickVerbose() {
         const t1 = performance.now();
         this.games.forEach(game => {
@@ -86,22 +116,8 @@ export class TickRunner {
         this.totalTicks++;
 
         if (t4 - this.lastStatPrint > printLogsEvery) {
-            const totalTime = ((this.botTotalTime + this.logicTotalTime + this.msgTotalTime) / this.ticksSincePrint).toFixed(1);
-            console.log(
-                (this.ticksSincePrint / printLogsEvery * 1000).toFixed(3) + 'TPS, ' +
-                totalTime + (this.TPS === undefined ? '' : '/' + (1000 / this.TPS).toFixed(1) + 'ms total') + ' = ' +
-                (this.botTotalTime / this.ticksSincePrint).toFixed(1) + 'ms bots + ' +
-                (this.logicTotalTime / this.ticksSincePrint).toFixed(1) + 'ms logic + ' +
-                (this.msgTotalTime / this.ticksSincePrint).toFixed(1) + 'ms messages, ' +
-                this.totalTicks + ' ticks, ' + 
-                this.games.reduce((n, g) => n + g.beetles.size, 0) + ' total players'
-            );
-
+            this.logMessage();
             this.lastStatPrint += printLogsEvery;
-            this.botTotalTime = 0;
-            this.logicTotalTime = 0;
-            this.msgTotalTime = 0;
-            this.ticksSincePrint = 0;
         }
     }
 }
