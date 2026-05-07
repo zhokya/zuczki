@@ -32,15 +32,33 @@ const pointCreationMargin = 4;
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
 const targetNumPoints = parseFloat(env('TARGET_POINT_DENSITY')) * Math.PI * mapSize * mapSize;
 
-export function initializeBeetle(id: string, isBot: boolean): Beetle {
-    // TODO: check for collisions before initializing position
-    // also consider other initializations, like uniform of circle
-    const [x, y] = samplePointInCircle(mapSize - 5);
-    const initialAngle = Math.random() * Math.PI * 2;
+export function initializeBeetle(id: string, isBot: boolean, game: Game): Beetle {
+    const maxR = mapSize - 5;
+    let bestX = 0;
+    let bestY = 0;
+    let bestMinDist = -1;
 
+    for(let i = 0; i < 1000; i ++) {
+        const [x, y] = samplePointInCircle(maxR);
+        let closest = 1e9;
+        game.beetles.forEach(b => {
+            const dx = b.x - x;
+            const dy = b.y - y;
+            const dist = Math.sqrt(dx * dx + dy * dy) - b.size;
+            closest = Math.min(closest, dist);
+        });
+        closest = Math.min(closest, mapSize - Math.sqrt(x * x + y * y));
+        if(closest > bestMinDist) {
+            bestMinDist = closest;
+            bestX = x;
+            bestY = y;
+        }
+    }
+
+    const initialAngle = Math.random() * Math.PI * 2;
     return {
-        x: x,
-        y: y,
+        x: bestX,
+        y: bestY,
         size: 1,
         angle: initialAngle,
 

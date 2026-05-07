@@ -89,7 +89,7 @@ export class GameServer {
                         beetleId = id;
                     }
                 } else if (data.type === 'play' && beetleId !== null && !game.beetles.has(beetleId)) {
-                    const beetle = initializeBeetle(beetleId, false);
+                    const beetle = initializeBeetle(beetleId, false, game);
                     game.beetles.set(beetleId, beetle);
                 }
 

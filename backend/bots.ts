@@ -16,6 +16,6 @@ export function updateBots(game: Game) {
 
     if (game.beetles.size < parseInt(env("TARGET_NUM_PLAYERS")) && Math.random() < 0.04) {
         const id = generateId(parseInt(env("VITE_ID_LENGTH")));
-        game.beetles.set(id, initializeBeetle(id, true));
+        game.beetles.set(id, initializeBeetle(id, true, game));
     }
 }
