@@ -23,7 +23,7 @@ const beetleCollisionAngleZeroPoint = 0.25;
 const magnitude1 = 0.12;
 const magnitude2 = 0.005;
 const maxDashDirectionChange = Math.PI / 5;
-export const rubyProtectionTicks = 15;
+export const rubyProtectionTicks = 30;
 const rubyVectorMagnitude = 0.1;
 const maxSize = parseFloat(env('VITE_MAX_SIZE'));
 const pointEatingMargin = 2;
@@ -87,6 +87,7 @@ function getHitQuality(dot: number) {
 })();
 
 export function updateGameLogic(game: Game) {
+    // Remove points first, so that there are no points that are created and removed in the same tick
     game.beetles.forEach(b => {
         game.points.forEach((point, id) => {
             const dx = b.x - point[0];
@@ -97,16 +98,17 @@ export function updateGameLogic(game: Game) {
                     id: id,
                     animation: [b.x - dx * 0.7, b.y - dy * 0.7]
                 });
-                if(point[2]) {
-                    game.numBeetleDeathPoints --;
+                if (point[2]) {
+                    game.numBeetleDeathPoints--;
                 } else {
-                    game.numEnvironmentDensityPoints --;
+                    game.numEnvironmentDensityPoints--;
                 }
                 game.points.delete(id);
             }
         });
     });
 
+    // Handle beetles
     game.beetles.forEach(b => {
         const magnitude = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
 
@@ -123,6 +125,7 @@ export function updateGameLogic(game: Game) {
         b.vy *= vectorDecay;
         b.vsize *= vectorDecay;
 
+        // Handle death
         if (b.size > maxSize) {
             let numPoints = Math.floor(b.score * 0.9);
 
@@ -134,8 +137,8 @@ export function updateGameLogic(game: Game) {
                         id: game.rubyId.id,
                         x: b.x,
                         y: b.y,
-                        vx: Math.cos(b.angle) * 0.05,
-                        vy: Math.sin(b.angle) * 0.05,
+                        vx: Math.cos(b.angle) * 1 * infSum,
+                        vy: Math.sin(b.angle) * 1 * infSum,
                         hp: 1,
                         baseSize: Math.random() * 0.8 + 0.8,
                         protectionTicks: rubyProtectionTicks
@@ -143,14 +146,14 @@ export function updateGameLogic(game: Game) {
                 }
             }
 
-            if(numPoints > 100) {
+            if (numPoints > 100) {
                 numPoints = 100 + 5 * Math.sqrt(numPoints - 100);
             }
 
             for (let i = 0; i < Math.max(0, numPoints) + 10; i++) {
                 const [px, py] = samplePointInCircle(b.size);
                 game.pointId.next();
-                game.numBeetleDeathPoints ++;
+                game.numBeetleDeathPoints++;
                 game.points.set(game.pointId.id, [px + b.x, py + b.y, true]);
                 game.pointIdCreations.push(game.pointId.id);
             }
@@ -160,6 +163,7 @@ export function updateGameLogic(game: Game) {
             return;
         }
 
+        // Collision with world edge
         const maxr = mapSize - b.size;
         if (b.x * b.x + b.y * b.y > maxr * maxr) {
             const norm = Math.sqrt(b.x * b.x + b.y * b.y);
@@ -173,6 +177,7 @@ export function updateGameLogic(game: Game) {
             b.vsize += vectorMagnitudes.mapEdgeCollision.size;
         }
 
+        // Dashing
         if (b.clicked) {
             b.clicked = false;
             if (magnitude < magnitude1) {
@@ -187,13 +192,13 @@ export function updateGameLogic(game: Game) {
             }
         }
 
+        // Interactions with other beetles
         for (let i = b.irrelevants.length - 1; i >= 0; i--) {
             b.irrelevants[i].ticks++;
             if (b.irrelevants[i].ticks > irrelevanceTicks) {
                 b.irrelevants.splice(i, 1);
             }
         }
-
         game.beetles.forEach(o => {
             if (o.id >= b.id) return;
 
@@ -218,7 +223,7 @@ export function updateGameLogic(game: Game) {
                     id: o.id,
                     ticks: 0
                 });
-                
+
                 const qualityB = getHitQuality(Math.cos(b.angle) * (-ndx) + Math.sin(b.angle) * (-ndy));
                 const qualityO = getHitQuality(Math.cos(o.angle) * ndx + Math.sin(o.angle) * ndy);
 
@@ -236,8 +241,16 @@ export function updateGameLogic(game: Game) {
                 o.score += Math.max(0, Math.round(67.4 * scoreO));
             }
         });
+    });
 
-        game.rubys.forEach(r => {
+    // Handle rubys
+    game.rubys.forEach(r => {
+        // Collision with beetles
+        // Many beetles can collide in the same tick, so we handle all of them at once to be fair
+        let removeRuby = false;
+        let applyProtection = false;
+        let totalHpTaken = 0;
+        game.beetles.forEach(b => {
             const dx = r.x - b.x;
             const dy = r.y - b.y;
             const ds = r.baseSize * r.hp + b.size;
@@ -247,23 +260,21 @@ export function updateGameLogic(game: Game) {
                 const ndx = dx / norm;
                 const ndy = dy / norm;
 
-                b.x -= ndx * (ds - norm) / 2;
-                b.y -= ndy * (ds - norm) / 2;
-                r.x += ndx * (ds - norm) / 2;
-                r.y += ndy * (ds - norm) / 2;
+                b.x -= ndx * (ds - norm);
+                b.y -= ndy * (ds - norm);
 
                 if (r.protectionTicks > 0) return;
 
                 let hp = Math.random() * 0.35 + 0.05;
 
                 if (r.hp - hp < 0.15) {
-                    game.rubys.delete(r.id);
+                    removeRuby = true;
                     hp = r.hp;
                 } else {
                     r.vx += ndx * rubyVectorMagnitude;
                     r.vy += ndx * rubyVectorMagnitude;
-                    r.hp -= hp;
-                    r.protectionTicks = rubyProtectionTicks;
+                    applyProtection = true;
+                    totalHpTaken += hp;
                 }
 
                 b.vx -= ndx * vectorMagnitudes.ruby.position * hp;
@@ -272,15 +283,23 @@ export function updateGameLogic(game: Game) {
                 b.score += Math.round(hp * 100);
             }
         });
-    });
 
-    game.rubys.forEach(r => {
+        if (removeRuby) {
+            game.rubys.delete(r.id);
+            return;
+        }
+        if (applyProtection) {
+            r.protectionTicks = rubyProtectionTicks;
+        }
+        r.hp -= totalHpTaken;
+
         r.x += r.vx;
         r.y += r.vy;
         r.vx *= vectorDecay;
         r.vy *= vectorDecay;
         r.protectionTicks = Math.max(0, r.protectionTicks - 1);
 
+        // Collision with world edge
         const maxr = mapSize - r.baseSize * r.hp;
         if (r.x * r.x + r.y * r.y > maxr * maxr) {
             const norm = Math.sqrt(r.x * r.x + r.y * r.y);
@@ -306,7 +325,7 @@ export function updateGameLogic(game: Game) {
         });
         if (isCorrect) {
             game.pointId.next();
-            game.numEnvironmentDensityPoints ++;
+            game.numEnvironmentDensityPoints++;
             game.points.set(game.pointId.id, [x, y, false]);
             game.pointIdCreations.push(game.pointId.id);
         }
