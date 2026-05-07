@@ -1,3 +1,7 @@
+export interface BotData {
+    botType: number;
+};
+
 export interface Beetle {
     // state
     x: number;
@@ -19,6 +23,7 @@ export interface Beetle {
     // other
     id: string;
     lastBrainActive: number;
+    botData: BotData | null;
 }
 
 export interface Looks {

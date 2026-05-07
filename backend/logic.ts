@@ -55,7 +55,8 @@ export function initializeBeetle(id: string, isBot: boolean): Beetle {
         clicked: false,
 
         id: id,
-        lastBrainActive: isBot ? -1e9 : performance.now()
+        lastBrainActive: isBot ? -1e9 : performance.now(),
+        botData: null
     };
 }
 
@@ -87,6 +88,21 @@ function getHitQuality(dot: number) {
 })();
 
 export function updateGameLogic(game: Game) {
+    // if(Math.random() < 0.2) {
+    //     const [x, y] = samplePointInCircle(mapSize - 2);
+    //     game.rubyId.next();
+    //     game.rubys.set(game.rubyId.id, {
+    //         id: game.rubyId.id,
+    //         x: x,
+    //         y: y,
+    //         vx: 0,
+    //         vy: 0,
+    //         hp: 1,
+    //         baseSize: Math.random() * 0.8 + 0.8,
+    //         protectionTicks: rubyProtectionTicks
+    //     });
+    // }
+
     // Remove points first, so that there are no points that are created and removed in the same tick
     game.beetles.forEach(b => {
         game.points.forEach((point, id) => {
