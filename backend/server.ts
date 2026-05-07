@@ -129,7 +129,7 @@ export class GameServer {
                     }
                 }),
                 newPoints: game.pointIdCreations.map(id => {
-                    const pos = game.points.get(id) as [number, number];
+                    const pos = game.points.get(id) as [number, number, boolean];
                     return [id, pos[0], pos[1]];
                 }),
                 removedPoints: game.pointIdRemovals.map(el => {

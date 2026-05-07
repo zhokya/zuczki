@@ -1,6 +1,6 @@
 import { getRandomLook, getRandomNickname } from "../shared/looks.ts";
 import type { Beetle, Looks, Ruby } from "../shared/types.ts";
-import { generateId } from "../shared/utils.ts";
+import { generateId, NumericIdGenerator } from "../shared/utils.ts";
 import env from "./env.ts";
 
 export class Game {
@@ -10,13 +10,15 @@ export class Game {
     looksMap: Map<string, Looks>;
     looksMapIdEdits: string[];
 
-    points: Map<number, [number, number]>;
-    currentPointId = 0;
+    points: Map<number, [number, number, boolean]>;
+    numEnvironmentDensityPoints = 0; // marked as 'false' in points
+    numBeetleDeathPoints = 0; // marked as 'true' in points
+    pointId: NumericIdGenerator;
     pointIdCreations: number[];
     pointIdRemovals: { id: number, animation: [number, number] }[];
 
     rubys: Map<number, Ruby>;
-    currentRubyId = 0;
+    rubyId: NumericIdGenerator;
 
     url: string;
 
@@ -30,6 +32,9 @@ export class Game {
         this.looksMapIdEdits = [];
         this.pointIdCreations = [];
         this.pointIdRemovals = [];
+
+        this.pointId = new NumericIdGenerator();
+        this.rubyId = new NumericIdGenerator();
 
         this.url = url;
     }

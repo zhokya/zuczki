@@ -6,6 +6,14 @@ export function generateId(id_length: number): string {
     return res;
 }
 
+export class NumericIdGenerator {
+    id = -1;
+    next() {
+        this.id = (this.id + 1) % 1_000_000_000;
+        return this.id;
+    }
+}
+
 export function samplePointInCircle(radius: number): [number, number] {
     const theta = Math.random() * 2 * Math.PI;
     const r = radius * Math.max(Math.random(), Math.random());

@@ -20,6 +20,8 @@ const maxDashDirectionChange = Math.PI / 5;
 export const rubyProtectionTicks = 15;
 const rubyVectorMagnitude = 0.1;
 const maxSize = parseFloat(env('VITE_MAX_SIZE'));
+const pointEatingMargin = 2;
+const pointCreationMargin = 4;
 
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
 const targetNumPoints = parseFloat(env('TARGET_POINT_DENSITY')) * Math.PI * mapSize * mapSize;
@@ -75,17 +77,20 @@ function getHitQuality(dot: number) {
 
 export function updateGameLogic(game: Game) {
     game.beetles.forEach(b => {
-        const pointEatingMargin = 2;
-
-        game.points.forEach((pos, id) => {
-            const dx = b.x - pos[0];
-            const dy = b.y - pos[1];
+        game.points.forEach((point, id) => {
+            const dx = b.x - point[0];
+            const dy = b.y - point[1];
             if (dx * dx + dy * dy < b.size * b.size * pointEatingMargin) {
                 b.score++;
                 game.pointIdRemovals.push({
                     id: id,
                     animation: [b.x - dx * 0.7, b.y - dy * 0.7]
                 });
+                if(point[2]) {
+                    game.numBeetleDeathPoints --;
+                } else {
+                    game.numEnvironmentDensityPoints --;
+                }
                 game.points.delete(id);
             }
         });
@@ -113,9 +118,9 @@ export function updateGameLogic(game: Game) {
             if (numPoints > 40) {
                 if (Math.random() < numPoints / 200) {
                     numPoints -= 80;
-                    game.currentRubyId = (game.currentRubyId + 1) % 1000000000;
-                    game.rubys.set(game.currentRubyId, {
-                        id: game.currentRubyId,
+                    game.rubyId.next();
+                    game.rubys.set(game.rubyId.id, {
+                        id: game.rubyId.id,
                         x: b.x,
                         y: b.y,
                         vx: Math.cos(b.angle) * 0.05,
@@ -133,9 +138,10 @@ export function updateGameLogic(game: Game) {
 
             for (let i = 0; i < Math.max(0, numPoints) + 10; i++) {
                 const [px, py] = samplePointInCircle(b.size);
-                game.currentPointId = (game.currentPointId + 1) % 1000000000;
-                game.points.set(game.currentPointId, [px + b.x, py + b.y]);
-                game.pointIdCreations.push(game.currentPointId);
+                game.pointId.next();
+                game.numBeetleDeathPoints ++;
+                game.points.set(game.pointId.id, [px + b.x, py + b.y, true]);
+                game.pointIdCreations.push(game.pointId.id);
             }
 
             game.beetles.delete(b.id);
@@ -273,22 +279,23 @@ export function updateGameLogic(game: Game) {
         }
     });
 
-    for (let i = 0; i < Math.ceil((targetNumPoints - game.points.size) * 0.1); i++) {
-        if (game.points.size < targetNumPoints) {
-            const pos = samplePointInCircle(mapSize - 2);
-            let isCorrect = true;
-            game.beetles.forEach(b => {
-                const dx = b.x - pos[0];
-                const dy = b.y - pos[1];
-                if (dx * dx + dy * dy < b.size * b.size * 1.1) {
-                    isCorrect = false;
-                }
-            });
-            if (isCorrect) {
-                game.currentPointId = (game.currentPointId + 1) % 1000000000;
-                game.points.set(game.currentPointId, pos);
-                game.pointIdCreations.push(game.currentPointId);
+    console.log(game.numEnvironmentDensityPoints, game.numBeetleDeathPoints);
+
+    for (let i = 0; i < Math.ceil((targetNumPoints - game.numEnvironmentDensityPoints) * 0.1); i++) {
+        const [x, y] = samplePointInCircle(mapSize - 2);
+        let isCorrect = true;
+        game.beetles.forEach(b => {
+            const dx = b.x - x;
+            const dy = b.y - y;
+            if (dx * dx + dy * dy < b.size * b.size * pointCreationMargin) {
+                isCorrect = false;
             }
+        });
+        if (isCorrect) {
+            game.pointId.next();
+            game.numEnvironmentDensityPoints ++;
+            game.points.set(game.pointId.id, [x, y, false]);
+            game.pointIdCreations.push(game.pointId.id);
         }
     }
 }
