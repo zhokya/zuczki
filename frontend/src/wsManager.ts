@@ -22,7 +22,7 @@ const jsonQueue: string[] = [];
 const messageListeners: ((data: any) => void)[] = [];
 
 export function rejoin() {
-    globalWs = new WebSocket('ws://localhost:6767');
+    globalWs = new WebSocket(import.meta.env.VITE_WEBSOCKET_PATH);
     globalWs.onopen = () => {
         if(globalWs === null) return;
         globalWs.send(JSON.stringify({
