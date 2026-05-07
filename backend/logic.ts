@@ -5,7 +5,7 @@ import type { Game } from "./game.ts";
 
 const baseSpeed = 0.35;
 const sizeIncreaseSpeed = 0.001;
-const vectorDecay = 0.92;
+const vectorDecay = 0.9;
 const infSum = 1 - vectorDecay;
 const irrelevanceTicks = 40;
 const minPossibleSize = 0.75;
@@ -14,12 +14,13 @@ const minPossibleSize = 0.75;
  * we can express each magnitude as the total delta it will cause:
  */
 const vectorMagnitudes = {
-    beetleCollision: { size: 0.6 * infSum, position: 6 * infSum },
+    beetleCollision: { size: 0.5 * infSum, position: 6 * infSum },
     mapEdgeCollision: { size: 0.3 * infSum, position: 5 * infSum },
     click: { size: 0.1 * infSum, position: 8 * infSum },
     ruby: { size: -1.5 * infSum, position: 30 * infSum }  // scaled by fraction of hp taken
 };
-const magnitude1 = 0.13;
+const beetleCollisionAngleZeroPoint = 0.25;
+const magnitude1 = 0.12;
 const magnitude2 = 0.005;
 const maxDashDirectionChange = Math.PI / 5;
 export const rubyProtectionTicks = 15;
@@ -58,8 +59,13 @@ export function initializeBeetle(id: string, isBot: boolean): Beetle {
     };
 }
 
+function shiftX(x: number, zeroPoint: number) {
+    return (x - zeroPoint) / (1 - zeroPoint * x);
+}
 function getHitQuality(dot: number) {
-    return 1 - Math.acos(dot) / Math.PI * 2;
+    // dot is the cosine of the angle (dot product of normalized vectors)
+    const scaledAngle = 1 - Math.acos(dot) * 2 / Math.PI;
+    return shiftX(scaledAngle, beetleCollisionAngleZeroPoint);
 }
 
 (() => {
@@ -212,18 +218,24 @@ export function updateGameLogic(game: Game) {
                     id: o.id,
                     ticks: 0
                 });
+                
+                const qualityB = getHitQuality(Math.cos(b.angle) * (-ndx) + Math.sin(b.angle) * (-ndy));
+                const qualityO = getHitQuality(Math.cos(o.angle) * ndx + Math.sin(o.angle) * ndy);
+
+                const scoreB = qualityO - (qualityB > 0 ? qualityB : 0);
+                const scoreO = qualityB - (qualityO > 0 ? qualityO : 0);
+
+                console.log(scoreB, scoreO);
 
                 b.vx -= vectorMagnitudes.beetleCollision.position * ndx;
                 b.vy -= vectorMagnitudes.beetleCollision.position * ndy;
-                const qo = getHitQuality(Math.cos(o.angle) * ndx + Math.sin(o.angle) * ndy);
-                b.vsize -= vectorMagnitudes.beetleCollision.size * qo;
-                b.score += Math.max(0, Math.round(67.4 * qo));
+                b.vsize -= vectorMagnitudes.beetleCollision.size * scoreB;
+                b.score += Math.max(0, Math.round(67.4 * scoreB));
 
                 o.vx += vectorMagnitudes.beetleCollision.position * ndx;
                 o.vy += vectorMagnitudes.beetleCollision.position * ndy;
-                const qb = getHitQuality(Math.cos(b.angle) * (-ndx) + Math.sin(b.angle) * (-ndy));
-                o.vsize -= vectorMagnitudes.beetleCollision.size * qb;
-                o.score += Math.max(0, Math.round(67.4 * qb));
+                o.vsize -= vectorMagnitudes.beetleCollision.size * scoreO;
+                o.score += Math.max(0, Math.round(67.4 * scoreO));
             }
         });
 

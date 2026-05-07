@@ -159,6 +159,13 @@ export function renderBeetle(renderInfo: RenderInfo, x: number, y: number, angle
         0, 2 * Math.PI
     );
     ctx.fill(path);
+
+    // ctx.fillStyle = 'purple';
+    // ctx.fillRect(x + Math.cos(Math.PI / 2) * size - 10, y + Math.sin(Math.PI / 2) * size - 10, 20, 20);
+    // ctx.fillRect(x + Math.cos(Math.PI / 2 * (1 - 1)) * size - 10, y + Math.sin(Math.PI / 2 * (1 - 1)) * size - 10, 20, 20);
+    // ctx.fillRect(x + Math.cos(Math.PI / 2 * (1 - 0.5)) * size - 10, y + Math.sin(Math.PI / 2 * (1 - 0.5)) * size - 10, 20, 20);
+    // ctx.fillRect(x + Math.cos(Math.PI / 2 * (1 - 0.33)) * size - 10, y + Math.sin(Math.PI / 2 * (1 - 0.33)) * size - 10, 20, 20);
+    // ctx.fillRect(x + Math.cos(Math.PI / 2 * (1 - 0.66)) * size - 10, y + Math.sin(Math.PI / 2 * (1 - 0.66)) * size - 10, 20, 20);
 }
 
 export class LocalBeetle {
