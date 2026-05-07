@@ -225,8 +225,6 @@ export function updateGameLogic(game: Game) {
                 const scoreB = qualityO - (qualityB > 0 ? qualityB : 0);
                 const scoreO = qualityB - (qualityO > 0 ? qualityO : 0);
 
-                console.log(scoreB, scoreO);
-
                 b.vx -= vectorMagnitudes.beetleCollision.position * ndx;
                 b.vy -= vectorMagnitudes.beetleCollision.position * ndy;
                 b.vsize -= vectorMagnitudes.beetleCollision.size * scoreB;
