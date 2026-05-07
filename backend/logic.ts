@@ -279,8 +279,6 @@ export function updateGameLogic(game: Game) {
         }
     });
 
-    console.log(game.numEnvironmentDensityPoints, game.numBeetleDeathPoints);
-
     for (let i = 0; i < Math.ceil((targetNumPoints - game.numEnvironmentDensityPoints) * 0.1); i++) {
         const [x, y] = samplePointInCircle(mapSize - 2);
         let isCorrect = true;
