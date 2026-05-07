@@ -6,16 +6,21 @@ import type { Game } from "./game.ts";
 const baseSpeed = 0.35;
 const sizeIncreaseSpeed = 0.001;
 const vectorDecay = 0.92;
+const infSum = 1 - vectorDecay;
 const irrelevanceTicks = 40;
 const minPossibleSize = 0.75;
+/**
+ * by dividing by the sum of infinite geometric series vectorDecay^0 + vectorDecay^1 + vectorDecay^2 + ...
+ * we can express each magnitude as the total delta it will cause:
+ */
 const vectorMagnitudes = {
-    beetleCollision: { size: 0.04, position: 0.6 },
-    mapEdgeCollision: { size: 0.03, position: 0.5 },
-    click: { size: 0.001, position: 0.65 },
-    ruby: { size: -0.1, position: 3 }  // scaled by fraction of hp taken
+    beetleCollision: { size: 0.6 * infSum, position: 6 * infSum },
+    mapEdgeCollision: { size: 0.3 * infSum, position: 5 * infSum },
+    click: { size: 0.1 * infSum, position: 8 * infSum },
+    ruby: { size: -1.5 * infSum, position: 30 * infSum }  // scaled by fraction of hp taken
 };
-const magnitude1 = 0.12;
-const magnitude2 = 0.01;
+const magnitude1 = 0.13;
+const magnitude2 = 0.005;
 const maxDashDirectionChange = Math.PI / 5;
 export const rubyProtectionTicks = 15;
 const rubyVectorMagnitude = 0.1;
