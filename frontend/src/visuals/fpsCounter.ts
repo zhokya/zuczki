@@ -1,6 +1,6 @@
 const fpsCounterElement = document.getElementById('fps-counter') as HTMLElement;
 
-const allStats = false;
+const allStats = true;
 
 let totalRenderingTime = 0;
 let maxRenderingTime = 0;
@@ -34,7 +34,7 @@ export function updateFpsCounter(frameStartTime: number) {
 
         if (allStats) {
             fpsCounterElement.innerText = Math.round(fps) + 'fps (' + Math.round(lowestFps) + 'fps lowest)\n' +
-                Math.round(avgMs) + 'ms (' + Math.round(maxMs) + 'ms max)';
+                avgMs.toFixed(2) + 'ms (' + maxMs.toFixed(2) + 'ms max)';
         } else {
             fpsCounterElement.innerText = Math.round(fps) + 'fps';
         }
