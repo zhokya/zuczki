@@ -137,7 +137,7 @@ export function updateGameLogic(game: Game) {
                         vx: Math.cos(b.angle) * 0.05,
                         vy: Math.sin(b.angle) * 0.05,
                         hp: 1,
-                        baseSize: Math.random() * 0.5 + 0.3,
+                        baseSize: Math.random() * 0.8 + 0.8,
                         protectionTicks: rubyProtectionTicks
                     });
                 }
