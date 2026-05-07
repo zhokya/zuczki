@@ -3,6 +3,7 @@ import { renderBeetle } from "./entities/beetle";
 import checkImg from './assets/check.png';
 import diceImg from './assets/dice.png';
 import type { RenderInfo } from "./types";
+import { isAlive } from "./mainCanvas";
 
 const c = document.getElementById('s') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
@@ -131,6 +132,7 @@ export function onDead() {
 }
 
 let prevT: number | null = null;
+let aliveT = 0;
 export function menuRenderLoop(t: number) {
     requestAnimationFrame(menuRenderLoop);
 
@@ -138,10 +140,17 @@ export function menuRenderLoop(t: number) {
         prevT = t;
     }
 
-    ctx.clearRect(0, 0, w, h);
-
-    const renderInfo: RenderInfo = { ctx, w, h, prevT, t };
-    renderBeetle(renderInfo, w * 0.5, h * 0.64, -Math.PI / 2, -Math.PI / 2, w * 0.33, chosenLooks);
+    if(isAlive) {
+        aliveT += t - prevT;
+    } else {
+        aliveT = 0;
+    }
+    if(aliveT < 1000) {
+        ctx.clearRect(0, 0, w, h);
+        
+        const renderInfo: RenderInfo = { ctx, w, h, prevT, t };
+        renderBeetle(renderInfo, w * 0.5, h * 0.64, -Math.PI / 2, -Math.PI / 2, w * 0.33, chosenLooks);
+    }
 
     prevT = t;
 }
