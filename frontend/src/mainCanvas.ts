@@ -8,6 +8,7 @@ import { renderSizeWarning } from "./visuals/sizeWarning";
 import { renderMinimap } from "./visuals/minimap";
 import type { RenderInfo } from "./types";
 import { renderEnvironment } from "./visuals/environment";
+import { updateFpsCounter } from "./visuals/fpsCounter";
 
 const baseVisibleArea = 25;
 const visibleAreaExponent = 0.4;
@@ -100,6 +101,8 @@ onMessage((data) => {
 });
 
 export function mainCanvasRenderLoop(t: number) {
+    const frameStartTime = performance.now();
+
     requestAnimationFrame(mainCanvasRenderLoop);
 
     const w = window.innerWidth * window.devicePixelRatio;
@@ -189,5 +192,6 @@ export function mainCanvasRenderLoop(t: number) {
         renderSizeWarning(renderInfo, selfBeetle.size.value);
     }
 
+    updateFpsCounter(frameStartTime);
     prevT = t;
 }
