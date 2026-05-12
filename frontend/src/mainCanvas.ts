@@ -9,7 +9,6 @@ import { renderMinimap } from "./visuals/minimap";
 import type { RenderInfo } from "./types";
 import { renderEnvironment } from "./visuals/environment";
 import { updateFpsCounter } from "./visuals/fpsCounter";
-import DOMPurify from 'dompurify';
 
 const baseVisibleArea = 25;
 const visibleAreaExponent = 0.4;
