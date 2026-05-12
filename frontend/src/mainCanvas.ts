@@ -7,8 +7,9 @@ import { aliveT, onDead } from "./menu";
 import { renderSizeWarning } from "./visuals/sizeWarning";
 import { renderMinimap } from "./visuals/minimap";
 import type { RenderInfo } from "./types";
-import { renderEnvironment } from "./visuals/environment";
+import { renderBeforeTransform, renderEnvironment, renderWorldEdge } from "./visuals/environment";
 import { updateFpsCounter } from "./visuals/fpsCounter";
+import { LocalObstacle } from "./entities/obstacle";
 
 const baseVisibleArea = 25;
 const visibleAreaExponent = 0.4;
@@ -30,7 +31,8 @@ let selfGlobId = '';
 let looks = new Map<string, Looks>();
 let localBeetles = new Map<string, LocalBeetle>();
 let localRubys = new Map<number, LocalRuby>();
-let points = new Map<number, LocalPoint>();
+let localObstacles = new Map<number, LocalObstacle>();
+let localPoints = new Map<number, LocalPoint>();
 
 onMessage((data) => {
     const d: Message = JSON.parse(data);
@@ -84,6 +86,20 @@ onMessage((data) => {
         }
     }
 
+    const updatedObstacleIds = new Set();
+    d.obstacles.forEach(o => {
+        if (!localObstacles.has(o.id)) {
+            localObstacles.set(o.id, new LocalObstacle(o));
+        }
+        localObstacles.get(o.id)?.update(o);
+        updatedObstacleIds.add(o.id);
+    });
+    for (const obstacleId of localObstacles.keys()) {
+        if (!updatedObstacleIds.has(obstacleId)) {
+            localObstacles.delete(obstacleId);
+        }
+    }
+
     if (d.looks !== undefined) {
         for (const k in d.looks) {
             looks.set(k, d.looks[k]);
@@ -91,11 +107,11 @@ onMessage((data) => {
     }
 
     d.newPoints.forEach(el => {
-        points.set(el[0], new LocalPoint(el));
+        localPoints.set(el[0], new LocalPoint(el));
     });
 
     d.removedPoints.forEach(el => {
-        const point = points.get(el[0]);
+        const point = localPoints.get(el[0]);
         if (point !== undefined) {
             point.remove(el);
         }
@@ -134,9 +150,6 @@ export function mainCanvasRenderLoop(t: number) {
         prevT = t;
     }
 
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, w, h);
-
     for (const b of localBeetles.values()) {
         b.onRender();
     }
@@ -152,21 +165,24 @@ export function mainCanvasRenderLoop(t: number) {
     }
     const scale = (w + h) / 2 / visibleArea;
 
+    const renderInfo: RenderInfo = { w, h, ctx, t, prevT, scale };
+
+    renderBeforeTransform(renderInfo);
+
     ctx.save();
     ctx.translate(w / 2, h / 2);
     ctx.scale(scale, scale);
     ctx.translate(-centerX, -centerY);
 
-    const texts: { x: number, y: number, text: string }[] = [];
-    const matrix = ctx.getTransform();
-    const renderInfo: RenderInfo = { w, h, ctx, t, prevT, scale };
-    
     renderEnvironment(renderInfo);
 
-    points.forEach(p => {
+    const texts: { x: number, y: number, text: string }[] = [];
+    const matrix = ctx.getTransform();
+
+    localPoints.forEach(p => {
         p.render(renderInfo);
         if (p.removedTime > 1000) {
-            points.delete(p.id);
+            localPoints.delete(p.id);
         }
     });
 
@@ -176,6 +192,12 @@ export function mainCanvasRenderLoop(t: number) {
             localRubys.delete(r.id);
         }
     });
+
+    localObstacles.forEach(o => {
+        o.render(renderInfo);
+    });
+    
+    renderWorldEdge(renderInfo);
 
     localBeetles.forEach(b => {
         let look = looks.get(b.globId);

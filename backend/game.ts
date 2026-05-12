@@ -1,5 +1,5 @@
 import { getRandomLook, getRandomNickname } from "../shared/looks.ts";
-import type { Beetle, Looks, Ruby } from "../shared/types.ts";
+import type { Beetle, Looks, Obstacle, Ruby } from "../shared/types.ts";
 import { generateId, NumericIdGenerator } from "../shared/utils.ts";
 import env from "./env.ts";
 
@@ -20,6 +20,9 @@ export class Game {
     rubys: Map<number, Ruby>;
     rubyId: NumericIdGenerator;
 
+    obstacles: Map<number, Obstacle>;
+    obstacleId: NumericIdGenerator;
+
     url: string;
 
     constructor(url: string) {
@@ -28,6 +31,7 @@ export class Game {
         this.globIdMap = new Map();
         this.points = new Map();
         this.rubys = new Map();
+        this.obstacles = new Map();
 
         this.looksMapIdEdits = [];
         this.pointIdCreations = [];
@@ -35,6 +39,7 @@ export class Game {
 
         this.pointId = new NumericIdGenerator();
         this.rubyId = new NumericIdGenerator();
+        this.obstacleId = new NumericIdGenerator();
 
         this.url = url;
     }

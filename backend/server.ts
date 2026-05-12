@@ -1,7 +1,7 @@
 import WebSocket, { WebSocketServer } from "ws";
 import { isLooks, moduloAngle, normalizeLooks, type Message } from "../shared/index.ts";
 import env from "./env.ts";
-import { initializeBeetle, rubyProtectionTicks } from "./logic.ts";
+import { getObstacleSize, initializeBeetle, rubyProtectionTicks } from "./logic.ts";
 import type { Game } from "./game.ts";
 import type { IncomingMessage } from "http";
 
@@ -141,6 +141,20 @@ export class GameServer {
                         protection: r.protectionTicks / rubyProtectionTicks
                     }
                 }),
+                obstacles: Array.from(game.obstacles.values()).map(o => {
+                    return {
+                        id: o.id,
+
+                        isCircle: o.isCircle,
+                        x1: o.x1,
+                        y1: o.y1,
+                        x2: o.x2,
+                        y2: o.y2,
+                        size: getObstacleSize(o),
+                        
+                        isAggressive: o.isAggressive
+                    }
+                }),
                 newPoints: game.pointIdCreations.map(id => {
                     const pos = game.points.get(id) as [number, number, boolean];
                     return [id, pos[0], pos[1]];
@@ -188,10 +202,6 @@ export class GameServer {
                 this.updateFns.splice(index, 1);
             }
         });
-    }
-
-    updateLeaderboardStrings() {
-
     }
 
     sendMessages() {

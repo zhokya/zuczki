@@ -1,4 +1,4 @@
-import type { Beetle } from "../shared/types.ts";
+import type { Beetle, Obstacle } from "../shared/types.ts";
 import { angleDifference, rotateAngleTowards, samplePointInCircle } from "../shared/utils.ts";
 import env from "./env.ts";
 import type { Game } from "./game.ts";
@@ -8,7 +8,7 @@ const maxSpeed = 0.4;
 const sizeIncreaseSpeed = 0.001;
 const vectorDecay = 0.9;
 const infSum = 1 - vectorDecay;
-const irrelevanceTicks = 40;
+const irrelevanceTicks = 24;
 const minPossibleSize = 0.75;
 /**
  * by dividing by the sum of infinite geometric series vectorDecay^0 + vectorDecay^1 + vectorDecay^2 + ...
@@ -18,7 +18,9 @@ const vectorMagnitudes = {
     beetleCollision: { size: 0.5 * infSum, position: 6 * infSum },
     mapEdgeCollision: { size: 0.3 * infSum, position: 5 * infSum },
     click: { size: 0.1 * infSum, position: 9 * infSum },
-    ruby: { size: -1.5 * infSum, position: 30 * infSum }  // scaled by fraction of hp taken
+    ruby: { size: -1.5 * infSum, position: 30 * infSum },  // scaled by fraction of hp taken
+    aggresiveObstacle: { size: 0.2 * infSum, position: 4 * infSum },
+    animatedObstacle: { size: 0, position: 12 * infSum },
 };
 const beetleCollisionAngleZeroPoint = 0.25;
 const magnitude1 = 0.12;
@@ -33,33 +35,76 @@ const pointCreationMargin = 6;
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
 const targetNumPoints = parseFloat(env('TARGET_POINT_DENSITY')) * Math.PI * mapSize * mapSize;
 
-export function initializeBeetle(id: string, isBot: boolean, game: Game): Beetle {
-    const maxR = mapSize - 5;
+// const holdTypes = [
+//     "protectSize",
+//     "rotateFaster",
+//     "noCollisions",
+//     "projectile"
+// ];
+export function getObstacleSize(o: Obstacle) {
+    return o.size + (o.isAggressive ? 0 : (1 - o.animation % 1) * 0.4);
+}
+function distanceFromObjects(x: number, y: number, game: Game): number {
+    // initialize with distance to world edge
+    let distance = mapSize - Math.sqrt(x * x + y * y);
+
+    game.beetles.forEach(b => {
+        const dx = b.x - x;
+        const dy = b.y - y;
+        distance = Math.min(distance, Math.sqrt(dx * dx + dy * dy) - b.size);
+    });
+    
+    game.obstacles.forEach(o => {
+        const obstacleSize = getObstacleSize(o);
+
+        if(o.isCircle) {
+            const dx = x - o.x1;
+            const dy = y - o.y1;
+            distance = Math.min(distance, Math.sqrt(dx * dx + dy * dy) - obstacleSize);
+        } else {
+            const vx = o.x2 - o.x1;
+            const vy = o.y2 - o.y1;
+
+            const lenSq = vx * vx + vy * vy;
+
+            let t = ((x - o.x1) * vx + (y - o.y1) * vy) / lenSq;
+            t = Math.max(0, Math.min(1, t));
+
+            const closestX = o.x1 + vx * t;
+            const closestY = o.y1 + vy * t;
+
+            const dx = x - closestX;
+            const dy = y - closestY;
+            distance = Math.min(distance, Math.sqrt(dx * dx + dy * dy) - obstacleSize);
+        }
+    });
+
+    return distance;
+}
+function getSpawnPoint(worldMargin: number, game: Game): [number, number] {
+    const maxR = mapSize - worldMargin;
     let bestX = 0;
     let bestY = 0;
     let bestMinDist = -1;
 
     for(let i = 0; i < 1000; i ++) {
         const [x, y] = samplePointInCircle(maxR);
-        let closest = 1e9;
-        game.beetles.forEach(b => {
-            const dx = b.x - x;
-            const dy = b.y - y;
-            const dist = Math.sqrt(dx * dx + dy * dy) - b.size;
-            closest = Math.min(closest, dist);
-        });
-        closest = Math.min(closest, mapSize - Math.sqrt(x * x + y * y));
-        if(closest > bestMinDist) {
-            bestMinDist = closest;
+        const dist = distanceFromObjects(x, y, game);
+        if(dist > bestMinDist) {
+            bestMinDist = dist;
             bestX = x;
             bestY = y;
         }
     }
 
+    return [bestX, bestY];
+}
+export function initializeBeetle(id: string, isBot: boolean, game: Game): Beetle {
+    const [x, y] = getSpawnPoint(4, game);
     const initialAngle = Math.random() * Math.PI * 2;
     return {
-        x: bestX,
-        y: bestY,
+        x: x,
+        y: y,
         size: 1,
         angle: initialAngle,
 
@@ -141,6 +186,43 @@ export function updateGameLogic(game: Game) {
                 }
                 game.points.delete(id);
             }
+        });
+    });
+
+    // Update obstacles, remove those outside world, handle relations with each other
+    game.obstacles.forEach(o => { 
+        o.animation += o.animationSpeed;
+
+        let dist = Math.sqrt(o.x1 * o.x1 + o.y1 * o.y1);
+        if(!o.isCircle) {
+            dist = Math.min(dist, Math.sqrt(o.x2 * o.x2 + o.y2 * o.y2));
+        }
+        if(dist - o.size > mapSize + 1) {
+            game.obstacles.delete(o.id);
+        }
+
+        if(!o.isCircle) {
+            const mx = (o.x1 - o.x2) * o.rotationSpeed;
+            const my = (o.y1 - o.y2) * o.rotationSpeed;
+            o.x1 -= my;
+            o.y1 += mx;
+            o.x2 += my;
+            o.y2 -= mx;
+        }
+
+        game.obstacles.forEach(o2 => {
+            if (o.id >= o2.id) return;
+            const dx = o.x1 - o2.x1;
+            const dy = o.y1 - o2.y1;
+            const dsqr = dx * dx + dy * dy;
+            o.x1 += dx / dsqr * 0.2;
+            o.x2 += dx / dsqr * 0.2;
+            o.y1 += dy / dsqr * 0.2;
+            o.y2 += dy / dsqr * 0.2;
+            o2.x1 -= dx / dsqr * 0.2;
+            o2.x2 -= dx / dsqr * 0.2;
+            o2.y1 -= dy / dsqr * 0.2;
+            o2.y2 -= dy / dsqr * 0.2;
         });
     });
 
@@ -280,6 +362,75 @@ export function updateGameLogic(game: Game) {
                 o.score += Math.max(0, Math.round(67.4 * scoreO));
             }
         });
+
+        // Interactions with obstacles
+        game.obstacles.forEach(o => {
+            const obstacleSize = getObstacleSize(o);
+            const ds = b.size + obstacleSize;
+
+            if(o.isCircle) {
+                const dx = b.x - o.x1;
+                const dy = b.y - o.y1;
+                if(dx * dx + dy * dy <= ds * ds) {
+                    const norm = Math.sqrt(dx * dx + dy * dy);
+                    const ndx = dx / norm;
+                    const ndy = dy / norm;
+                    b.x += ndx * (ds - norm);
+                    b.y += ndy * (ds - norm);
+
+                    if(o.isAggressive) {
+                        b.vx += ndx * vectorMagnitudes.aggresiveObstacle.position;
+                        b.vy += ndy * vectorMagnitudes.aggresiveObstacle.position;
+                        b.vsize += vectorMagnitudes.aggresiveObstacle.size;
+                    } else if(o.animation > 1) {
+                        b.vx += ndx * vectorMagnitudes.animatedObstacle.position;
+                        b.vy += ndy * vectorMagnitudes.animatedObstacle.position;
+                        b.vsize += vectorMagnitudes.animatedObstacle.size;
+                    }
+                }
+            } else {
+                const vx = o.x2 - o.x1;
+                const vy = o.y2 - o.y1;
+
+                const lenSq = vx * vx + vy * vy;
+
+                let t = ((b.x - o.x1) * vx + (b.y - o.y1) * vy) / lenSq;
+                t = Math.max(0, Math.min(1, t));
+
+                const closestX = o.x1 + vx * t;
+                const closestY = o.y1 + vy * t;
+
+                const dx = b.x - closestX;
+                const dy = b.y - closestY;
+
+                if (dx * dx + dy * dy < ds * ds) {
+                    const norm = Math.sqrt(dx * dx + dy * dy);
+                    let ndx, ndy;
+
+                    if (norm < 1e-7) {
+                        const len = Math.hypot(vx, vy);
+                        ndx = -vy / len;
+                        ndy = vx / len;
+                    } else {
+                        ndx = dx / norm;
+                        ndy = dy / norm;
+                    }
+
+                    b.x += ndx * (ds - norm);
+                    b.y += ndy * (ds - norm);
+
+                    if(o.isAggressive) {
+                        b.vx += ndx * vectorMagnitudes.aggresiveObstacle.position;
+                        b.vy += ndy * vectorMagnitudes.aggresiveObstacle.position;
+                        b.vsize += vectorMagnitudes.aggresiveObstacle.size;
+                    } else if(o.animation > 1) {
+                        b.vx += ndx * vectorMagnitudes.animatedObstacle.position;
+                        b.vy += ndy * vectorMagnitudes.animatedObstacle.position;
+                        b.vsize += vectorMagnitudes.animatedObstacle.size;
+                    }
+                }
+            }
+        });
     });
 
     // Handle rubys
@@ -353,6 +504,14 @@ export function updateGameLogic(game: Game) {
         }
     });
 
+    // Finish updating obstacles
+    game.obstacles.forEach(o => {
+        if(o.animation > 1) {
+            o.animation --;
+        }
+    });
+
+    // Spawn new points
     for (let i = 0; i < Math.ceil((targetNumPoints - game.numEnvironmentDensityPoints) * 0.1); i++) {
         const [x, y] = samplePointInCircle(mapSize - 2);
         let isCorrect = true;
@@ -369,5 +528,45 @@ export function updateGameLogic(game: Game) {
             game.points.set(game.pointId.id, [x, y, false]);
             game.pointIdCreations.push(game.pointId.id);
         }
+    }
+
+    // Spawn new obstacles
+    if(game.obstacles.size < 16) {
+        game.obstacleId.next();
+        const [x, y] = getSpawnPoint(0, game);
+
+        const isCircle = Math.random() < 0.5;
+        let x1: number, y1: number, x2: number, y2: number, size: number;
+        if(isCircle) {
+            x1 = x;
+            y1 = y;
+            x2 = 0;
+            y2 = 0;
+            size = Math.random() * 2 + 2;
+        } else {
+            const ang = Math.random() * Math.PI * 2;
+            const rr = Math.random() * 2.5 + 1.5;
+            x1 = x - Math.cos(ang) * rr;
+            y1 = y - Math.sin(ang) * rr;
+            x2 = x + Math.cos(ang) * rr;
+            y2 = y + Math.sin(ang) * rr;
+            size = Math.random() * 0.3 + 0.5;
+        }
+
+        game.obstacles.set(game.obstacleId.id, {
+            id: game.obstacleId.id,
+
+            isCircle,
+            x1,
+            y1,
+            x2,
+            y2,
+            size,
+
+            isAggressive: Math.random() < 0.5,
+            animation: 0,
+            animationSpeed: Math.pow(Math.random(), 1.5) * 0.1,
+            rotationSpeed: Math.pow(Math.random(), 1.5) * 0.01 * (Math.random() < 0.5 ? 1 : -1)
+        });
     }
 }
