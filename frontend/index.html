@@ -14,6 +14,7 @@
             font-family: Arial, Helvetica, sans-serif;
         }
 
+
         #c {
             width: 100%;
             height: 100%;
@@ -21,6 +22,29 @@
             opacity: 0.5;
             filter: blur(10px);
         }
+        #fps-counter {
+            color: black;
+            text-shadow: 0 0 4px white;
+            font-size: 12px;
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+        }
+        #leaderboard {
+            color: black;
+            text-shadow: 0 0 4px white;
+            font-size: 14px;
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .leaderboard-self {
+            color: rgb(209, 162, 6);
+        }
+
 
         #menu {
             position: absolute;
@@ -30,7 +54,6 @@
             height: 100%;
             transition: 0.4s;
         }
-
         #s {
             position: absolute;
             transition:
@@ -38,7 +61,6 @@
                 transform 0.4s,
                 all 0.7s;
         }
-
         .notChoosingLooks {
             cursor: pointer;
             width: 300px;
@@ -46,19 +68,16 @@
             left: calc(50% - 150px);
             top: calc(50% - 290px);
         }
-
         .notChoosingLooks:hover {
             filter: brightness(1.2);
             transform: scale(1.04);
         }
-
         .choosingLooks {
             width: 500px;
             height: 500px;
             left: calc(25% - 250px);
             top: calc(50% - 320px);
         }
-
         #menu-fade {
             position: absolute;
             top: 0;
@@ -69,7 +88,16 @@
             background: white;
             transition: 0.4s;
         }
-
+        #final-score {
+            position: absolute;
+            width: 100%;
+            left: 0;
+            top: calc(50% + 18px);
+            text-align: center;
+            color: rgb(182, 109, 13);
+            text-shadow: 0 0 12px rgb(202, 168, 72);
+            font-size: 16px;
+        }
         #nickname {
             position: absolute;
             width: 200px;
@@ -86,7 +114,6 @@
             box-sizing: border-box;
             transition: 0.4s;
         }
-
         #play {
             position: absolute;
             margin: 0;
@@ -102,6 +129,7 @@
             font-size: 20px;
             transition: 0.4s;
         }
+
 
         #looks {
             position: absolute;
@@ -125,7 +153,6 @@
             grid-template-rows: repeat(4, auto);
             gap: 2px;
         }
-
         .color-option {
             width: 15px;
             height: 15px;
@@ -134,7 +161,6 @@
             border-radius: 4px;
             transition: 0.2s;
         }
-
         .color-option:hover {
             transform: scale(1.1);
         }
@@ -143,7 +169,6 @@
             display: flex;
             gap: 4px;
         }
-
         #looks-save,
         #looks-random {
             width: 32px;
@@ -156,31 +181,18 @@
             cursor: pointer;
             transition: 0.2s;
         }
-
         #looks-save {
             background: rgb(255, 255, 255);
         }
-
         #looks-save:hover,
         #looks-random:hover {
             transform: scale(1.05);
             filter: brightness(1.2);
         }
-
         #looks-save img,
         #looks-random img {
             width: 28px;
         }
-
-        #fps-counter {
-            color: black;
-            text-shadow: 0 0 4px white;
-            font-size: 12px;
-            position: absolute;
-            bottom: 4px;
-            right: 4px;
-        }
-
 
         #looks-antennaSize {
             -webkit-appearance: none;
@@ -344,18 +356,25 @@
 
 <body>
     <canvas id="c"></canvas>
+    <span id="fps-counter"></span>
+    <div id="leaderboard"></div>
+
     <div id="menu">
         <div id="menu-fade"></div>
+
+        <span id="final-score"></span>
         <canvas id="s" width="1024" height="1024" class="notChoosingLooks"></canvas>
-        <input id="nickname" type="text" placeholder="nazwa" />
+        <input id="nickname" type="text" placeholder="nazwa" maxlength="18" />
         <button id="play">Graj</button>
+
         <div id="looks">
             <div id="looks-antenna">
-            <input type="checkbox" id="looks-antennaDots" />
-<label for="looks-antennaDots" class="antenna-box">
-  <span class="dot"></span>
-</label>
-            <input type="range" min="0.0" max="0.5" step="any" id="looks-antennaSize" /></div>
+                <input type="checkbox" id="looks-antennaDots" />
+                <label for="looks-antennaDots" class="antenna-box">
+                    <span class="dot"></span>
+                </label>
+                <input type="range" min="0.0" max="0.5" step="any" id="looks-antennaSize" />
+            </div>
 
             <div id="looks-antennaColor" class="color-picker"></div>
             <div id="looks-mainColor" class="color-picker"></div>
@@ -366,7 +385,6 @@
             </div>
         </div>
     </div>
-    <span id="fps-counter"></span>
     <script type="module" src="/src/main.ts"></script>
 </body>
 

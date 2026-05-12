@@ -67,6 +67,7 @@ export interface MessageRuby {
 
 export interface Message {
     looks?: { [k: string]: Looks },
+    leaderboard?: [number, string, number, boolean][],
     beetles: MessageBeetle[],
     rubys: MessageRuby[],
     newPoints: [number, number, number][],

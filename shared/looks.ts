@@ -82,15 +82,33 @@ export const colors = [
     "#ad1457",
 ];
 
+function getRandomColor() {
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
 export function getRandomLook(nickname: string): Looks {
     return {
         antennaDots: Math.random() < 0.5,
         antennaSize: Math.random() * 0.5,
-        antennaColor: colors[Math.floor(Math.random() * colors.length)],
-        mainColor: colors[Math.floor(Math.random() * colors.length)],
-        insideColor: colors[Math.floor(Math.random() * colors.length)],
+        antennaColor: getRandomColor(),
+        mainColor: getRandomColor(),
+        insideColor: getRandomColor(),
         nickname: nickname
     };
+}
+
+export function normalizeLooks(looks: Looks) {
+    looks.nickname = looks.nickname.split('\0').join('').split('\n').join('').slice(0, 18);
+    looks.antennaSize = Math.max(0, Math.min(0.5, looks.antennaSize));
+    if(!colors.includes(looks.mainColor)) {
+        looks.mainColor = getRandomColor();
+    }
+    if(!colors.includes(looks.insideColor)) {
+        looks.insideColor = getRandomColor();
+    }
+    if(!colors.includes(looks.antennaColor)) {
+        looks.antennaColor = getRandomColor();
+    }
 }
 
 export const randomNicknames = [

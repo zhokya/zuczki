@@ -1,14 +1,15 @@
-import { type Looks, type Message } from "../../shared";
+import { formatPoints, type Looks, type Message } from "../../shared";
 import { onMessage } from "./wsManager";
 import { LocalBeetle } from "./entities/beetle";
 import { LocalPoint } from "./entities/point";
 import { LocalRuby } from "./entities/ruby";
-import { onDead } from "./menu";
+import { aliveT, onDead } from "./menu";
 import { renderSizeWarning } from "./visuals/sizeWarning";
 import { renderMinimap } from "./visuals/minimap";
 import type { RenderInfo } from "./types";
 import { renderEnvironment } from "./visuals/environment";
 import { updateFpsCounter } from "./visuals/fpsCounter";
+import DOMPurify from 'dompurify';
 
 const baseVisibleArea = 25;
 const visibleAreaExponent = 0.4;
@@ -16,6 +17,8 @@ const visibleAreaExponent = 0.4;
 const c = document.getElementById('c') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
 const menu = document.getElementById('menu') as HTMLDivElement;
+const leaderboardElement = document.getElementById('leaderboard') as HTMLElement;
+const finalScoreElement = document.getElementById('final-score') as HTMLElement;
 
 let prevW = -1;
 let prevH = -1;
@@ -98,6 +101,20 @@ onMessage((data) => {
             point.remove(el);
         }
     });
+
+    if(d.leaderboard !== undefined) {
+        const newChildren: HTMLSpanElement[] = [];
+        d.leaderboard.forEach((elem) => {
+            const [idx, nickname, score, isSelf] = elem;
+            const spanElem = document.createElement('span');
+            spanElem.innerText = `${idx}. ${nickname} (${score})`;
+            if(isSelf) {
+                spanElem.className = 'leaderboard-self';
+            }
+            newChildren.push(spanElem);
+        })
+        leaderboardElement.replaceChildren(...newChildren);
+    }
 });
 
 export function mainCanvasRenderLoop(t: number) {
@@ -134,7 +151,7 @@ export function mainCanvasRenderLoop(t: number) {
         centerY = selfBeetle.y.value;
         visibleArea = Math.pow(selfBeetle.size.value, visibleAreaExponent) * baseVisibleArea;
     }
-    const scale = (window.innerWidth + window.innerHeight) / 2 / visibleArea;
+    const scale = (w + h) / 2 / visibleArea;
 
     ctx.save();
     ctx.translate(w / 2, h / 2);
@@ -190,6 +207,9 @@ export function mainCanvasRenderLoop(t: number) {
     if (selfBeetle !== undefined) {
         renderMinimap(renderInfo, selfBeetle);
         renderSizeWarning(renderInfo, selfBeetle.size.value);
+        if(aliveT > 1000) {
+            finalScoreElement.innerText = selfBeetle.score + ' ' + formatPoints(selfBeetle.score);
+        }
     }
 
     updateFpsCounter(frameStartTime);

@@ -132,7 +132,7 @@ export function onDead() {
 }
 
 let prevT: number | null = null;
-let aliveT = 0;
+export let aliveT = 0;
 export function menuRenderLoop(t: number) {
     requestAnimationFrame(menuRenderLoop);
 

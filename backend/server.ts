@@ -1,5 +1,5 @@
 import WebSocket, { WebSocketServer } from "ws";
-import { isLooks, moduloAngle, type Message } from "../shared/index.ts";
+import { isLooks, moduloAngle, normalizeLooks, type Message } from "../shared/index.ts";
 import env from "./env.ts";
 import { initializeBeetle, rubyProtectionTicks } from "./logic.ts";
 import type { Game } from "./game.ts";
@@ -29,6 +29,16 @@ export class GameServer {
             }
         }
         return null;
+    }
+
+    getLeaderboardData(game: Game, selfId: string | null): [number, string, number, boolean][] {
+        const opts: [string, number, boolean][] = [];
+        game.beetles.forEach(b => {
+            const looks = game.looksMap.get(game.resolveGlobalId(b.id));
+            opts.push([looks === undefined ? '' : looks.nickname, b.score, b.id === selfId]);
+        });
+        opts.sort((a, b) => b[1] - a[1]);
+        return opts.slice(0, 10).map((o, idx) => [idx + 1, o[0], o[1], o[2]]);
     }
 
     onConnection(ws: WebSocket, request: IncomingMessage) {
@@ -88,21 +98,24 @@ export class GameServer {
                     if (typeof (id) == 'string' && id.length === parseInt(env('VITE_ID_LENGTH'))) {
                         beetleId = id;
                     }
-                } else if (data.type === 'play' && beetleId !== null && !game.beetles.has(beetleId)) {
-                    const beetle = initializeBeetle(beetleId, false, game);
-                    game.beetles.set(beetleId, beetle);
                 }
 
-                if (isLooks(data.looks) && beetleId !== null) {
+                if (isLooks(data.looks) && beetleId !== null && !game.beetles.has(beetleId)) {
+                    normalizeLooks(data.looks);
                     game.looksMap.set(game.resolveGlobalId(beetleId), data.looks);
                     game.looksMapIdEdits.push(game.resolveGlobalId(beetleId));
+                }
+
+                if (data.type === 'play' && beetleId !== null && !game.beetles.has(beetleId)) {
+                    const beetle = initializeBeetle(beetleId, false, game);
+                    game.beetles.set(beetleId, beetle);
                 }
             } catch (e) {
                 console.log(e);
             }
         });
 
-        let sentFirstMessage: boolean = false;
+        let numMessages = 0;
         const updateFn = () => {
             const beetle = beetleId === null ? undefined : game.beetles.get(beetleId);
 
@@ -138,7 +151,7 @@ export class GameServer {
                 globId: beetle ? game.resolveGlobalId(beetle.id) : ''
             };
 
-            if (!sentFirstMessage) {
+            if (numMessages == 0) {
                 msg.looks = Object.fromEntries(game.looksMap);
 
                 msg.newPoints = [];
@@ -159,7 +172,11 @@ export class GameServer {
                 }
             }
 
-            sentFirstMessage = true;
+            if(numMessages % 50 == 0) {
+                msg.leaderboard = this.getLeaderboardData(game, beetleId);
+            }
+
+            numMessages ++;
 
             ws.send(JSON.stringify(msg));
         }
@@ -171,6 +188,10 @@ export class GameServer {
                 this.updateFns.splice(index, 1);
             }
         });
+    }
+
+    updateLeaderboardStrings() {
+
     }
 
     sendMessages() {
