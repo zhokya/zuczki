@@ -55,10 +55,16 @@
   },
   "scripts": {
     "dev": "concurrently -n server,client -c green,blue \"npm:dev:server\" \"npm:dev:client\"",
-    "dev:server": "nodemon --watch backend --exec tsx backend/main.ts",
+    "dev:server": "nodemon --watch backend --watch shared --watch .env --exec tsx backend/main.ts",
     "dev:client": "npm --prefix frontend run dev",
-    "build": "npm --prefix frontend run build && tsc",
-    "start": "node dist/main.js"
+
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "npm --prefix frontend run build",
+    "build:server": "tsc",
+
+    "start": "concurrently -n backend,frontend -c green,blue \"npm:start:server\" \"npm:start:client\"",
+    "start:server": "node dist/backend/main.js",
+    "start:client": "npm --prefix frontend run preview"
   },
   "repository": {
     "type": "git",

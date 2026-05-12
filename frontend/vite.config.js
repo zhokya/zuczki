@@ -10,6 +10,9 @@ export default ({ mode }) => {
         server: {
             allowedHosts: true,
             port: Number(env.VITE_PORT)
+        },
+        preview: {
+            port: Number(env.VITE_PORT)
         }
     });
 };
