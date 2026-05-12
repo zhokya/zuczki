@@ -3,7 +3,8 @@ import { angleDifference, rotateAngleTowards, samplePointInCircle } from "../sha
 import env from "./env.ts";
 import type { Game } from "./game.ts";
 
-const baseSpeed = 0.35;
+const minSpeed = 0.35;
+const maxSpeed = 0.39;
 const sizeIncreaseSpeed = 0.001;
 const vectorDecay = 0.9;
 const infSum = 1 - vectorDecay;
@@ -26,8 +27,8 @@ const maxDashDirectionChange = Math.PI / 5;
 export const rubyProtectionTicks = 30;
 const rubyVectorMagnitude = 0.1;
 const maxSize = parseFloat(env('VITE_MAX_SIZE'));
-const pointEatingMargin = 2;
-const pointCreationMargin = 4;
+const pointEatingMargin = 2.5;
+const pointCreationMargin = 6;
 
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
 const targetNumPoints = parseFloat(env('TARGET_POINT_DENSITY')) * Math.PI * mapSize * mapSize;
@@ -93,7 +94,7 @@ function getHitQuality(dot: number) {
     let x = 0;
     let vx = 0;
     for (let i = 0; i < numTicks; i++) {
-        const speed = baseSpeed * Math.max(0, Math.min(1, (vx - magnitude1) / (magnitude2 - magnitude1)));
+        const speed = minSpeed * Math.max(0, Math.min(1, (vx - magnitude1) / (magnitude2 - magnitude1)));
         x += speed + vx;
         vx *= vectorDecay;
         if (vx < magnitude1) {
@@ -101,8 +102,9 @@ function getHitQuality(dot: number) {
         }
     }
 
-    console.log('Speed without clicking: ' + baseSpeed.toFixed(4));
+    console.log('Speed without clicking: ' + minSpeed.toFixed(4));
     console.log('Speed with constant clicking: ' + (x / numTicks).toFixed(4));
+    console.log('');
 })();
 
 export function updateGameLogic(game: Game) {
@@ -124,13 +126,13 @@ export function updateGameLogic(game: Game) {
     // Remove points first, so that there are no points that are created and removed in the same tick
     game.beetles.forEach(b => {
         game.points.forEach((point, id) => {
-            const dx = b.x - point[0];
-            const dy = b.y - point[1];
+            const dx = point[0] - b.x;
+            const dy = point[1] - b.y;
             if (dx * dx + dy * dy < b.size * b.size * pointEatingMargin) {
                 b.score++;
                 game.pointIdRemovals.push({
                     id: id,
-                    animation: [b.x - dx * 0.7, b.y - dy * 0.7]
+                    animation: [b.x + dx * 0.5, b.y + dy * 0.5]
                 });
                 if (point[2]) {
                     game.numBeetleDeathPoints--;
@@ -147,6 +149,7 @@ export function updateGameLogic(game: Game) {
         const magnitude = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
 
         const rotationSpeed = 0.12 / b.size;
+        const baseSpeed = minSpeed + (maxSpeed - minSpeed) * ((b.size - 1) / (maxSpeed - 1));
         const speed = baseSpeed * Math.max(0, Math.min(1, (magnitude - magnitude1) / (magnitude2 - magnitude1)));
 
         b.angle = rotateAngleTowards(b.angle, b.targetAngle, rotationSpeed);
