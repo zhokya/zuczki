@@ -4,7 +4,7 @@ import env from "./env.ts";
 import type { Game } from "./game.ts";
 
 const minSpeed = 0.35;
-const maxSpeed = 0.39;
+const maxSpeed = 0.4;
 const sizeIncreaseSpeed = 0.001;
 const vectorDecay = 0.9;
 const infSum = 1 - vectorDecay;
@@ -17,7 +17,7 @@ const minPossibleSize = 0.75;
 const vectorMagnitudes = {
     beetleCollision: { size: 0.5 * infSum, position: 6 * infSum },
     mapEdgeCollision: { size: 0.3 * infSum, position: 5 * infSum },
-    click: { size: 0.1 * infSum, position: 8 * infSum },
+    click: { size: 0.1 * infSum, position: 9 * infSum },
     ruby: { size: -1.5 * infSum, position: 30 * infSum }  // scaled by fraction of hp taken
 };
 const beetleCollisionAngleZeroPoint = 0.25;
@@ -149,8 +149,8 @@ export function updateGameLogic(game: Game) {
         const magnitude = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
 
         const rotationSpeed = 0.12 / b.size;
-        const baseSpeed = minSpeed + (maxSpeed - minSpeed) * ((b.size - 1) / (maxSpeed - 1));
-        const speed = baseSpeed * Math.max(0, Math.min(1, (magnitude - magnitude1) / (magnitude2 - magnitude1)));
+        const speedMultiplier = 1 + (maxSpeed / minSpeed - 1) * (b.size - 1) / (maxSize - 1);
+        const speed = minSpeed * speedMultiplier * Math.max(0, Math.min(1, (magnitude - magnitude1) / (magnitude2 - magnitude1)));
 
         b.angle = rotateAngleTowards(b.angle, b.targetAngle, rotationSpeed);
 
@@ -166,25 +166,27 @@ export function updateGameLogic(game: Game) {
         if (b.size > maxSize) {
             let numPoints = Math.floor(b.score * 0.9);
 
-            if (numPoints > 40) {
-                if (Math.random() < numPoints / 200) {
-                    numPoints -= 80;
-                    game.rubyId.next();
-                    game.rubys.set(game.rubyId.id, {
-                        id: game.rubyId.id,
-                        x: b.x,
-                        y: b.y,
-                        vx: Math.cos(b.angle) * 1 * infSum,
-                        vy: Math.sin(b.angle) * 1 * infSum,
-                        hp: 1,
-                        baseSize: Math.random() * 0.8 + 0.8,
-                        protectionTicks: rubyProtectionTicks
-                    });
-                }
+            const createRuby = Math.random() < (numPoints - 50) / (150 - 50);
+
+            if (numPoints > 150) {
+                numPoints = 150 + 5 * Math.sqrt(numPoints - 150);
             }
 
-            if (numPoints > 100) {
-                numPoints = 100 + 5 * Math.sqrt(numPoints - 100);
+            if (createRuby) {
+                const rubyPoints = (Math.random() * 0.3 + 0.4) * numPoints;
+                numPoints -= rubyPoints;
+
+                game.rubyId.next();
+                game.rubys.set(game.rubyId.id, {
+                    id: game.rubyId.id,
+                    x: b.x,
+                    y: b.y,
+                    vx: Math.cos(b.angle) * 1.2 * infSum,
+                    vy: Math.sin(b.angle) * 1.2 * infSum,
+                    hp: 1,
+                    baseSize: Math.sqrt(rubyPoints / 100),
+                    protectionTicks: rubyProtectionTicks
+                });
             }
 
             for (let i = 0; i < Math.max(0, numPoints) + 10; i++) {
@@ -223,8 +225,8 @@ export function updateGameLogic(game: Game) {
                     b.targetAngle,
                     Math.min(angleDifference(b.angle, b.targetAngle), maxDashDirectionChange)
                 );
-                b.vx += Math.cos(jumpAngle) * vectorMagnitudes.click.position;
-                b.vy += Math.sin(jumpAngle) * vectorMagnitudes.click.position;
+                b.vx += Math.cos(jumpAngle) * speedMultiplier * vectorMagnitudes.click.position;
+                b.vy += Math.sin(jumpAngle) * speedMultiplier * vectorMagnitudes.click.position;
                 b.vsize += vectorMagnitudes.click.size;
             }
         }
@@ -302,7 +304,7 @@ export function updateGameLogic(game: Game) {
 
                 if (r.protectionTicks > 0) return;
 
-                let hp = Math.random() * 0.35 + 0.05;
+                let hp = Math.random() * 0.3 + 0.1;
 
                 if (r.hp - hp < 0.15) {
                     removeRuby = true;
@@ -316,8 +318,9 @@ export function updateGameLogic(game: Game) {
 
                 b.vx -= ndx * vectorMagnitudes.ruby.position * hp;
                 b.vy -= ndy * vectorMagnitudes.ruby.position * hp;
+
                 b.vsize += vectorMagnitudes.ruby.size * hp;
-                b.score += Math.round(hp * 100);
+                b.score += Math.round(100 * hp * r.baseSize * r.baseSize);
             }
         });
 
