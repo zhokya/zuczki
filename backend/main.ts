@@ -5,7 +5,10 @@ import { TickRunner } from "./tickRunner.ts";
 
 const TPS = parseInt(env('TPS'));
 const warmupTicks = parseInt(env('WARMUP_TICKS'))
+const port = parseInt(env('WEBSOCKET_PORT'));
+
 const games = [new Game('/')];
-const server = new GameServer(6767, games);
+const server = new GameServer(port, games);
+
 const tickRunner = new TickRunner(server, games);
 tickRunner.start(TPS, warmupTicks);

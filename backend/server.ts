@@ -14,7 +14,7 @@ export class GameServer {
     constructor(port: number, games: Game[]) {
         this.port = port;
         this.games = games;
-        this.wss = new WebSocketServer({ port: 6767 });
+        this.wss = new WebSocketServer({ port });
         this.updateFns = [];
 
         this.wss.on('connection', (ws, request) => {
