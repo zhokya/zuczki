@@ -24,7 +24,7 @@ export class TickRunner {
         this.lastStatPrint = performance.now();
     }
 
-    start(TPS: number, warmupTicks: number) {
+    start(TPS: number, warmupTicks: number, exactTickMode: boolean) {
         this.TPS = TPS;
 
         const startT = performance.now();
@@ -40,21 +40,37 @@ export class TickRunner {
         );
 
         const interval = 1000 / TPS;
-        let next = performance.now();
+        let start = performance.now();
+        let n = 0;
         const that = this;
 
-        function tick() {
-            const now = performance.now();
-
-            while (now >= next) {
-                that.runTickVerbose();
-                next += interval;
-            }
-
-            setTimeout(tick, Math.max(0, next - performance.now()));
+        function timeUntilNextTick() {
+            return start + n * interval - performance.now();
         }
 
-        tick();
+        if (exactTickMode) {
+            while (true) {
+                n++;
+                const next = start + n * interval;
+                while (next > performance.now()) { }
+                that.runTickVerbose();
+            }
+        } else {
+            function tick() {
+                if (timeUntilNextTick() < 0) {
+                    that.runTickVerbose();
+                    n++;
+                }
+
+                if (timeUntilNextTick() < 0) {
+                    start = performance.now();
+                    n = 0;
+                }
+
+                setTimeout(tick, timeUntilNextTick());
+            }
+            tick();
+        }
     }
 
     runTick() {
