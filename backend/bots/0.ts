@@ -1,16 +1,5 @@
-import { Game } from "../game.ts";
-import { updateGameLogic, initializeBeetle } from "../logic.ts";
-import { generateId, moduloAngle } from "../../shared/utils.ts";
-import type { Beetle, Ruby } from "../../shared/types.ts";
-
-const baseSpeed = 0.35;
-const sizeIncreaseSpeed = 0.001;
-const vectorDecay = 0.9;
-const beetleCollisionAngleZeroPoint = 0.25;
-const rubyProtectionTicks = 30;
-const maxSize = 4;
-const mapSize = 67;
-const pointEatingMargin = 2;
+import { Game } from "../game.js";
+import type { Beetle } from "../../shared/types.js";
 
 export function updateBot(game: Game, beetle: Beetle) {
     if (Math.random() < 0.005) {

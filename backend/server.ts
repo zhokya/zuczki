@@ -1,8 +1,8 @@
 import WebSocket, { WebSocketServer } from "ws";
-import { isLooks, moduloAngle, normalizeLooks, type Message } from "../shared/index.ts";
-import env from "./env.ts";
-import { getObstacleSize, initializeBeetle, rubyProtectionTicks } from "./logic.ts";
-import type { Game } from "./game.ts";
+import { isLooks, moduloAngle, normalizeLooks, type Message } from "../shared/index.js";
+import env from "./env.js";
+import { getObstacleSize, initializeBeetle, rubyProtectionTicks } from "./logic.js";
+import type { Game } from "./game.js";
 import type { IncomingMessage } from "http";
 
 export class GameServer {

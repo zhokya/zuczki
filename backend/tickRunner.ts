@@ -1,8 +1,8 @@
-import type { Game } from "./game.ts";
-import { updateBots } from "./bots.ts";
-import { updateGameLogic } from "./logic.ts";
-import env from "./env.ts";
-import type { GameServer } from "./server.ts";
+import type { Game } from "./game.js";
+import { updateBots } from "./bots.js";
+import { updateGameLogic } from "./logic.js";
+import env from "./env.js";
+import type { GameServer } from "./server.js";
 
 const printLogsEvery = parseInt(env('PRINT_LOGS_EVERY'));
 

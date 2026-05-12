@@ -1,7 +1,7 @@
-import env from "./env.ts";
-import { Game } from "./game.ts";
-import { GameServer } from "./server.ts";
-import { TickRunner } from "./tickRunner.ts";
+import env from "./env.js";
+import { Game } from "./game.js";
+import { GameServer } from "./server.js";
+import { TickRunner } from "./tickRunner.js";
 
 const TPS = parseInt(env('TPS'));
 const warmupTicks = parseInt(env('WARMUP_TICKS'))

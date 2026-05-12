@@ -1,3 +1,3 @@
-export * from "./types.ts";
-export * from "./utils.ts";
-export * from "./looks.ts";
+export * from "./types.js";
+export * from "./utils.js";
+export * from "./looks.js";

@@ -1,19 +1,12 @@
-import { Game } from "../game.ts";
-import { updateGameLogic, initializeBeetle } from "../logic.ts";
-import { generateId, moduloAngle } from "../../shared/utils.ts";
-import type { Beetle, Ruby } from "../../shared/types.ts";
+import { Game } from "../game.js";
+import { moduloAngle } from "../../shared/utils.js";
+import type { Beetle } from "../../shared/types.js";
 
 /**
  * --- CONFIGURATION & CONSTANTS ---
  */
-const baseSpeed = 0.35;
-const sizeIncreaseSpeed = 0.001;
-const vectorDecay = 0.9;
-const beetleCollisionAngleZeroPoint = 0.25;
-const rubyProtectionTicks = 30;
 const maxSize = 4;
 const mapSize = 67;
-const pointEatingMargin = 2;
 
 interface BotParameters {
     pointWeight: number;      // Attractiveness of small points
@@ -27,10 +20,6 @@ interface BotParameters {
 /**
  * --- BOT LOGIC ---
  */
-
-function getDistance(x1: number, y1: number, x2: number, y2: number) {
-    return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
-}
 
 function updateBotWithParameters(game: Game, beetle: Beetle, params: BotParameters) {
     let forceX = 0;
@@ -121,39 +110,6 @@ function updateBotWithParameters(game: Game, beetle: Beetle, params: BotParamete
     if (beetle.size > params.dashThresholdSize && !beetle.clicked) {
         beetle.clicked = false; 
     }
-}
-
-/**
- * --- EVOLUTIONARY TUNING ---
- * This block runs briefly to find the best parameters.
- */
-
-function runSimulation(params: BotParameters, ticks = 5000): number {
-    const game = new Game('/sim');
-    const numBeetles = 20;
-    let totalScore = 0;
-    let deaths = 0;
-
-    for (let i = 0; i < ticks; i++) {
-        while (game.beetles.size < numBeetles) {
-            const id = generateId(10);
-            const beetle = initializeBeetle(id, true);
-            game.beetles.set(id, beetle);
-        }
-
-        game.beetles.forEach(b => {
-            updateBotWithParameters(game, b, params);
-            b.targetAngle = moduloAngle(b.targetAngle);
-            
-            // Track score of beetles about to die
-            if (b.size >= maxSize - 0.01) {
-                totalScore += b.score;
-                deaths++;
-            }
-        });
-        updateGameLogic(game);
-    }
-    return deaths > 0 ? totalScore / deaths : 0;
 }
 
 // Optimization results (Hardcoded after a local simulated run)

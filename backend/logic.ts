@@ -1,7 +1,7 @@
-import type { Beetle, Obstacle } from "../shared/types.ts";
-import { angleDifference, rotateAngleTowards, samplePointInCircle } from "../shared/utils.ts";
-import env from "./env.ts";
-import type { Game } from "./game.ts";
+import type { Beetle, Obstacle } from "../shared/types.js";
+import { angleDifference, rotateAngleTowards, samplePointInCircle } from "../shared/utils.js";
+import env from "./env.js";
+import type { Game } from "./game.js";
 
 const minSpeed = 0.35;
 const maxSpeed = 0.4;

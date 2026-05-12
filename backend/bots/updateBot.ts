@@ -1,14 +1,14 @@
-import type { Beetle } from "../../shared/types.ts";
-import { Game } from "../game.ts";
+import type { Beetle } from "../../shared/types.js";
+import { Game } from "../game.js";
 
-import { updateBot as updateBot0 } from "./0.ts";
+import { updateBot as updateBot0 } from "./0.js";
 
-import { updateBot as updateBot1 } from "./1.ts";
-import { updateBot as updateBot2 } from "./2.ts";
-import { updateBot as updateBot3 } from "./3.ts";
+import { updateBot as updateBot1 } from "./1.js";
+import { updateBot as updateBot2 } from "./2.js";
+import { updateBot as updateBot3 } from "./3.js";
 
-import { updateBot as updateBot4 } from "./4.ts";
-import { updateBot as updateBot5 } from "./5.ts";
+import { updateBot as updateBot4 } from "./4.js";
+import { updateBot as updateBot5 } from "./5.js";
 
 const updateFns = [updateBot0, updateBot1, updateBot2, updateBot3, updateBot4, updateBot5];
 

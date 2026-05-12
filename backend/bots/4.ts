@@ -38,7 +38,6 @@ const DEFAULT_WEIGHTS: TunableWeights = {
 const TAU = Math.PI * 2;
 const EPS = 1e-9;
 const MAP_SIZE = 67;
-const MAX_SIZE = 4;
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v));
@@ -49,23 +48,6 @@ function wrapAngle(a: number): number {
   if (a <= -Math.PI) a += TAU;
   if (a > Math.PI) a -= TAU;
   return a;
-}
-
-function angleDelta(from: number, to: number): number {
-  return wrapAngle(to - from);
-}
-
-function rotateAngleTowards(current: number, target: number, maxDelta: number): number {
-  const delta = clamp(angleDelta(current, target), -maxDelta, maxDelta);
-  return wrapAngle(current + delta);
-}
-
-function hypot2(x: number, y: number): number {
-  return x * x + y * y;
-}
-
-function len(x: number, y: number): number {
-  return Math.sqrt(hypot2(x, y));
 }
 
 function addWeightedDirection(
@@ -221,113 +203,113 @@ function buildDesireVector(game: Game, beetle: Beetle, weights: TunableWeights) 
   return { desire, bestClickOpportunity };
 }
 
-function searchWeights(): TunableWeights {
-  // Lightweight local search helper.
-  // It is intentionally kept simple so it can be run from the same file when tuning.
-  const rng = Math.random;
-  let best = { ...DEFAULT_WEIGHTS };
-  let bestScore = -Infinity;
+// function searchWeights(): TunableWeights {
+//   // Lightweight local search helper.
+//   // It is intentionally kept simple so it can be run from the same file when tuning.
+//   const rng = Math.random;
+//   let best = { ...DEFAULT_WEIGHTS };
+//   let bestScore = -Infinity;
 
-  function sampleWeights(): TunableWeights {
-    return {
-      pointWeight: 2.0 + rng() * 2.2,
-      pointRadius: 14 + rng() * 12,
-      rubyWeight: 3.0 + rng() * 4.0,
-      rubyRadius: 14 + rng() * 14,
-      huntWeight: 1.2 + rng() * 2.8,
-      huntRadius: 10 + rng() * 10,
-      avoidWeight: 2.0 + rng() * 4.0,
-      avoidRadius: 7 + rng() * 8,
-      edgeWeight: 2.5 + rng() * 4.5,
-      edgeRadius: 6 + rng() * 6,
-      inertiaWeight: 0.15 + rng() * 0.8,
-      clickThreshold: 0.25 + rng() * 0.35,
-      clickSizeGate: 3.1 + rng() * 0.6,
-    };
-  }
+//   function sampleWeights(): TunableWeights {
+//     return {
+//       pointWeight: 2.0 + rng() * 2.2,
+//       pointRadius: 14 + rng() * 12,
+//       rubyWeight: 3.0 + rng() * 4.0,
+//       rubyRadius: 14 + rng() * 14,
+//       huntWeight: 1.2 + rng() * 2.8,
+//       huntRadius: 10 + rng() * 10,
+//       avoidWeight: 2.0 + rng() * 4.0,
+//       avoidRadius: 7 + rng() * 8,
+//       edgeWeight: 2.5 + rng() * 4.5,
+//       edgeRadius: 6 + rng() * 6,
+//       inertiaWeight: 0.15 + rng() * 0.8,
+//       clickThreshold: 0.25 + rng() * 0.35,
+//       clickSizeGate: 3.1 + rng() * 0.6,
+//     };
+//   }
 
-  function proxyScore(w: TunableWeights): number {
-    // A tiny proxy objective: reward strong attraction to nearby points/rubies,
-    // prioritize back-hit opportunities, and punish edge exposure / crowded danger.
-    let total = 0;
-    for (let i = 0; i < 200; i++) {
-      const x = (rng() - 0.5) * 120;
-      const y = (rng() - 0.5) * 120;
-      const size = 1 + rng() * 3;
-      const angle = (rng() - 0.5) * TAU;
+//   function proxyScore(w: TunableWeights): number {
+//     // A tiny proxy objective: reward strong attraction to nearby points/rubies,
+//     // prioritize back-hit opportunities, and punish edge exposure / crowded danger.
+//     let total = 0;
+//     for (let i = 0; i < 200; i++) {
+//       const x = (rng() - 0.5) * 120;
+//       const y = (rng() - 0.5) * 120;
+//       const size = 1 + rng() * 3;
+//       const angle = (rng() - 0.5) * TAU;
 
-      const dummy: Beetle = {
-        x,
-        y,
-        size,
-        angle,
-        vx: 0,
-        vy: 0,
-        score: 0,
-        id: "bot",
-      };
+//       const dummy: Beetle = {
+//         x,
+//         y,
+//         size,
+//         angle,
+//         vx: 0,
+//         vy: 0,
+//         score: 0,
+//         id: "bot",
+//       };
 
-      const fakeGame = {
-        points: new Map<number, [number, number, boolean]>(),
-        rubys: new Map<number, { id: number; x: number; y: number; baseSize: number; hp: number; protectionTicks: number }>(),
-        beetles: new Map<string, Beetle>(),
-      } as unknown as Game;
+//       const fakeGame = {
+//         points: new Map<number, [number, number, boolean]>(),
+//         rubys: new Map<number, { id: number; x: number; y: number; baseSize: number; hp: number; protectionTicks: number }>(),
+//         beetles: new Map<string, Beetle>(),
+//       } as unknown as Game;
 
-      const nPoints = 1 + Math.floor(rng() * 10);
-      for (let p = 0; p < nPoints; p++) {
-        const px = x + (rng() - 0.5) * 40;
-        const py = y + (rng() - 0.5) * 40;
-        fakeGame.points.set(p, [px, py, false]);
-      }
+//       const nPoints = 1 + Math.floor(rng() * 10);
+//       for (let p = 0; p < nPoints; p++) {
+//         const px = x + (rng() - 0.5) * 40;
+//         const py = y + (rng() - 0.5) * 40;
+//         fakeGame.points.set(p, [px, py, false]);
+//       }
 
-      const nRubies = Math.floor(rng() * 4);
-      for (let r = 0; r < nRubies; r++) {
-        fakeGame.rubys.set(r, {
-          id: r,
-          x: x + (rng() - 0.5) * 50,
-          y: y + (rng() - 0.5) * 50,
-          baseSize: 1,
-          hp: 0.15 + rng() * 0.8,
-          protectionTicks: rng() < 0.25 ? 10 : 0,
-        });
-      }
+//       const nRubies = Math.floor(rng() * 4);
+//       for (let r = 0; r < nRubies; r++) {
+//         fakeGame.rubys.set(r, {
+//           id: r,
+//           x: x + (rng() - 0.5) * 50,
+//           y: y + (rng() - 0.5) * 50,
+//           baseSize: 1,
+//           hp: 0.15 + rng() * 0.8,
+//           protectionTicks: rng() < 0.25 ? 10 : 0,
+//         });
+//       }
 
-      const nEnemies = Math.floor(rng() * 6);
-      for (let e = 0; e < nEnemies; e++) {
-        const enemy: Beetle = {
-          x: x + (rng() - 0.5) * 30,
-          y: y + (rng() - 0.5) * 30,
-          size: 1 + rng() * 3,
-          angle: (rng() - 0.5) * TAU,
-          vx: 0,
-          vy: 0,
-          score: 0,
-          id: `e${e}`,
-        };
-        fakeGame.beetles.set(enemy.id, enemy);
-      }
+//       const nEnemies = Math.floor(rng() * 6);
+//       for (let e = 0; e < nEnemies; e++) {
+//         const enemy: Beetle = {
+//           x: x + (rng() - 0.5) * 30,
+//           y: y + (rng() - 0.5) * 30,
+//           size: 1 + rng() * 3,
+//           angle: (rng() - 0.5) * TAU,
+//           vx: 0,
+//           vy: 0,
+//           score: 0,
+//           id: `e${e}`,
+//         };
+//         fakeGame.beetles.set(enemy.id, enemy);
+//       }
 
-      const { desire, bestClickOpportunity } = buildDesireVector(fakeGame, dummy, w);
-      const score = len(desire.x, desire.y) - Math.max(0, Math.hypot(x, y) + size - (MAP_SIZE - 0.8)) * 2;
-      total += score + (bestClickOpportunity > w.clickThreshold ? 0.35 : 0);
-    }
-    return total / 200;
-  }
+//       const { desire, bestClickOpportunity } = buildDesireVector(fakeGame, dummy, w);
+//       const score = len(desire.x, desire.y) - Math.max(0, Math.hypot(x, y) + size - (MAP_SIZE - 0.8)) * 2;
+//       total += score + (bestClickOpportunity > w.clickThreshold ? 0.35 : 0);
+//     }
+//     return total / 200;
+//   }
 
-  for (let i = 0; i < 100; i++) {
-    const candidate = sampleWeights();
-    const s = proxyScore(candidate);
-    if (s > bestScore) {
-      bestScore = s;
-      best = candidate;
-    }
-  }
+//   for (let i = 0; i < 100; i++) {
+//     const candidate = sampleWeights();
+//     const s = proxyScore(candidate);
+//     if (s > bestScore) {
+//       bestScore = s;
+//       best = candidate;
+//     }
+//   }
 
-  return best;
-}
+//   return best;
+// }
 
 // Optional local tuning hook. Leave disabled in normal use.
-const WEIGHTS = searchWeights();
+const WEIGHTS = DEFAULT_WEIGHTS;
 
 export function updateBot(game: Game, beetle: Beetle) {
   const { desire, bestClickOpportunity } = buildDesireVector(game, beetle, WEIGHTS);
@@ -352,5 +334,3 @@ export function updateBot(game: Game, beetle: Beetle) {
 
   (beetle as Beetle & { targetAngle: number; click: boolean }).click = shouldClick;
 }
-
-export { searchWeights };

@@ -1,8 +1,8 @@
-import { generateId, moduloAngle } from "../shared/utils.ts";
-import { updateBot } from "./bots/updateBot.ts";
-import env from "./env.ts";
-import type { Game } from "./game.ts";
-import { initializeBeetle } from "./logic.ts";
+import { generateId, moduloAngle } from "../shared/utils.js";
+import { updateBot } from "./bots/updateBot.js";
+import env from "./env.js";
+import type { Game } from "./game.js";
+import { initializeBeetle } from "./logic.js";
 
 export function updateBots(game: Game) {
     const t = performance.now();

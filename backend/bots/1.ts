@@ -1,6 +1,6 @@
-import { Game } from "../game.ts";
-import { moduloAngle } from "../../shared/utils.ts";
-import type { Beetle, Ruby } from "../../shared/types.ts";
+import { Game } from "../game.js";
+import { moduloAngle } from "../../shared/utils.js";
+import type { Beetle } from "../../shared/types.js";
 
 /**
  * Constants & Weights 

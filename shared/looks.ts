@@ -1,4 +1,4 @@
-import type { Looks } from "./types.ts";
+import type { Looks } from "./types.js";
 
 export const colors = [
     "#f1615f",

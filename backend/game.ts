@@ -1,7 +1,7 @@
-import { getRandomLook, getRandomNickname } from "../shared/looks.ts";
-import type { Beetle, Looks, Obstacle, Ruby } from "../shared/types.ts";
-import { generateId, NumericIdGenerator } from "../shared/utils.ts";
-import env from "./env.ts";
+import { getRandomLook, getRandomNickname } from "../shared/looks.js";
+import type { Beetle, Looks, Obstacle, Ruby } from "../shared/types.js";
+import { generateId, NumericIdGenerator } from "../shared/utils.js";
+import env from "./env.js";
 
 export class Game {
     beetles: Map<string, Beetle>;
