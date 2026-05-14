@@ -1,18 +1,17 @@
 # Żuczki
 
 ## Running
-
 Install packages:
-\`\`\`bash
+```bash
 npm install
 npm install ./frontend
-\`\`\`
+```
 Then to run:
-\`\`\`bash
+```bash
 npm run build
 npm start
-\`\`\`
+```
 Run in development mode:
-\`\`\`bash
+```bash
 npm run dev
-\`\`\`
+```
