@@ -64,7 +64,7 @@
 
     "start": "concurrently -n backend,frontend -c green,blue \"npm:start:server\" \"npm:start:client\"",
     "start:server": "node dist/backend/main.js",
-    "start:client": "npm --prefix frontend run preview"
+    "start:client": "npm --prefix frontend run preview -- --host"
   },
   "repository": {
     "type": "git",

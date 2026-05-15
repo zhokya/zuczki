@@ -12,6 +12,7 @@ export default ({ mode }) => {
             port: Number(env.VITE_PORT)
         },
         preview: {
+            allowedHosts: true,
             port: Number(env.VITE_PORT)
         }
     });
