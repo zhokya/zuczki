@@ -22,7 +22,7 @@ export function updateBot(game: Game, beetle: Beetle) {
     game.rubys.forEach(ruby => {
         const dx = ruby.x - beetle.x;
         const dy = ruby.y - beetle.y;
-        const imp = 40 * (240 - (dx * dx + dy * dy)) / 240;
+        const imp = ruby.baseSize * 40 * (240 - (dx * dx + dy * dy)) / 240;
         if (imp > 0) {
             const norm = Math.sqrt(dx * dx + dy * dy);
             mx += dx * imp / norm;
