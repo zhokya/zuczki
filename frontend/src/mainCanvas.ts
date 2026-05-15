@@ -35,7 +35,7 @@ let localRubys = new Map<number, LocalRuby>();
 let localObstacles = new Map<number, LocalObstacle>();
 let localPoints = new Map<number, LocalPoint>();
 
-onMessage((data) => {
+onMessage((data, isFirstMessage: boolean) => {
     const d: Message = JSON.parse(data);
 
     selfGlobId = d.globId;
@@ -58,6 +58,14 @@ onMessage((data) => {
         }
     }
     prevIsAlive = isAlive;
+
+    if(isFirstMessage) {
+        looks = new Map<string, Looks>();
+        localBeetles = new Map<string, LocalBeetle>();
+        localRubys = new Map<number, LocalRuby>();
+        localObstacles = new Map<number, LocalObstacle>();
+        localPoints = new Map<number, LocalPoint>();
+    }
 
     const updatedIds = new Set();
     d.beetles.forEach(b => {

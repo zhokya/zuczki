@@ -17,12 +17,14 @@ function getBeetleId(): string {
 const beetleId = getBeetleId();
 
 let globalWs: WebSocket | null = null;
+let isFirstMessage = true;
 let isRunning = false;
 const jsonQueue: string[] = [];
-const messageListeners: ((data: any) => void)[] = [];
+const messageListeners: ((data: any, isFirstMessage: boolean) => void)[] = [];
 
 export function rejoin() {
     globalWs = new WebSocket(import.meta.env.VITE_WEBSOCKET_PATH);
+    isFirstMessage = true;
     globalWs.onopen = () => {
         if(globalWs === null) return;
         globalWs.send(JSON.stringify({
@@ -43,8 +45,9 @@ export function rejoin() {
         isRunning = true;
 
         messageListeners.forEach(fn => {
-            fn(ev.data);
-        })
+            fn(ev.data, isFirstMessage);
+        });
+        isFirstMessage = false;
 
         const lastQueueElement = jsonQueue.pop();
         if(lastQueueElement !== undefined) {
@@ -74,6 +77,6 @@ export function sendUpdate(uint8: number, angle: number) {
     globalWs.send(buffer);
 }
 
-export function onMessage(listener: (ev: any) => void) {
+export function onMessage(listener: (ev: any, isFirstMessage: boolean) => void) {
     messageListeners.push(listener);
 }
