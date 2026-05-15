@@ -4,6 +4,7 @@ import checkImg from './assets/check.png';
 import diceImg from './assets/dice.png';
 import type { RenderInfo } from "./types";
 import { isAlive } from "./mainCanvas";
+import { sendJson } from "./wsManager";
 
 const c = document.getElementById('s') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
@@ -121,6 +122,14 @@ nicknameElement.value = chosenLooks.nickname;
 nicknameElement.addEventListener('input', () => {
     chosenLooks.nickname = nicknameElement.value;
     saveToStorage();
+});
+
+document.getElementById('play')?.addEventListener('click', () => {
+    chosenLooks.nickname = nicknameElement.value;
+    sendJson({
+        type: 'play',
+        looks: chosenLooks
+    });
 });
 
 export function onDead() {
