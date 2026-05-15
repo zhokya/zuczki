@@ -122,6 +122,11 @@ export class TickRunner {
         if (t4 - this.lastStatPrint > printLogsEvery) {
             this.logMessage();
             this.lastStatPrint += printLogsEvery;
+
+            // Reset counter when too far behind
+            if (t4 - this.lastStatPrint > printLogsEvery) {
+                this.lastStatPrint = performance.now();
+            }
         }
     }
 }
