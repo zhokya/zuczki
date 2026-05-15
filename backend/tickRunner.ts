@@ -1,6 +1,5 @@
 import type { Game } from "./game.js";
 import { updateBots } from "./bots.js";
-import { updateGameLogic } from "./logic.js";
 import env from "./env.js";
 import type { GameServer } from "./server.js";
 
@@ -67,7 +66,7 @@ export class TickRunner {
     runTick() {
         this.games.forEach(game => {
             updateBots(game);
-            updateGameLogic(game);
+            game.update();
         });
 
         this.server.sendMessages();
@@ -103,7 +102,7 @@ export class TickRunner {
 
         const t2 = performance.now();
         this.games.forEach(game => {
-            updateGameLogic(game);
+            game.update();
         });
 
         const t3 = performance.now();

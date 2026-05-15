@@ -1,30 +1,3 @@
-export interface BotData {
-    botType: number;
-};
-
-export interface Beetle {
-    // state
-    x: number;
-    y: number;
-    size: number;
-    angle: number;
-
-    vx: number;
-    vy: number;
-    vsize: number;
-
-    score: number;
-    irrelevants: {id: string, ticks: number}[];
-
-    // decissions
-    targetAngle: number;
-    clicked: boolean;
-
-    // other
-    id: string;
-    lastBrainActive: number;
-    botData: BotData | null;
-}
 export interface MessageBeetle {
     x: number,
     y: number,
@@ -44,16 +17,6 @@ export interface Looks {
     nickname: string;
 }
 
-export interface Ruby {
-    id: number,
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    baseSize: number;
-    hp: number;
-    protectionTicks: number;
-}
 export interface MessageRuby {
     id: number;
     x: number;
@@ -63,21 +26,6 @@ export interface MessageRuby {
     protection: number;
 }
 
-export interface Obstacle {
-    id: number;
-
-    isCircle: boolean;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
-    size: number;
-
-    isAggressive: boolean;
-    animation: number;
-    animationSpeed: number;
-    rotationSpeed: number;
-}
 export interface MessageObstacle {
     id: number;
 

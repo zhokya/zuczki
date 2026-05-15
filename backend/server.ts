@@ -1,9 +1,11 @@
 import WebSocket, { WebSocketServer } from "ws";
 import { isLooks, moduloAngle, normalizeLooks, type Message } from "../shared/index.js";
 import env from "./env.js";
-import { getObstacleSize, initializeBeetle, rubyProtectionTicks } from "./logic.js";
 import type { Game } from "./game.js";
 import type { IncomingMessage } from "http";
+import { Beetle } from "./entities/beetle.js";
+import { rubyProtectionTicks } from "./entities/ruby.js";
+import type { Point } from "./entities/point.js";
 
 export class GameServer {
     port: number;
@@ -107,7 +109,7 @@ export class GameServer {
                 }
 
                 if (data.type === 'play' && beetleId !== null && !game.beetles.has(beetleId)) {
-                    const beetle = initializeBeetle(beetleId, false, game);
+                    const beetle = new Beetle(beetleId, false, game);
                     game.beetles.set(beetleId, beetle);
                 }
             } catch (e) {
@@ -150,14 +152,14 @@ export class GameServer {
                         y1: o.y1,
                         x2: o.x2,
                         y2: o.y2,
-                        size: getObstacleSize(o),
+                        size: o.getSize(),
                         
                         isAggressive: o.isAggressive
                     }
                 }),
                 newPoints: game.pointIdCreations.map(id => {
-                    const pos = game.points.get(id) as [number, number, boolean];
-                    return [id, pos[0], pos[1]];
+                    const point = game.points.get(id) as Point;
+                    return [id, point.x, point.y];
                 }),
                 removedPoints: game.pointIdRemovals.map(el => {
                     return [el.id, el.animation[0], el.animation[1]];
@@ -171,8 +173,8 @@ export class GameServer {
                 msg.newPoints = [];
                 msg.removedPoints = [];
 
-                game.points.forEach((pos, id) => {
-                    msg.newPoints.push([id, pos[0], pos[1]])
+                game.points.forEach((point, id) => {
+                    msg.newPoints.push([id, point.x, point.y])
                 });
             } else if (game.looksMapIdEdits.length > 0) {
                 msg.looks = {};

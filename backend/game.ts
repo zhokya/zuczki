@@ -1,7 +1,15 @@
 import { getRandomLook, getRandomNickname } from "../shared/looks.js";
-import type { Beetle, Looks, Obstacle, Ruby } from "../shared/types.js";
-import { generateId, NumericIdGenerator } from "../shared/utils.js";
+import { generateId, NumericIdGenerator, samplePointInCircle } from "../shared/utils.js";
 import env from "./env.js";
+
+import { Beetle } from "./entities/beetle.js";
+import type { Looks } from "../shared/types.js";
+import { Point, spawnNewPoints } from "./entities/point.js";
+import { Ruby } from "./entities/ruby.js";
+import { Obstacle, spawnNewObstacles } from "./entities/obstacle.js";
+
+const maxSize = parseFloat(env('VITE_MAX_SIZE'));
+const mapSize = parseInt(env('VITE_MAP_SIZE'));
 
 export class Game {
     beetles: Map<string, Beetle>;
@@ -10,9 +18,9 @@ export class Game {
     looksMap: Map<string, Looks>;
     looksMapIdEdits: string[];
 
-    points: Map<number, [number, number, boolean]>;
-    numEnvironmentDensityPoints = 0; // marked as 'false' in points
-    numBeetleDeathPoints = 0; // marked as 'true' in points
+    points: Map<number, Point>;
+    numEnvironmentDensityPoints = 0;
+    numBeetleDeathPoints = 0;
     pointId: NumericIdGenerator;
     pointIdCreations: number[];
     pointIdRemovals: { id: number, animation: [number, number] }[];
@@ -61,5 +69,98 @@ export class Game {
             this.looksMapIdEdits.push(globId);
         }
         return globId;
+    }
+
+    distanceFromObjects(x: number, y: number): number {
+        // initialize with distance to world edge
+        let distance = mapSize - Math.sqrt(x * x + y * y);
+
+        this.beetles.forEach(beetle => {
+            const dx = beetle.x - x;
+            const dy = beetle.y - y;
+            distance = Math.min(distance, Math.sqrt(dx * dx + dy * dy) - beetle.size);
+        });
+
+        this.obstacles.forEach(obstacle => {
+            distance = Math.min(distance, obstacle.getDistanceTo(x, y) - obstacle.getSize());
+        });
+
+        return distance;
+    }
+
+    getSpawnPointWithMargin(worldMargin: number): [number, number] {
+        const maxR = mapSize - worldMargin;
+        let bestX = 0;
+        let bestY = 0;
+        let bestMinDist = -1;
+
+        for (let i = 0; i < 1000; i++) {
+            const [x, y] = samplePointInCircle(maxR);
+            const dist = this.distanceFromObjects(x, y);
+            if (dist > bestMinDist) {
+                bestMinDist = dist;
+                bestX = x;
+                bestY = y;
+            }
+        }
+
+        return [bestX, bestY];
+    }
+
+    update() {
+        // Remove points first, so that there are no points that are created and removed in the same tick
+        this.beetles.forEach(beetle => {
+            this.points.forEach((point, id) => {
+                if (point.handleEating(beetle)) {
+                    this.points.delete(id);
+                }
+            });
+        });
+
+        this.obstacles.forEach(obstacle => {
+            obstacle.update();
+            if (obstacle.getDistanceTo(0, 0) - obstacle.size > mapSize + 2) {
+                this.obstacles.delete(obstacle.id);
+                return;
+            }
+            this.obstacles.forEach(otherObstacle => {
+                obstacle.pushAwayFrom(otherObstacle);
+            });
+        });
+
+        this.beetles.forEach(beetle => {
+            beetle.update();
+
+            if (beetle.size > maxSize) {
+                beetle.createPointsAndRubyAfterDeath(this);
+                this.beetles.delete(beetle.id);
+                return;
+            }
+
+            this.beetles.forEach(other => {
+                if (other.id >= beetle.id) return;
+                beetle.handleBeetleCollision(other);
+            });
+        });
+
+        this.rubys.forEach(ruby => {
+            ruby.update(this.beetles);
+            if (ruby.hp < 0) {
+                this.rubys.delete(ruby.id);
+            }
+        });
+
+        this.obstacles.forEach(obstacle => {
+            this.beetles.forEach(beetle => {
+                obstacle.handleCollision(beetle);
+            });
+            this.rubys.forEach(ruby => {
+                obstacle.handleCollision(ruby);
+            });
+            obstacle.finishUpdate();
+        });
+
+        spawnNewPoints(this);
+        spawnNewObstacles(this);
     }
 }
