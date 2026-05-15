@@ -1,3 +1,5 @@
+import type { VisionBounds } from "./visionBounds";
+
 export interface RenderInfo {
     ctx: CanvasRenderingContext2D;
     prevT: number;
@@ -5,4 +7,5 @@ export interface RenderInfo {
     w: number;
     h: number;
     scale: number;
+    bounds: VisionBounds;
 }

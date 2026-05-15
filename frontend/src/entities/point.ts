@@ -50,7 +50,7 @@ export class LocalPoint {
     }
 
     render(renderInfo: RenderInfo) {
-        const { ctx, prevT, t } = renderInfo;
+        const { ctx, prevT, t, bounds } = renderInfo;
         
         const dt = t - prevT;
 
@@ -60,6 +60,8 @@ export class LocalPoint {
 
         this.phase += dt * this.speed;
         const pt = (Math.sin(this.phase) + 1) / 2;
+
+        if(!bounds.isInsideWithMargin(this.x, this.y, 1.1)) return;
 
         // ctx.shadowBlur = lerp(0.5, 0.3, pt) * scale;
         // ctx.shadowColor = 'hsla(' + this.h + ',' + (this.s + 10) + '%,' + (this.l - 20 + Math.round(pt * 20)) + '%,' + this.o + ')';

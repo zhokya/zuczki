@@ -10,6 +10,7 @@ import type { RenderInfo } from "./types";
 import { renderBeforeTransform, renderEnvironment, renderWorldEdge } from "./visuals/environment";
 import { updateFpsCounter } from "./visuals/fpsCounter";
 import { LocalObstacle } from "./entities/obstacle";
+import { getVisionBoundsFromCenter } from "./visionBounds";
 
 const baseVisibleArea = 25;
 const visibleAreaExponent = 0.4;
@@ -117,13 +118,13 @@ onMessage((data) => {
         }
     });
 
-    if(d.leaderboard !== undefined) {
+    if (d.leaderboard !== undefined) {
         const newChildren: HTMLSpanElement[] = [];
         d.leaderboard.forEach((elem) => {
             const [idx, nickname, score, isSelf] = elem;
             const spanElem = document.createElement('span');
             spanElem.innerText = `${idx}. ${nickname} (${score})`;
-            if(isSelf) {
+            if (isSelf) {
                 spanElem.className = 'leaderboard-self';
             }
             newChildren.push(spanElem);
@@ -165,7 +166,8 @@ export function mainCanvasRenderLoop(t: number) {
     }
     const scale = (w + h) / 2 / visibleArea;
 
-    const renderInfo: RenderInfo = { w, h, ctx, t, prevT, scale };
+    const bounds = getVisionBoundsFromCenter(centerX, centerY, w, h, scale);
+    const renderInfo: RenderInfo = { w, h, ctx, t, prevT, scale, bounds };
 
     renderBeforeTransform(renderInfo);
 
@@ -196,7 +198,7 @@ export function mainCanvasRenderLoop(t: number) {
     localObstacles.forEach(o => {
         o.render(renderInfo);
     });
-    
+
     renderWorldEdge(renderInfo);
 
     localBeetles.forEach(b => {
@@ -228,7 +230,7 @@ export function mainCanvasRenderLoop(t: number) {
     if (selfBeetle !== undefined) {
         renderMinimap(renderInfo, selfBeetle);
         renderSizeWarning(renderInfo, selfBeetle.size.value);
-        if(aliveT > 1000) {
+        if (aliveT > 1000) {
             finalScoreElement.innerText = selfBeetle.score + ' ' + formatPoints(selfBeetle.score);
         }
     }

@@ -5,6 +5,7 @@ import diceImg from './assets/dice.png';
 import type { RenderInfo } from "./types";
 import { isAlive } from "./mainCanvas";
 import { sendJson } from "./wsManager";
+import { VisionBounds } from "./visionBounds";
 
 const c = document.getElementById('s') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
@@ -157,7 +158,8 @@ export function menuRenderLoop(t: number) {
     if(aliveT < 1000) {
         ctx.clearRect(0, 0, w, h);
 
-        const renderInfo: RenderInfo = { ctx, w, h, prevT, t, scale: 1 };
+        const bounds = new VisionBounds(0, 0, w, h);
+        const renderInfo: RenderInfo = { ctx, w, h, prevT, t, scale: 1, bounds };
         renderBeetle(renderInfo, w * 0.5, h * 0.64, -Math.PI / 2, -Math.PI / 2, w * 0.33, chosenLooks);
     }
 
