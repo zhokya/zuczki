@@ -59,7 +59,7 @@ export class TickRunner {
                 n = 0;
             }
 
-            setTimeout(tick, timeUntilNextTick());
+            setTimeout(tick, Math.max(0, timeUntilNextTick()));
         }
         tick();
     }
