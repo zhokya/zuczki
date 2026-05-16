@@ -1,4 +1,6 @@
-import { angleDifference, type Looks, type MessageBeetle } from "../../../shared";
+import type { MessageBeetle } from "../../../shared/dataEncoders";
+import type { Looks } from "../../../shared/types";
+import { angleDifference } from "../../../shared/utils";
 import { Interpolator } from "../interpolator";
 import type { RenderInfo } from "../types";
 
@@ -186,8 +188,8 @@ export class LocalBeetle {
     angle: Interpolator;
     targetAngle: Interpolator;
 
-    score: number = 0;
-    globId: string = '';
+    score: number;
+    globId: number;
 
     constructor(b: MessageBeetle) {
         this.x = new Interpolator(b.x, false);
@@ -195,6 +197,9 @@ export class LocalBeetle {
         this.size = new Interpolator(b.size, false);
         this.angle = new Interpolator(b.angle, true);
         this.targetAngle = new Interpolator(b.targetAngle, true);
+        
+        this.score = b.score;
+        this.globId = b.globId;
     }
 
     update(b: MessageBeetle) {

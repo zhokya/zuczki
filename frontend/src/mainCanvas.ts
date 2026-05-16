@@ -1,4 +1,3 @@
-import { formatPoints, type Looks, type Message } from "../../shared";
 import { onMessage } from "./wsManager";
 import { LocalBeetle } from "./entities/beetle";
 import { LocalPoint } from "./entities/point";
@@ -11,6 +10,10 @@ import { renderBeforeTransform, renderEnvironment, renderWorldEdge } from "./vis
 import { updateFpsCounter } from "./visuals/fpsCounter";
 import { LocalObstacle } from "./entities/obstacle";
 import { getVisionBoundsFromCenter } from "./visionBounds";
+import type { Looks } from "../../shared/types";
+import { beetleEncoder, headerEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, type MessageBeetle, type MessageObstacle, type MessageRuby, type PointCreation, type PointRemoval } from "../../shared/dataEncoders";
+import { PointedDataView } from "../../shared/encoder";
+import { formatPoints } from "../../shared/utils";
 
 const baseVisibleArea = 25;
 const visibleAreaExponent = 0.4;
@@ -27,21 +30,28 @@ let prevT = -1;
 
 export let isAlive = false;
 let prevIsAlive = false;
-let selfGlobId = '';
+let selfGlobId = -1;
 
-let looks = new Map<string, Looks>();
-let localBeetles = new Map<string, LocalBeetle>();
+let looks = new Map<number, Looks>();
+let localBeetles = new Map<number, LocalBeetle>();
 let localRubys = new Map<number, LocalRuby>();
 let localObstacles = new Map<number, LocalObstacle>();
 let localPoints = new Map<number, LocalPoint>();
 
-onMessage((data, isFirstMessage: boolean) => {
-    const d: Message = JSON.parse(data);
+onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
+    const view = new PointedDataView(new DataView(data));
+    const header = headerEncoder.readFromBuffer(view);
 
-    selfGlobId = d.globId;
+    const beetles: MessageBeetle[] = beetleEncoder.readListFromBuffer(view, header.numBeetles);
+    const rubys: MessageRuby[] = rubyEncoder.readListFromBuffer(view, header.numRubys);
+    const obstacles: MessageObstacle[] = obstacleEncoder.readListFromBuffer(view, header.numObstacles);
+    const pointCreations: PointCreation[] = pointCreationEncoder.readListFromBuffer(view, header.numPointCreations);
+    const pointRemovals: PointRemoval[] = pointRemovalEncoder.readListFromBuffer(view, header.numPointRemovals);
+
+    selfGlobId = header.globId;
 
     isAlive = false;
-    d.beetles.forEach(b => {
+    beetles.forEach(b => {
         if (b.globId === selfGlobId) {
             isAlive = true;
         }
@@ -60,15 +70,15 @@ onMessage((data, isFirstMessage: boolean) => {
     prevIsAlive = isAlive;
 
     if(isFirstMessage) {
-        looks = new Map<string, Looks>();
-        localBeetles = new Map<string, LocalBeetle>();
+        looks = new Map<number, Looks>();
+        localBeetles = new Map<number, LocalBeetle>();
         localRubys = new Map<number, LocalRuby>();
         localObstacles = new Map<number, LocalObstacle>();
         localPoints = new Map<number, LocalPoint>();
     }
 
     const updatedIds = new Set();
-    d.beetles.forEach(b => {
+    beetles.forEach(b => {
         if (!localBeetles.has(b.globId)) {
             localBeetles.set(b.globId, new LocalBeetle(b));
         }
@@ -82,7 +92,7 @@ onMessage((data, isFirstMessage: boolean) => {
     }
 
     const updatedRubyIds = new Set();
-    d.rubys.forEach(r => {
+    rubys.forEach(r => {
         if (!localRubys.has(r.id)) {
             localRubys.set(r.id, new LocalRuby(r));
         }
@@ -96,7 +106,7 @@ onMessage((data, isFirstMessage: boolean) => {
     }
 
     const updatedObstacleIds = new Set();
-    d.obstacles.forEach(o => {
+    obstacles.forEach(o => {
         if (!localObstacles.has(o.id)) {
             localObstacles.set(o.id, new LocalObstacle(o));
         }
@@ -109,36 +119,36 @@ onMessage((data, isFirstMessage: boolean) => {
         }
     }
 
-    if (d.looks !== undefined) {
-        for (const k in d.looks) {
-            looks.set(k, d.looks[k]);
-        }
-    }
+    // if (d.looks !== undefined) {
+    //     for (const k in d.looks) {
+    //         looks.set(k, d.looks[k]);
+    //     }
+    // }
 
-    d.newPoints.forEach(el => {
-        localPoints.set(el[0], new LocalPoint(el));
+    pointCreations.forEach(point => {
+        localPoints.set(point.id, new LocalPoint(point));
     });
 
-    d.removedPoints.forEach(el => {
-        const point = localPoints.get(el[0]);
+    pointRemovals.forEach(removal => {
+        const point = localPoints.get(removal.id);
         if (point !== undefined) {
-            point.remove(el);
+            point.remove(removal);
         }
     });
 
-    if (d.leaderboard !== undefined) {
-        const newChildren: HTMLSpanElement[] = [];
-        d.leaderboard.forEach((elem) => {
-            const [idx, nickname, score, isSelf] = elem;
-            const spanElem = document.createElement('span');
-            spanElem.innerText = `${idx}. ${nickname} (${score})`;
-            if (isSelf) {
-                spanElem.className = 'leaderboard-self';
-            }
-            newChildren.push(spanElem);
-        })
-        leaderboardElement.replaceChildren(...newChildren);
-    }
+    // if (d.leaderboard !== undefined) {
+    //     const newChildren: HTMLSpanElement[] = [];
+    //     d.leaderboard.forEach((elem) => {
+    //         const [idx, nickname, score, isSelf] = elem;
+    //         const spanElem = document.createElement('span');
+    //         spanElem.innerText = `${idx}. ${nickname} (${score})`;
+    //         if (isSelf) {
+    //             spanElem.className = 'leaderboard-self';
+    //         }
+    //         newChildren.push(spanElem);
+    //     })
+    //     leaderboardElement.replaceChildren(...newChildren);
+    // }
 });
 
 export function mainCanvasRenderLoop(t: number) {

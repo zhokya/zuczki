@@ -1,5 +1,5 @@
 import { getRandomLook, getRandomNickname } from "../shared/looks.js";
-import { generateId, NumericIdGenerator, samplePointInCircle } from "../shared/utils.js";
+import { NumericIdGenerator, samplePointInCircle } from "../shared/utils.js";
 import env from "./env.js";
 
 import { Beetle } from "./entities/beetle.js";
@@ -7,23 +7,25 @@ import type { Looks } from "../shared/types.js";
 import { Point, spawnNewPoints } from "./entities/point.js";
 import { Ruby } from "./entities/ruby.js";
 import { Obstacle, spawnNewObstacles } from "./entities/obstacle.js";
+import type { PointCreation, PointRemoval } from "../shared/dataEncoders.js";
 
 const maxSize = parseFloat(env('VITE_MAX_SIZE'));
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
 
 export class Game {
     beetles: Map<string, Beetle>;
-    globIdMap: Map<string, string>;
+    globIdMap: Map<string, number>;
+    globId: NumericIdGenerator;
 
-    looksMap: Map<string, Looks>;
-    looksMapIdEdits: string[];
+    looksMap: Map<number, Looks>;
+    looksMapIdEdits: number[] = [];
 
     points: Map<number, Point>;
+    pointId: NumericIdGenerator;
     numEnvironmentDensityPoints = 0;
     numBeetleDeathPoints = 0;
-    pointId: NumericIdGenerator;
-    pointIdCreations: number[];
-    pointIdRemovals: { id: number, animation: [number, number] }[];
+    pointCreations: PointCreation[] = [];
+    pointRemovals: PointRemoval[] = [];
 
     rubys: Map<number, Ruby>;
     rubyId: NumericIdGenerator;
@@ -41,10 +43,7 @@ export class Game {
         this.rubys = new Map();
         this.obstacles = new Map();
 
-        this.looksMapIdEdits = [];
-        this.pointIdCreations = [];
-        this.pointIdRemovals = [];
-
+        this.globId = new NumericIdGenerator();
         this.pointId = new NumericIdGenerator();
         this.rubyId = new NumericIdGenerator();
         this.obstacleId = new NumericIdGenerator();
@@ -54,14 +53,14 @@ export class Game {
 
     afterSendingMessages() {
         this.looksMapIdEdits = [];
-        this.pointIdCreations = [];
-        this.pointIdRemovals = [];
+        this.pointCreations = [];
+        this.pointRemovals = [];
     }
 
-    resolveGlobalId(id: string): string {
+    resolveGlobalId(id: string): number {
         let globId = this.globIdMap.get(id);
         if (globId === undefined) {
-            globId = generateId(parseInt(env('VITE_ID_LENGTH')));
+            globId = this.globId.next();
             this.globIdMap.set(id, globId);
         }
         if (!this.looksMap.has(globId)) {

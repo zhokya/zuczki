@@ -1,4 +1,6 @@
-import { generateId } from "../../shared";
+import { clientMessageEncoder, type ClientMessage } from "../../shared/dataEncoders";
+import { PointedDataView } from "../../shared/encoder";
+import { generateId } from "../../shared/utils";
 
 function getBeetleId(): string {
     // TODO: uncomment to make automatic rejoining work
@@ -24,7 +26,9 @@ const messageListeners: ((data: any, isFirstMessage: boolean) => void)[] = [];
 
 export function rejoin() {
     globalWs = new WebSocket(import.meta.env.VITE_WEBSOCKET_PATH);
+    globalWs.binaryType = 'arraybuffer';
     isFirstMessage = true;
+
     globalWs.onopen = () => {
         if(globalWs === null) return;
         globalWs.send(JSON.stringify({
@@ -65,14 +69,12 @@ export function sendJson(json: any) {
     }
 }
 
-export function sendUpdate(uint8: number, angle: number) {
+export function sendUpdate(update: ClientMessage) {
     if(globalWs === null || !isRunning) return;
 
-    const buffer = new ArrayBuffer(5);
-    const view = new DataView(buffer);
-
-    view.setUint8(0, uint8);
-    view.setFloat32(1, angle, true);
+    const buffer = new ArrayBuffer(clientMessageEncoder.bytes);
+    const view = new PointedDataView(new DataView(buffer));
+    clientMessageEncoder.writeToBuffer(view, update);
 
     globalWs.send(buffer);
 }

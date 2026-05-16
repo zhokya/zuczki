@@ -1,4 +1,5 @@
-import { expLerp, lerp } from "../../../shared";
+import type { PointCreation, PointRemoval } from "../../../shared/dataEncoders";
+import { expLerp, lerp } from "../../../shared/utils";
 import type { RenderInfo } from "../types";
 
 export class LocalPoint {
@@ -22,10 +23,10 @@ export class LocalPoint {
     phase: number;
     size: number;
 
-    constructor(el: [number, number, number]) {
-        this.id = el[0];
-        this.tx = el[1];
-        this.ty = el[2];
+    constructor(el: PointCreation) {
+        this.id = el.id;
+        this.tx = el.x;
+        this.ty = el.y;
         this.to = 1;
 
         const ang = Math.random() * Math.PI * 2;
@@ -42,9 +43,9 @@ export class LocalPoint {
         this.size = lerp(0.4, 1, Math.random());
     }
 
-    remove(el: [number, number, number]) {
-        this.tx = el[1];
-        this.ty = el[2];
+    remove(el: PointRemoval) {
+        this.tx = el.x;
+        this.ty = el.y;
         this.to = 0;
         this.removed = true;
     }

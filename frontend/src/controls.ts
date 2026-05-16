@@ -1,4 +1,4 @@
-import { moduloAngle } from "../../shared";
+import { moduloAngle } from "../../shared/utils";
 import { sendUpdate } from "./wsManager";
 import { isAlive } from "./mainCanvas";
 
@@ -15,7 +15,7 @@ let mouseup = false;
 let click = false;
 const clickDt = 200;
 window.addEventListener('mousedown', () => {
-    if(isAlive) {
+    if (isAlive) {
         mousedown = true;
         mousedownT = performance.now();
     }
@@ -34,7 +34,7 @@ window.addEventListener('mouseup', () => {
     }
 });
 
-function getStateId() {
+function getClickMode() {
     if (click) {
         click = false;
         return 1;
@@ -58,13 +58,12 @@ let lastSendT = -1;
 export function updateSendingLoop() {
     requestAnimationFrame(updateSendingLoop);
 
-    if(!isAlive) return;
+    if (!isAlive) return;
 
-    const stateId = getStateId();
-    if(stateId != 0 || prevTargetAngle != targetAngle || performance.now() - lastSendT > 1000) {
-        console.log('send');
+    const clickMode = getClickMode();
+    if (clickMode != 0 || prevTargetAngle != targetAngle || performance.now() - lastSendT > 1000) {
         prevTargetAngle = targetAngle;
         lastSendT = performance.now();
-        sendUpdate(stateId, targetAngle);
+        sendUpdate({ clickMode, targetAngle });
     }
 }

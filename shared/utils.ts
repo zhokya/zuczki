@@ -7,9 +7,12 @@ export function generateId(id_length: number): string {
 }
 
 export class NumericIdGenerator {
-    id = -1;
+    id = 4;  // first few ids for special use (id = 0 used as 'null', required by data encoders)
     next() {
-        this.id = (this.id + 1) % 1_000_000_000;
+        this.id ++;
+        if(this.id > 1_000_000_000) {
+            this.id = 4;
+        }
         return this.id;
     }
 }

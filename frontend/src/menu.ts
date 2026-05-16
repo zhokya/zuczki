@@ -1,4 +1,3 @@
-import { colors, getRandomLook, isLooks, type Looks } from "../../shared";
 import { renderBeetle } from "./entities/beetle";
 import checkImg from './assets/check.png';
 import diceImg from './assets/dice.png';
@@ -6,6 +5,8 @@ import type { RenderInfo } from "./types";
 import { isAlive } from "./mainCanvas";
 import { sendJson } from "./wsManager";
 import { VisionBounds } from "./visionBounds";
+import { isLooks, type Looks } from "../../shared/types";
+import { colors, getRandomLook } from "../../shared/looks";
 
 const c = document.getElementById('s') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;

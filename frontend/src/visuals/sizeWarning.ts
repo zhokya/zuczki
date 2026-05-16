@@ -1,4 +1,4 @@
-import { lerp } from "../../../shared";
+import { lerp } from "../../../shared/utils";
 import type { RenderInfo } from "../types";
 
 const maxSize = parseFloat(import.meta.env.VITE_MAX_SIZE);

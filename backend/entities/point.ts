@@ -22,7 +22,7 @@ export class Point {
         this.isEnv = isEnv;
         this.game = game;
 
-        game.pointIdCreations.push(id);
+        game.pointCreations.push({ id, x, y });
         if (isEnv) {
             game.numEnvironmentDensityPoints++;
         } else {
@@ -38,9 +38,10 @@ export class Point {
 
         beetle.score++;
 
-        this.game.pointIdRemovals.push({
+        this.game.pointRemovals.push({
             id: this.id,
-            animation: [beetle.x + dx * 0.5, beetle.y + dy * 0.5]
+            x: beetle.x + dx * 0.5,
+            y: beetle.y + dy * 0.5
         });
         if (this.isEnv) {
             this.game.numEnvironmentDensityPoints--;

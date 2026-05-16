@@ -1,4 +1,5 @@
-import { expLerp, lerp, type MessageRuby } from "../../../shared";
+import type { MessageRuby } from "../../../shared/dataEncoders";
+import { expLerp, lerp } from "../../../shared/utils";
 import { Interpolator } from "../interpolator";
 import type { RenderInfo } from "../types";
 
@@ -70,7 +71,7 @@ export class LocalRuby {
         const x = this.x.value;
         const y = this.y.value;
         path.moveTo(this.points[0][0] * radius + x, this.points[0][1] * radius + y);
-        for(let i = 1; i < this.points.length; i ++) {
+        for (let i = 1; i < this.points.length; i++) {
             path.lineTo(this.points[i][0] * radius + x, this.points[i][1] * radius + y);
         }
 
@@ -88,7 +89,7 @@ export class LocalRuby {
         ctx.fill(path);
         ctx.shadowColor = 'rgba(0,0,0,0)';
         ctx.shadowBlur = 0;
-        
+
         ctx.lineWidth = radius * 0.2 * (1 - prot);
         ctx.strokeStyle = 'rgba(202,13,139)';
         ctx.stroke(path);

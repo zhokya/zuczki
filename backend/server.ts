@@ -1,11 +1,14 @@
 import WebSocket, { WebSocketServer } from "ws";
-import { isLooks, moduloAngle, normalizeLooks, type Message } from "../shared/index.js";
+import { isLooks } from "../shared/types.js";
 import env from "./env.js";
 import type { Game } from "./game.js";
 import type { IncomingMessage } from "http";
 import { Beetle } from "./entities/beetle.js";
 import { rubyProtectionTicks } from "./entities/ruby.js";
-import type { Point } from "./entities/point.js";
+import { beetleEncoder, clientMessageEncoder, headerEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder } from "../shared/dataEncoders.js";
+import { PointedDataView } from "../shared/encoder.js";
+import { moduloAngle } from "../shared/utils.js";
+import { normalizeLooks } from "../shared/looks.js";
 
 export class GameServer {
     port: number;
@@ -64,29 +67,17 @@ export class GameServer {
                     const beetle = game.beetles.get(beetleId);
                     if (beetle === undefined) return;
 
-                    let buffer: Buffer;
-                    if (Buffer.isBuffer(rawData)) {
-                        buffer = rawData;
-                    } else if (rawData instanceof ArrayBuffer) {
-                        buffer = Buffer.from(rawData);
-                    } else if (Array.isArray(rawData)) {
-                        buffer = Buffer.concat(rawData);
-                    } else {
-                        return;
-                    }
-
-                    const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
-                    const uint8 = view.getUint8(0);
-                    let targetAngle = view.getFloat32(1, true);
-
-                    if (!Number.isFinite(targetAngle)) {
-                        return;
-                    }
-                    targetAngle = moduloAngle(targetAngle);
+                    const buffer = rawData as Buffer;
+                    const view = new PointedDataView(new DataView(
+                        buffer.buffer,
+                        buffer.byteOffset,
+                        buffer.byteLength
+                    ));
+                    const message = clientMessageEncoder.readFromBuffer(view);
 
                     beetle.lastBrainActive = performance.now();
-                    beetle.targetAngle = targetAngle;
-                    if (uint8 == 1) {
+                    beetle.targetAngle = moduloAngle(message.targetAngle);
+                    if (message.clickMode == 1) {
                         beetle.clicked = true;
                     }
 
@@ -113,6 +104,7 @@ export class GameServer {
                     game.beetles.set(beetleId, beetle);
                 }
             } catch (e) {
+                // TODO: potentially remove this in the future?
                 console.log(e);
             }
         });
@@ -121,80 +113,100 @@ export class GameServer {
         const updateFn = () => {
             const beetle = beetleId === null ? undefined : game.beetles.get(beetleId);
 
-            const msg: Message = {
-                beetles: Array.from(game.beetles.values()).map(b => {
-                    return {
-                        x: b.x,
-                        y: b.y,
-                        angle: b.angle,
-                        size: b.size,
-                        score: b.score,
-                        targetAngle: b.targetAngle,
-                        globId: game.resolveGlobalId(b.id)
-                    }
-                }),
-                rubys: Array.from(game.rubys.values()).map(r => {
-                    return {
-                        id: r.id,
-                        x: r.x,
-                        y: r.y,
-                        baseSize: r.baseSize,
-                        hp: r.hp,
-                        protection: r.protectionTicks / rubyProtectionTicks
-                    }
-                }),
-                obstacles: Array.from(game.obstacles.values()).map(o => {
-                    return {
-                        id: o.id,
+            // TODO: do not send everything!
+            const header = {
+                globId: beetle ? game.resolveGlobalId(beetle.id) : 0,
+                numBeetles: game.beetles.size,
+                numRubys: game.rubys.size,
+                numObstacles: game.obstacles.size,
+                numPointCreations: game.pointCreations.length,
+                numPointRemovals: game.pointRemovals.length,
+            }
+            const buffer = Buffer.alloc(
+                headerEncoder.bytes + 
+                header.numBeetles * beetleEncoder.bytes +
+                header.numRubys * rubyEncoder.bytes +
+                header.numObstacles * obstacleEncoder.bytes +
+                header.numPointCreations * pointCreationEncoder.bytes +
+                header.numPointRemovals * pointRemovalEncoder.bytes
+            );
+            const view = new PointedDataView(new DataView(
+                buffer.buffer,
+                buffer.byteOffset,
+                buffer.byteLength
+            ));
 
-                        isCircle: o.isCircle,
-                        x1: o.x1,
-                        y1: o.y1,
-                        x2: o.x2,
-                        y2: o.y2,
-                        size: o.getSize(),
-                        
-                        isAggressive: o.isAggressive
-                    }
-                }),
-                newPoints: game.pointIdCreations.map(id => {
-                    const point = game.points.get(id) as Point;
-                    return [id, point.x, point.y];
-                }),
-                removedPoints: game.pointIdRemovals.map(el => {
-                    return [el.id, el.animation[0], el.animation[1]];
-                }),
-                globId: beetle ? game.resolveGlobalId(beetle.id) : ''
-            };
-
-            if (numMessages == 0) {
-                msg.looks = Object.fromEntries(game.looksMap);
-
-                msg.newPoints = [];
-                msg.removedPoints = [];
-
-                game.points.forEach((point, id) => {
-                    msg.newPoints.push([id, point.x, point.y])
+            headerEncoder.writeToBuffer(view, header);
+            game.beetles.forEach(b => {
+                beetleEncoder.writeToBuffer(view, {
+                    x: b.x,
+                    y: b.y,
+                    angle: b.angle,
+                    size: b.size,
+                    score: b.score,
+                    targetAngle: b.targetAngle,
+                    globId: game.resolveGlobalId(b.id)
                 });
-            } else if (game.looksMapIdEdits.length > 0) {
-                msg.looks = {};
+            });
+            game.rubys.forEach(r => {
+                rubyEncoder.writeToBuffer(view, {
+                    id: r.id,
+                    x: r.x,
+                    y: r.y,
+                    baseSize: r.baseSize,
+                    hp: r.hp,
+                    protection: r.protectionTicks / rubyProtectionTicks
+                });
+            });
+            game.obstacles.forEach(o => {
+                obstacleEncoder.writeToBuffer(view, {
+                    id: o.id,
 
-                for (let i = 0; i < game.looksMapIdEdits.length; i++) {
-                    const idd = game.looksMapIdEdits[i];
-                    const look = game.looksMap.get(idd);
-                    if (look !== undefined) {
-                        msg.looks[idd] = look;
-                    }
-                }
-            }
+                    isCircle: o.isCircle ? 1 : 0,
+                    x1: o.x1,
+                    y1: o.y1,
+                    x2: o.x2,
+                    y2: o.y2,
+                    size: o.getSize(),
+                    
+                    isAggressive: o.isAggressive ? 1 : 0
+                });
+            });
+            game.pointCreations.forEach(p => {
+                pointCreationEncoder.writeToBuffer(view, p);
+            });
+            game.pointRemovals.forEach(p => {
+                pointCreationEncoder.writeToBuffer(view, p);
+            });
 
-            if(numMessages % 50 == 0) {
-                msg.leaderboard = this.getLeaderboardData(game, beetleId);
-            }
+            // if (numMessages == 0) {
+            //     msg.looks = Object.fromEntries(game.looksMap);
+
+            //     msg.newPoints = [];
+            //     msg.removedPoints = [];
+
+            //     game.points.forEach((point, id) => {
+            //         msg.newPoints.push([id, point.x, point.y])
+            //     });
+            // } else if (game.looksMapIdEdits.length > 0) {
+            //     msg.looks = {};
+
+            //     for (let i = 0; i < game.looksMapIdEdits.length; i++) {
+            //         const idd = game.looksMapIdEdits[i];
+            //         const look = game.looksMap.get(idd);
+            //         if (look !== undefined) {
+            //             msg.looks[idd] = look;
+            //         }
+            //     }
+            // }
+
+            // if(numMessages % 50 == 0) {
+            //     msg.leaderboard = this.getLeaderboardData(game, beetleId);
+            // }
 
             numMessages ++;
 
-            ws.send(JSON.stringify(msg));
+            ws.send(buffer.buffer);
         }
         this.updateFns.push(updateFn);
 
