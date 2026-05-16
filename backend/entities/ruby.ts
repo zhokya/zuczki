@@ -6,6 +6,10 @@ export const rubyProtectionTicks = 30;
 const rubyVectorMagnitude = 0.1;
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
 
+const decreaseHpSpeed = 0.0015;
+const decreaseHpThreshold = 0.25;
+const minRubyHp = 0.15;
+
 export class Ruby {
     id: number;
     x: number;
@@ -29,11 +33,20 @@ export class Ruby {
         return this.baseSize * this.hp;
     }
 
+    sampleHpTaken() {
+        return Math.random() * 0.3 + 0.1;
+    }
+
     // Many beetles can collide in the same tick, so we handle all of them at once to be fair
     update(beetles: Map<string, Beetle>) {
-        let removeRuby = false;
-        let applyProtection = false;
+        let anyHits = false;
         let totalHpTaken = 0;
+
+        if(this.hp > decreaseHpThreshold) {
+            this.hp -= decreaseHpSpeed;
+        }
+
+        const removeIfHit = this.hp - this.sampleHpTaken() < minRubyHp;
 
         beetles.forEach(b => {
             const dx = this.x - b.x;
@@ -50,17 +63,12 @@ export class Ruby {
 
                 if (this.protectionTicks > 0) return;
 
-                let hp = Math.random() * 0.3 + 0.1;
+                const hp = removeIfHit ? this.hp : Math.min(this.hp - minRubyHp, this.sampleHpTaken());
 
-                if (this.hp - hp < 0.15) {
-                    removeRuby = true;
-                    hp = this.hp;
-                } else {
-                    this.vx += ndx * rubyVectorMagnitude;
-                    this.vy += ndx * rubyVectorMagnitude;
-                    applyProtection = true;
-                    totalHpTaken += hp;
-                }
+                this.vx += ndx * rubyVectorMagnitude;
+                this.vy += ndx * rubyVectorMagnitude;
+                anyHits = true;
+                totalHpTaken += hp;
 
                 b.vx -= ndx * vectorMagnitudes.ruby.position * hp;
                 b.vy -= ndy * vectorMagnitudes.ruby.position * hp;
@@ -69,11 +77,11 @@ export class Ruby {
             }
         });
 
-        if (removeRuby) {
-            this.hp = -1;
-        }
-        if (applyProtection) {
+        if (anyHits) {
             this.protectionTicks = rubyProtectionTicks;
+            if(removeIfHit) {
+                this.hp = -1;
+            }
         }
         this.hp -= totalHpTaken;
 
