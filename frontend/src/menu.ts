@@ -90,8 +90,7 @@ function initializeInputs() {
 c.addEventListener('click', () => {
     c.className = 'choosingLooks';
     document.getElementById('menu-fade')?.setAttribute('style', 'opacity: 0.6');
-    document.getElementById('nickname')?.setAttribute('style', 'pointer-events: none; opacity: 0;');
-    document.getElementById('play')?.setAttribute('style', 'pointer-events: none; opacity: 0;');
+    document.getElementById('not-looks')?.setAttribute('style', 'pointer-events: none; opacity: 0;');
     document.getElementById('looks')?.setAttribute('style', 'pointer-events: all; opacity: 1;');
     initializeInputs();
 });
@@ -103,8 +102,7 @@ function saveToStorage() {
 looksSave.addEventListener('click', () => {
     c.className = 'notChoosingLooks';
     document.getElementById('menu-fade')?.setAttribute('style', 'opacity: 0');
-    document.getElementById('nickname')?.setAttribute('style', 'pointer-events: all; opacity: 1;');
-    document.getElementById('play')?.setAttribute('style', 'pointer-events: all; opacity: 1;');
+    document.getElementById('not-looks')?.setAttribute('style', 'pointer-events: all; opacity: 1;');
     document.getElementById('looks')?.setAttribute('style', 'pointer-events: none; opacity: 0;');
     saveToStorage();
 });

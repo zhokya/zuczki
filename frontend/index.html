@@ -89,6 +89,10 @@
             background: white;
             transition: 0.4s;
         }
+
+        #not-looks {
+            transition: 0.4s;
+        }
         #final-score {
             position: absolute;
             width: 100%;
@@ -113,7 +117,6 @@
             border: 2px solid lightgray;
             border-radius: 8px;
             box-sizing: border-box;
-            transition: 0.4s;
         }
         #play {
             position: absolute;
@@ -128,7 +131,6 @@
             box-sizing: border-box;
             cursor: pointer;
             font-size: 20px;
-            transition: 0.4s;
         }
 
 
@@ -363,10 +365,13 @@
     <div id="menu">
         <div id="menu-fade"></div>
 
-        <span id="final-score"></span>
         <canvas id="s" width="1024" height="1024" class="notChoosingLooks"></canvas>
-        <input id="nickname" type="text" placeholder="nazwa" maxlength="18" />
-        <button id="play">Graj</button>
+
+        <div id="not-looks">
+            <span id="final-score"></span>
+            <input id="nickname" type="text" placeholder="nazwa" maxlength="18" />
+            <button id="play">Graj</button>
+        </div>
 
         <div id="looks">
             <div id="looks-antenna">
