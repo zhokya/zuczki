@@ -1,14 +1,15 @@
 import WebSocket, { WebSocketServer } from "ws";
-import { isLooks } from "../shared/looks.js";
+import { isLooks, looksEntryEncoder, type Looks, type LooksEntry } from "../shared/looks.js";
 import env from "./env.js";
 import type { Game } from "./game.js";
 import type { IncomingMessage } from "http";
 import { Beetle } from "./entities/beetle.js";
 import { rubyProtectionTicks } from "./entities/ruby.js";
 import { beetleEncoder, clientMessageEncoder, headerEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder } from "../shared/dataEncoders.js";
-import { PointedDataView } from "../shared/encoder.js";
 import { moduloAngle } from "../shared/utils.js";
 import { normalizeLooks } from "../shared/looks.js";
+import { PointedDataView } from "../shared/encoder/types.js";
+import { utf8ByteLength } from "../shared/encoder/stringEncoder.js";
 
 export class GameServer {
     port: number;
@@ -114,21 +115,31 @@ export class GameServer {
             const beetle = beetleId === null ? undefined : game.beetles.get(beetleId);
 
             // TODO: do not send everything!
+            const looksToSend: LooksEntry[] = [];
+            if (numMessages == 0) {
+                game.looksMap.forEach((looks, globId) => {
+                    looksToSend.push({ globId, looks });
+                });
+            } else {
+                for (let i = 0; i < game.looksMapIdEdits.length; i++) {
+                    const globId = game.looksMapIdEdits[i];
+                    const looks = game.looksMap.get(globId) as Looks;
+                    looksToSend.push({ globId, looks });
+                }
+            }
+            let numNicknameStringBytes = 0;
+            looksToSend.forEach(lookEntry => {
+                numNicknameStringBytes += utf8ByteLength(lookEntry.looks.nickname);
+            });
+
             const header = {
                 globId: beetle ? game.resolveGlobalId(beetle.id) : 0,
                 numBeetles: game.beetles.size,
                 numRubys: game.rubys.size,
                 numObstacles: game.obstacles.size,
-                numPointCreations: game.pointCreations.length,
-                numPointRemovals: game.pointRemovals.length,
-                // numLooks: game.looksMapIdEdits.length
-                numLooks: 0
-            }
-
-            if (numMessages == 0) {
-                // header.numLooks = game.looksMap.size;
-                header.numPointCreations = game.points.size;
-                header.numPointRemovals = 0;
+                numPointCreations: numMessages == 0 ? game.points.size : game.pointCreations.length,
+                numPointRemovals: numMessages == 0 ? 0 : game.pointRemovals.length,
+                numLooks: looksToSend.length
             }
 
             const buffer = Buffer.alloc(
@@ -137,7 +148,8 @@ export class GameServer {
                 header.numRubys * rubyEncoder.bytes +
                 header.numObstacles * obstacleEncoder.bytes +
                 header.numPointCreations * pointCreationEncoder.bytes +
-                header.numPointRemovals * pointRemovalEncoder.bytes
+                header.numPointRemovals * pointRemovalEncoder.bytes +
+                header.numLooks * (looksEntryEncoder.bytes + 64) + numNicknameStringBytes
             );
             const view = new PointedDataView(new DataView(
                 buffer.buffer,
@@ -186,9 +198,6 @@ export class GameServer {
                 game.points.forEach(p => {
                     pointCreationEncoder.writeToBuffer(view, { id: p.id, x: p.x, y: p.y });
                 });
-                // game.looksMap.forEach((look, globId) => {
-                //     looksEntryEncoder.writeToBuffer(view, { globId, ...look });
-                // });
             } else {
                 game.pointCreations.forEach(p => {
                     pointCreationEncoder.writeToBuffer(view, p);
@@ -196,13 +205,11 @@ export class GameServer {
                 game.pointRemovals.forEach(p => {
                     pointCreationEncoder.writeToBuffer(view, p);
                 });
-
-                // for (let i = 0; i < game.looksMapIdEdits.length; i++) {
-                //     const globId = game.looksMapIdEdits[i];
-                //     const look = game.looksMap.get(globId) as Looks;
-                //     looksEntryEncoder.writeToBuffer(view, { globId, ...look });
-                // }
             }
+
+            looksToSend.forEach(lookEntry => {
+                looksEntryEncoder.writeToBuffer(view, lookEntry);
+            });
 
             // if(numMessages % 50 == 0) {
             //     msg.leaderboard = this.getLeaderboardData(game, beetleId);

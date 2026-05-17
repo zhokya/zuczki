@@ -10,9 +10,9 @@ import { renderBeforeTransform, renderEnvironment, renderWorldEdge } from "./vis
 import { updateFpsCounter } from "./visuals/fpsCounter";
 import { LocalObstacle } from "./entities/obstacle";
 import { getVisionBoundsFromCenter } from "./visionBounds";
-import type { Looks } from "../../shared/looks";
+import { looksEntryEncoder, type Looks, type LooksEntry } from "../../shared/looks";
 import { beetleEncoder, headerEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, type MessageBeetle, type MessageObstacle, type MessageRuby, type PointCreation, type PointRemoval } from "../../shared/dataEncoders";
-import { PointedDataView } from "../../shared/encoder";
+import { PointedDataView } from "../../shared/encoder/types";
 import { formatPoints } from "../../shared/utils";
 
 const baseVisibleArea = 25;
@@ -47,6 +47,7 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     const obstacles: MessageObstacle[] = obstacleEncoder.readListFromBuffer(view, header.numObstacles);
     const pointCreations: PointCreation[] = pointCreationEncoder.readListFromBuffer(view, header.numPointCreations);
     const pointRemovals: PointRemoval[] = pointRemovalEncoder.readListFromBuffer(view, header.numPointRemovals);
+    const lookUpdates: LooksEntry[] = looksEntryEncoder.readListFromBuffer(view, header.numLooks);
 
     selfGlobId = header.globId;
 
@@ -119,11 +120,9 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
         }
     }
 
-    // if (d.looks !== undefined) {
-    //     for (const k in d.looks) {
-    //         looks.set(k, d.looks[k]);
-    //     }
-    // }
+    lookUpdates.forEach(lookEntry => {
+        looks.set(lookEntry.globId, lookEntry.looks);
+    });
 
     pointCreations.forEach(point => {
         localPoints.set(point.id, new LocalPoint(point));

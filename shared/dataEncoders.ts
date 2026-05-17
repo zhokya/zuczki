@@ -1,6 +1,7 @@
-import { BooleanEncoder, Encoder, RangeEncoder, UintEncoder } from "./encoder.js";
+import { Encoder } from "./encoder/encoder.js";
+import { BooleanEncoder, RangeEncoder, UintEncoder } from "./encoder/numberEncoders.js";
 
-const idEncoder = new UintEncoder(32);
+export const idEncoder = new UintEncoder(32);
 const positionEncoder = new RangeEncoder(16, -100, 100);
 const angleEncoder = new RangeEncoder(16, 0, Math.PI * 2);
 const sizeEncoder = new RangeEncoder(16, 0, 20);

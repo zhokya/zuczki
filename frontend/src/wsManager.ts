@@ -1,5 +1,5 @@
 import { clientMessageEncoder, type ClientMessage } from "../../shared/dataEncoders";
-import { PointedDataView } from "../../shared/encoder";
+import { PointedDataView } from "../../shared/encoder/types";
 import { generateId } from "../../shared/utils";
 
 function getBeetleId(): string {

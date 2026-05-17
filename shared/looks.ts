@@ -1,11 +1,22 @@
-export type Looks = {
-    mainColor: number;
-    insideColor: number;
-    antennaColor: number;
-    antennaSize: number;
-    antennaDots: boolean;
-    nickname: string;
-};
+import { idEncoder } from "./dataEncoders.js";
+import { Encoder } from "./encoder/encoder.js";
+import { BooleanEncoder, RangeEncoder, UintEncoder } from "./encoder/numberEncoders.js";
+import { StringEncoder } from "./encoder/stringEncoder.js";
+
+export const looksEncoder = new Encoder({
+    mainColor: new UintEncoder(8),
+    insideColor: new UintEncoder(8),
+    antennaColor: new UintEncoder(8),
+    antennaSize: new RangeEncoder(8, 0, 0.5),
+    antennaDots: new BooleanEncoder(),
+    nickname: new StringEncoder(8)
+});
+export const looksEntryEncoder = new Encoder({
+    globId: idEncoder,
+    looks: looksEncoder
+});
+export type Looks = typeof looksEncoder.type;
+export type LooksEntry = typeof looksEntryEncoder.type;
 
 export function isLooks(obj: any): obj is Looks {
     return (
@@ -120,13 +131,13 @@ export function getRandomLook(nickname: string): Looks {
 export function normalizeLooks(looks: Looks) {
     looks.nickname = looks.nickname.split('\0').join('').split('\n').join('').slice(0, 18);
     looks.antennaSize = Math.max(0, Math.min(0.5, looks.antennaSize));
-    if(looks.mainColor < 0 || looks.mainColor >= colors.length) {
+    if (looks.mainColor < 0 || looks.mainColor >= colors.length) {
         looks.mainColor = getRandomColor();
     }
-    if(looks.insideColor < 0 || looks.insideColor >= colors.length) {
+    if (looks.insideColor < 0 || looks.insideColor >= colors.length) {
         looks.insideColor = getRandomColor();
     }
-    if(looks.antennaColor < 0 || looks.antennaColor >= colors.length) {
+    if (looks.antennaColor < 0 || looks.antennaColor >= colors.length) {
         looks.antennaColor = getRandomColor();
     }
 }
