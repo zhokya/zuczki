@@ -7,13 +7,38 @@ export function generateId(id_length: number): string {
 }
 
 export class NumericIdGenerator {
-    id = 4;  // first few ids for special use (id = 0 used as 'null', required by data encoders)
-    next() {
-        this.id ++;
-        if(this.id > 1_000_000_000) {
-            this.id = 4;
+    queue: number[] = [];
+    unregisteredQueue1: number[] = [];
+    unregisteredQueue2: number[] = [];
+    maxId: number;
+
+    constructor(maxId: number) {
+        // first few ids for special use (id = 0 used as 'null', required by data encoders)
+        for(let id = 4; id < maxId; id ++) {
+            this.queue.push(id);
         }
-        return this.id;
+        this.maxId = maxId;
+    }
+
+    update() {
+        while(this.unregisteredQueue2.length > 0) {
+            this.queue.push(this.unregisteredQueue2.pop() as number);
+        }
+        while(this.unregisteredQueue1.length > 0) {
+            this.unregisteredQueue2.push(this.unregisteredQueue1.pop() as number);
+        }
+    }
+
+    next() {
+        const id = this.queue.pop();
+        if(id === undefined) {
+            throw new Error('Not enough IDs in NumericIdGenerator - used all up to ' + this.maxId);
+        }
+        return id;
+    }
+
+    unregister(id: number) {
+        this.unregisteredQueue1.push(id);
     }
 }
 

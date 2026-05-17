@@ -1,7 +1,7 @@
 import { Encoder } from "./encoder/encoder.js";
 import { BooleanEncoder, RangeEncoder, UintEncoder } from "./encoder/numberEncoders.js";
 
-export const globIdEncoder = new UintEncoder(32);
+export const globIdEncoder = new UintEncoder(8);
 const positionEncoder = new RangeEncoder(16, -100, 100);
 const angleEncoder = new RangeEncoder(16, 0, Math.PI * 2);
 const sizeEncoder = new RangeEncoder(16, 0, 20);
@@ -19,16 +19,16 @@ export const beetleEncoder = new Encoder({
 });
 
 export const rubyEncoder = new Encoder({
-    id: new UintEncoder(32),
+    id: new UintEncoder(16),
     x: positionEncoder,
     y: positionEncoder,
     baseSize: sizeEncoder,
-    hp: new RangeEncoder(16, 0, 1),
-    protection: new RangeEncoder(16, 0, 1),
+    hp: new RangeEncoder(8, 0, 1),
+    protection: new RangeEncoder(8, 0, 1),
 });
 
 export const obstacleEncoder = new Encoder({
-    id: new UintEncoder(32),
+    id: new UintEncoder(8),
 
     isCircle: booleanEncoder,
     x1: positionEncoder,
@@ -41,13 +41,13 @@ export const obstacleEncoder = new Encoder({
 });
 
 export const pointCreationEncoder = new Encoder({
-    id: new UintEncoder(32),
+    id: new UintEncoder(16),
     x: positionEncoder,
     y: positionEncoder
 });
 
 export const pointRemovalEncoder = new Encoder({
-    id: new UintEncoder(32),
+    id: new UintEncoder(16),
     x: positionEncoder,
     y: positionEncoder,
 });

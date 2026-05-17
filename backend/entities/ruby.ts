@@ -1,4 +1,5 @@
 import env from "../env.js";
+import type { Game } from "../game.js";
 import { vectorDecay, vectorMagnitudes } from "../sharedConstants.js";
 import type { Beetle } from "./beetle.js";
 
@@ -12,6 +13,8 @@ const minRubyHp = 0.15;
 
 export class Ruby {
     id: number;
+    game: Game;
+
     x: number;
     y: number;
     vx: number;
@@ -20,8 +23,10 @@ export class Ruby {
     hp: number = 1;
     protectionTicks: number = rubyProtectionTicks;
 
-    constructor(id: number, x: number, y: number, vx: number, vy: number, baseSize: number) {
-        this.id = id;
+    constructor(x: number, y: number, vx: number, vy: number, baseSize: number, game: Game) {
+        this.id = game.rubyId.next();
+        this.game = game;
+
         this.x = x;
         this.y = y;
         this.vx = vx;
@@ -103,5 +108,9 @@ export class Ruby {
             this.vx = -vectorMagnitudes.mapEdgeCollision.position * normx;
             this.vy = -vectorMagnitudes.mapEdgeCollision.position * normy;
         }
+    }
+
+    onDead() {
+        this.game.rubyId.unregister(this.id);
     }
 }

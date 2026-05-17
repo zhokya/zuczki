@@ -65,6 +65,7 @@ export class Beetle {
     clicked: boolean = false;
 
     // other
+    game: Game;
     id: string;
     lastBrainActive: number;
     looks: Looks;
@@ -79,6 +80,7 @@ export class Beetle {
         this.angle = initialAngle;
         this.targetAngle = initialAngle;
 
+        this.game = game;
         this.id = id;
         this.lastBrainActive = isBot ? -1e9 : performance.now();
 
@@ -142,7 +144,7 @@ export class Beetle {
         }
     }
 
-    createPointsAndRubyAfterDeath(game: Game) {
+    onDead() {
         let numPoints = Math.floor(this.score * 0.9);
 
         const createRuby = Math.random() < (numPoints - 50) / (150 - 50);
@@ -155,22 +157,24 @@ export class Beetle {
             const rubyPoints = (Math.random() * 0.3 + 0.4) * numPoints;
             numPoints -= rubyPoints;
 
-            game.rubyId.next();
-            game.rubys.set(game.rubyId.id, new Ruby(
-                game.rubyId.id,
+            const ruby = new Ruby(
                 this.x,
                 this.y,
                 Math.cos(this.angle) * 1.2 * infSum,
                 Math.sin(this.angle) * 1.2 * infSum,
-                Math.sqrt(rubyPoints / 100)
-            ));
+                Math.sqrt(rubyPoints / 100),
+                this.game
+            );
+            this.game.rubys.set(ruby.id, ruby);
         }
 
         for (let i = 0; i < Math.max(0, numPoints) + 10; i++) {
             const [px, py] = samplePointInCircle(this.size);
-            game.pointId.next();
-            game.points.set(game.pointId.id, new Point(game.pointId.id, px + this.x, py + this.y, false, game));
+            const point = new Point(px + this.x, py + this.y, false, this.game);
+            this.game.points.set(point.id, point);
         }
+
+        this.game.globId.unregister(this.globId);
     }
 
     handleBeetleCollision(other: Beetle) {

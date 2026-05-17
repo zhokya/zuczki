@@ -202,7 +202,7 @@ export class GameServer {
                     pointCreationEncoder.writeToBuffer(view, p);
                 });
                 game.pointRemovals.forEach(p => {
-                    pointCreationEncoder.writeToBuffer(view, p);
+                    pointRemovalEncoder.writeToBuffer(view, p);
                 });
             }
 

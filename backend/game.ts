@@ -36,10 +36,10 @@ export class Game {
         this.rubys = new Map();
         this.obstacles = new Map();
 
-        this.globId = new NumericIdGenerator();
-        this.pointId = new NumericIdGenerator();
-        this.rubyId = new NumericIdGenerator();
-        this.obstacleId = new NumericIdGenerator();
+        this.globId = new NumericIdGenerator(255);
+        this.pointId = new NumericIdGenerator(65535);
+        this.rubyId = new NumericIdGenerator(65535);
+        this.obstacleId = new NumericIdGenerator(255);
 
         this.url = url;
     }
@@ -87,6 +87,11 @@ export class Game {
     }
 
     update() {
+        this.globId.update();
+        this.rubyId.update();
+        this.obstacleId.update();
+        this.pointId.update();
+
         // Remove points first, so that there are no points that are created and removed in the same tick
         this.beetles.forEach(beetle => {
             this.points.forEach((point, id) => {
@@ -99,6 +104,7 @@ export class Game {
         this.obstacles.forEach(obstacle => {
             obstacle.update();
             if (obstacle.getDistanceTo(0, 0) - obstacle.size > mapSize + 2) {
+                obstacle.onDead();
                 this.obstacles.delete(obstacle.id);
                 return;
             }
@@ -111,7 +117,7 @@ export class Game {
             beetle.update();
 
             if (beetle.size > maxSize) {
-                beetle.createPointsAndRubyAfterDeath(this);
+                beetle.onDead();
                 this.beetles.delete(beetle.id);
                 return;
             }
@@ -125,6 +131,7 @@ export class Game {
         this.rubys.forEach(ruby => {
             ruby.update(this.beetles);
             if (ruby.hp < 0) {
+                ruby.onDead();
                 this.rubys.delete(ruby.id);
             }
         });

@@ -15,14 +15,15 @@ export class Point {
     isEnv: boolean;
     game: Game;
 
-    constructor(id: number, x: number, y: number, isEnv: boolean, game: Game) {
-        this.id = id;
+    constructor(x: number, y: number, isEnv: boolean, game: Game) {
+        this.id = game.pointId.next();
+        this.game = game;
+
         this.x = x;
         this.y = y;
         this.isEnv = isEnv;
-        this.game = game;
 
-        game.pointCreations.push({ id, x, y });
+        game.pointCreations.push({ id: this.id, x, y });
         if (isEnv) {
             game.numEnvironmentDensityPoints++;
         } else {
@@ -49,6 +50,8 @@ export class Point {
             this.game.numBeetleDeathPoints--;
         }
 
+        this.game.pointId.unregister(this.id);
+
         return true;
     }
 }
@@ -65,8 +68,8 @@ export function spawnNewPoints(game: Game) {
             }
         });
         if (isCorrect) {
-            game.pointId.next();
-            game.points.set(game.pointId.id, new Point(game.pointId.id, x, y, true, game));
+            const point = new Point(x, y, true, game);
+            game.points.set(point.id, point);
         }
     }
 }

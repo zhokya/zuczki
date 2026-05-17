@@ -4,8 +4,6 @@ import { Beetle } from "./beetle.js";
 import type { Ruby } from "./ruby.js";
 
 export class Obstacle {
-    id: number;
-
     isCircle: boolean;
     x1: number;
     y1: number;
@@ -18,7 +16,10 @@ export class Obstacle {
     animationSpeed: number;
     rotationSpeed: number;
 
-    constructor(id: number, game: Game) {
+    id: number;
+    game: Game;
+
+    constructor(game: Game) {
         const [x, y] = game.getSpawnPointWithMargin(0);
 
         const isCircle = Math.random() < 0.5;
@@ -39,7 +40,9 @@ export class Obstacle {
             size = Math.random() * 0.3 + 0.5;
         }
 
-        this.id = id;
+        this.id = game.obstacleId.next();
+        this.game = game;
+
         this.isCircle = isCircle;
         this.x1 = x1;
         this.y1 = y1;
@@ -62,6 +65,10 @@ export class Obstacle {
             this.x2 += my;
             this.y2 -= mx;
         }
+    }
+
+    onDead() {
+        this.game.obstacleId.unregister(this.id);
     }
 
     finishUpdate() {
@@ -178,7 +185,7 @@ export class Obstacle {
 
 export function spawnNewObstacles(game: Game) {
     if (game.obstacles.size < 16) {
-        game.obstacleId.next();
-        game.obstacles.set(game.obstacleId.id, new Obstacle(game.obstacleId.id, game));
+        const obstacle = new Obstacle(game);
+        game.obstacles.set(obstacle.id, obstacle);
     }
 }
