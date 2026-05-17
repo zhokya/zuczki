@@ -20,11 +20,13 @@ export class VisionBounds {
     }
 }
 
-export function getVisionBoundsFromCenter(centerX: number, centerY: number, w: number, h: number, scale: number) {
+export function getVisionBoundsFromCenter(centerX: number, centerY: number, w: number, h: number, scale: number = 1) {
+    const w2s = w / 2 / scale;
+    const h2s = h / 2 / scale;
     return new VisionBounds(
-        centerX - w / 2 / scale,
-        centerY - h / 2 / scale,
-        centerX + w / 2 / scale,
-        centerY + h / 2 / scale,
+        centerX - w2s,
+        centerY - h2s,
+        centerX + w2s,
+        centerY + h2s,
     );
 }

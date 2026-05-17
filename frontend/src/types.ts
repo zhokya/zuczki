@@ -1,4 +1,4 @@
-import type { VisionBounds } from "./visionBounds";
+import type { VisionBounds } from "../../shared/visionBounds";
 
 export interface RenderInfo {
     ctx: CanvasRenderingContext2D;

@@ -4,7 +4,7 @@ import diceImg from './assets/dice.png';
 import type { RenderInfo } from "./types";
 import { isAlive } from "./mainCanvas";
 import { sendJson } from "./wsManager";
-import { VisionBounds } from "./visionBounds";
+import { VisionBounds } from "../../shared/visionBounds";
 import { isLooks, type Looks } from "../../shared/looks";
 import { colors, getRandomLook } from "../../shared/looks";
 

@@ -10,6 +10,18 @@ import { moduloAngle } from "../shared/utils.js";
 import { normalizeLooks } from "../shared/looks.js";
 import { PointedDataView } from "../shared/encoder/types.js";
 import { utf8ByteLength } from "../shared/encoder/stringEncoder.js";
+import { getVisionBoundsFromCenter } from "../shared/visionBounds.js";
+import { defaultAspect, getVisibleArea } from "../shared/getVisibleArea.js";
+
+function filterMapValues<T>(map: Map<any, T>, filterFn: (element: T) => boolean): T[] {
+    const result: T[] = [];
+    map.forEach(element => {
+        if(filterFn(element)) {
+            result.push(element);
+        }
+    });
+    return result;
+}
 
 export class GameServer {
     port: number;
@@ -109,7 +121,18 @@ export class GameServer {
         const updateFn = () => {
             const beetle = beetleId === null ? undefined : game.beetles.get(beetleId);
 
-            // TODO: do not send everything!
+            const centerX = beetle ? beetle.x : 0;
+            const centerY = beetle ? beetle.y : 0;
+            const visibleArea = getVisibleArea(beetle ? beetle.size : null);
+            const bounds = getVisionBoundsFromCenter(centerX, centerY, visibleArea * defaultAspect, visibleArea);
+
+            const beetlesToSend = filterMapValues(game.beetles, b => bounds.isInsideWithMargin(b.x, b.y, b.size * 1.5 + 1));
+            const rubysToSend = filterMapValues(game.rubys, r => bounds.isInsideWithMargin(r.x, r.y, r.baseSize + 2));
+            const obstaclesToSend = filterMapValues(
+                game.obstacles, 
+                o => bounds.isInsideWithMargin(o.x1, o.y1, o.size + 2) || (!o.isCircle && bounds.isInsideWithMargin(o.x2, o.y2, o.size + 1))
+            );
+
             const looksToSend: LooksEntry[] = [];
             if (numMessages == 0) {
                 game.beetles.forEach(beetle => {
@@ -131,9 +154,9 @@ export class GameServer {
 
             const header = {
                 globId: beetle ? beetle.globId : 0,
-                numBeetles: game.beetles.size,
-                numRubys: game.rubys.size,
-                numObstacles: game.obstacles.size,
+                numBeetles: beetlesToSend.length,
+                numRubys: rubysToSend.length,
+                numObstacles: obstaclesToSend.length,
                 numPointCreations: numMessages == 0 ? game.points.size : game.pointCreations.length,
                 numPointRemovals: numMessages == 0 ? 0 : game.pointRemovals.length,
                 numLooks: looksToSend.length,
@@ -150,6 +173,16 @@ export class GameServer {
                 header.numLooks * looksEntryEncoder.bytes + numNicknameStringBytes +
                 header.numLeaderboardEntries * leaderboardEntryEncoder.bytes
             );
+            // console.log(
+            //     'h', headerEncoder.bytes,
+            //     'b', header.numBeetles * beetleEncoder.bytes,
+            //     'r', header.numRubys * rubyEncoder.bytes,
+            //     'o', header.numObstacles * obstacleEncoder.bytes,
+            //     'pc', header.numPointCreations * pointCreationEncoder.bytes,
+            //     'pr', header.numPointRemovals * pointRemovalEncoder.bytes,
+            //     'l', header.numLooks * looksEntryEncoder.bytes + numNicknameStringBytes,
+            //     'l', header.numLeaderboardEntries * leaderboardEntryEncoder.bytes
+            // );
             const view = new PointedDataView(new DataView(
                 buffer.buffer,
                 buffer.byteOffset,
@@ -157,7 +190,7 @@ export class GameServer {
             ));
 
             headerEncoder.writeToBuffer(view, header);
-            game.beetles.forEach(b => {
+            beetlesToSend.forEach(b => {
                 beetleEncoder.writeToBuffer(view, {
                     x: b.x,
                     y: b.y,
@@ -168,7 +201,7 @@ export class GameServer {
                     globId: b.globId
                 });
             });
-            game.rubys.forEach(r => {
+            rubysToSend.forEach(r => {
                 rubyEncoder.writeToBuffer(view, {
                     id: r.id,
                     x: r.x,
@@ -178,7 +211,7 @@ export class GameServer {
                     protection: r.protectionTicks / rubyProtectionTicks
                 });
             });
-            game.obstacles.forEach(o => {
+            obstaclesToSend.forEach(o => {
                 obstacleEncoder.writeToBuffer(view, {
                     id: o.id,
 

@@ -7,16 +7,14 @@ import { renderSizeWarning } from "./visuals/sizeWarning";
 import { renderMinimap } from "./visuals/minimap";
 import type { RenderInfo } from "./types";
 import { renderBeforeTransform, renderEnvironment, renderWorldEdge } from "./visuals/environment";
-import { updateFpsCounter } from "./visuals/fpsCounter";
+import { registerWebsocketDataReceived, updateFpsCounter } from "./visuals/fpsCounter";
 import { LocalObstacle } from "./entities/obstacle";
-import { getVisionBoundsFromCenter } from "./visionBounds";
+import { getVisionBoundsFromCenter } from "../../shared/visionBounds";
 import { looksEntryEncoder, type Looks, type LooksEntry } from "../../shared/looks";
 import { beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, type LeaderboardEntry, type MessageBeetle, type MessageObstacle, type MessageRuby, type PointCreation, type PointRemoval } from "../../shared/dataEncoders";
 import { PointedDataView } from "../../shared/encoder/types";
 import { formatPoints } from "../../shared/utils";
-
-const baseVisibleArea = 25;
-const visibleAreaExponent = 0.4;
+import { defaultAspect, getVisibleArea } from "../../shared/getVisibleArea";
 
 const c = document.getElementById('c') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
@@ -39,6 +37,8 @@ let localObstacles = new Map<number, LocalObstacle>();
 let localPoints = new Map<number, LocalPoint>();
 
 onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
+    registerWebsocketDataReceived(data.byteLength);
+
     const view = new PointedDataView(new DataView(data));
     const header = headerEncoder.readFromBuffer(view);
 
@@ -175,14 +175,14 @@ export function mainCanvasRenderLoop(t: number) {
 
     let centerX = 0;
     let centerY = 0;
-    let visibleArea = 2 * baseVisibleArea;
+    let visibleArea = getVisibleArea(null);
     const selfBeetle = localBeetles.get(selfGlobId);
     if (selfBeetle !== undefined) {
         centerX = selfBeetle.x.value;
         centerY = selfBeetle.y.value;
-        visibleArea = Math.pow(selfBeetle.size.value, visibleAreaExponent) * baseVisibleArea;
+        visibleArea = getVisibleArea(selfBeetle.size.value);
     }
-    const scale = (w + h) / 2 / visibleArea;
+    const scale = Math.max(h / visibleArea, w / defaultAspect / visibleArea);
 
     const bounds = getVisionBoundsFromCenter(centerX, centerY, w, h, scale);
     const renderInfo: RenderInfo = { w, h, ctx, t, prevT, scale, bounds };
@@ -195,6 +195,15 @@ export function mainCanvasRenderLoop(t: number) {
     ctx.translate(-centerX, -centerY);
 
     renderEnvironment(renderInfo);
+
+    // ctx.fillStyle = 'rgba(0,0,0,.5)';
+    // const vx = visibleArea * defaultAspect;
+    // const vy = visibleArea;
+    // ctx.fillRect(centerX - vx / 2, centerY - vy / 2, vx, vy);
+    // ctx.fillStyle = 'rgba(0,0,255,.2)';
+    // ctx.fillRect(centerX - vx * 0.45, centerY - vy * 0.45, vx * 0.9, vy * 0.9);
+    // ctx.fillStyle = 'rgba(0,255,0,.2)';
+    // ctx.fillRect(centerX - vx / 4, centerY - vy / 4, vx / 2, vy / 2);
 
     const texts: { x: number, y: number, text: string }[] = [];
     const matrix = ctx.getTransform();

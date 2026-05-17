@@ -7,6 +7,11 @@ let maxRenderingTime = 0;
 let totalFrames = 0;
 let maxFrameDelay = 0;
 
+let totalWebsocketBytesReceived = 0;
+export function registerWebsocketDataReceived(bytes: number) {
+    totalWebsocketBytesReceived += bytes;
+}
+
 let prevUpdate = -1;
 let prevTime = -1;
 
@@ -24,17 +29,19 @@ export function updateFpsCounter(frameStartTime: number) {
     totalFrames++;
 
     const timeElapsed = currentTime - prevUpdate;
-    if (timeElapsed > 1000) {
+    if (timeElapsed > 2000) {
         prevUpdate = currentTime;
 
         const fps = totalFrames / (timeElapsed / 1000);
         const lowestFps = 1000 / maxFrameDelay;
         const avgMs = totalRenderingTime / totalFrames;
         const maxMs = maxRenderingTime;
+        const kbps = (totalWebsocketBytesReceived / 1000) / (timeElapsed / 1000);
 
         if (allStats) {
             fpsCounterElement.innerText = Math.round(fps) + 'fps (' + Math.round(lowestFps) + 'fps lowest)\n' +
-                avgMs.toFixed(2) + 'ms (' + maxMs.toFixed(2) + 'ms max)';
+                avgMs.toFixed(2) + 'ms (' + maxMs.toFixed(2) + 'ms max)\n' + 
+                kbps.toFixed(1) + 'kB/s';
         } else {
             fpsCounterElement.innerText = Math.round(fps) + 'fps';
         }
@@ -43,6 +50,7 @@ export function updateFpsCounter(frameStartTime: number) {
         maxRenderingTime = 0;
         totalFrames = 0;
         maxFrameDelay = 0;
+        totalWebsocketBytesReceived = 0;
     }
 
     prevTime = currentTime;
