@@ -1,9 +1,8 @@
-import { getRandomLook, getRandomNickname } from "../shared/looks.js";
+import { getRandomLook, getRandomNickname, type Looks } from "../shared/looks.js";
 import { NumericIdGenerator, samplePointInCircle } from "../shared/utils.js";
 import env from "./env.js";
 
 import { Beetle } from "./entities/beetle.js";
-import type { Looks } from "../shared/types.js";
 import { Point, spawnNewPoints } from "./entities/point.js";
 import { Ruby } from "./entities/ruby.js";
 import { Obstacle, spawnNewObstacles } from "./entities/obstacle.js";

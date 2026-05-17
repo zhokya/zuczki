@@ -1,4 +1,24 @@
-import type { Looks } from "./types.js";
+export type Looks = {
+    mainColor: number;
+    insideColor: number;
+    antennaColor: number;
+    antennaSize: number;
+    antennaDots: boolean;
+    nickname: string;
+};
+
+export function isLooks(obj: any): obj is Looks {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        typeof obj.mainColor === "number" &&
+        typeof obj.insideColor === "number" &&
+        typeof obj.antennaColor === "number" &&
+        typeof obj.antennaSize === "number" &&
+        typeof obj.antennaDots === "boolean" &&
+        typeof obj.nickname === "string"
+    );
+}
 
 export const colors = [
     "#f1615f",
@@ -83,7 +103,7 @@ export const colors = [
 ];
 
 function getRandomColor() {
-    return colors[Math.floor(Math.random() * colors.length)];
+    return Math.floor(Math.random() * colors.length);
 }
 
 export function getRandomLook(nickname: string): Looks {
@@ -100,13 +120,13 @@ export function getRandomLook(nickname: string): Looks {
 export function normalizeLooks(looks: Looks) {
     looks.nickname = looks.nickname.split('\0').join('').split('\n').join('').slice(0, 18);
     looks.antennaSize = Math.max(0, Math.min(0.5, looks.antennaSize));
-    if(!colors.includes(looks.mainColor)) {
+    if(looks.mainColor < 0 || looks.mainColor >= colors.length) {
         looks.mainColor = getRandomColor();
     }
-    if(!colors.includes(looks.insideColor)) {
+    if(looks.insideColor < 0 || looks.insideColor >= colors.length) {
         looks.insideColor = getRandomColor();
     }
-    if(!colors.includes(looks.antennaColor)) {
+    if(looks.antennaColor < 0 || looks.antennaColor >= colors.length) {
         looks.antennaColor = getRandomColor();
     }
 }

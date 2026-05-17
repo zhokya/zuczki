@@ -5,7 +5,7 @@ import type { RenderInfo } from "./types";
 import { isAlive } from "./mainCanvas";
 import { sendJson } from "./wsManager";
 import { VisionBounds } from "./visionBounds";
-import { isLooks, type Looks } from "../../shared/types";
+import { isLooks, type Looks } from "../../shared/looks";
 import { colors, getRandomLook } from "../../shared/looks";
 
 const c = document.getElementById('s') as HTMLCanvasElement;
@@ -55,7 +55,7 @@ const elements: Record<ColorProperty, HTMLDivElement[]> = { antennaColor: [], ma
 function updateBorders() {
     colorProperties.forEach(property => {
         elements[property].forEach((other, idx) => {
-            if (colors[idx] === chosenLooks[property]) {
+            if (idx === chosenLooks[property]) {
                 other.style = 'transform: scale(1.2); background: ' + colors[idx];
             } else {
                 other.style = 'background: ' + colors[idx];
@@ -66,13 +66,12 @@ function updateBorders() {
 colorProperties.forEach(property => {
     const container = document.getElementById('looks-' + property) as HTMLDivElement;
     const elementsHere: HTMLDivElement[] = [];
-    colors.forEach(hex => {
+    colors.forEach((_hex, idx) => {
         const element = document.createElement('div');
         elementsHere.push(element);
         element.className = 'color-option';
-        // element.innerText = idx;
         element.addEventListener('click', () => {
-            chosenLooks[property] = hex;
+            chosenLooks[property] = idx;
             updateBorders();
             randomize = false;
             updateRandomizationButton();

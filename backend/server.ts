@@ -1,5 +1,5 @@
 import WebSocket, { WebSocketServer } from "ws";
-import { isLooks } from "../shared/types.js";
+import { isLooks } from "../shared/looks.js";
 import env from "./env.js";
 import type { Game } from "./game.js";
 import type { IncomingMessage } from "http";
@@ -121,9 +121,18 @@ export class GameServer {
                 numObstacles: game.obstacles.size,
                 numPointCreations: game.pointCreations.length,
                 numPointRemovals: game.pointRemovals.length,
+                // numLooks: game.looksMapIdEdits.length
+                numLooks: 0
             }
+
+            if (numMessages == 0) {
+                // header.numLooks = game.looksMap.size;
+                header.numPointCreations = game.points.size;
+                header.numPointRemovals = 0;
+            }
+
             const buffer = Buffer.alloc(
-                headerEncoder.bytes + 
+                headerEncoder.bytes +
                 header.numBeetles * beetleEncoder.bytes +
                 header.numRubys * rubyEncoder.bytes +
                 header.numObstacles * obstacleEncoder.bytes +
@@ -162,49 +171,44 @@ export class GameServer {
                 obstacleEncoder.writeToBuffer(view, {
                     id: o.id,
 
-                    isCircle: o.isCircle ? 1 : 0,
+                    isCircle: o.isCircle,
                     x1: o.x1,
                     y1: o.y1,
                     x2: o.x2,
                     y2: o.y2,
                     size: o.getSize(),
-                    
-                    isAggressive: o.isAggressive ? 1 : 0
+
+                    isAggressive: o.isAggressive
                 });
             });
-            game.pointCreations.forEach(p => {
-                pointCreationEncoder.writeToBuffer(view, p);
-            });
-            game.pointRemovals.forEach(p => {
-                pointCreationEncoder.writeToBuffer(view, p);
-            });
 
-            // if (numMessages == 0) {
-            //     msg.looks = Object.fromEntries(game.looksMap);
+            if (numMessages == 0) {
+                game.points.forEach(p => {
+                    pointCreationEncoder.writeToBuffer(view, { id: p.id, x: p.x, y: p.y });
+                });
+                // game.looksMap.forEach((look, globId) => {
+                //     looksEntryEncoder.writeToBuffer(view, { globId, ...look });
+                // });
+            } else {
+                game.pointCreations.forEach(p => {
+                    pointCreationEncoder.writeToBuffer(view, p);
+                });
+                game.pointRemovals.forEach(p => {
+                    pointCreationEncoder.writeToBuffer(view, p);
+                });
 
-            //     msg.newPoints = [];
-            //     msg.removedPoints = [];
-
-            //     game.points.forEach((point, id) => {
-            //         msg.newPoints.push([id, point.x, point.y])
-            //     });
-            // } else if (game.looksMapIdEdits.length > 0) {
-            //     msg.looks = {};
-
-            //     for (let i = 0; i < game.looksMapIdEdits.length; i++) {
-            //         const idd = game.looksMapIdEdits[i];
-            //         const look = game.looksMap.get(idd);
-            //         if (look !== undefined) {
-            //             msg.looks[idd] = look;
-            //         }
-            //     }
-            // }
+                // for (let i = 0; i < game.looksMapIdEdits.length; i++) {
+                //     const globId = game.looksMapIdEdits[i];
+                //     const look = game.looksMap.get(globId) as Looks;
+                //     looksEntryEncoder.writeToBuffer(view, { globId, ...look });
+                // }
+            }
 
             // if(numMessages % 50 == 0) {
             //     msg.leaderboard = this.getLeaderboardData(game, beetleId);
             // }
 
-            numMessages ++;
+            numMessages++;
 
             ws.send(buffer.buffer);
         }

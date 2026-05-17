@@ -10,7 +10,7 @@ import { renderBeforeTransform, renderEnvironment, renderWorldEdge } from "./vis
 import { updateFpsCounter } from "./visuals/fpsCounter";
 import { LocalObstacle } from "./entities/obstacle";
 import { getVisionBoundsFromCenter } from "./visionBounds";
-import type { Looks } from "../../shared/types";
+import type { Looks } from "../../shared/looks";
 import { beetleEncoder, headerEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, type MessageBeetle, type MessageObstacle, type MessageRuby, type PointCreation, type PointRemoval } from "../../shared/dataEncoders";
 import { PointedDataView } from "../../shared/encoder";
 import { formatPoints } from "../../shared/utils";
@@ -21,7 +21,7 @@ const visibleAreaExponent = 0.4;
 const c = document.getElementById('c') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
 const menu = document.getElementById('menu') as HTMLDivElement;
-const leaderboardElement = document.getElementById('leaderboard') as HTMLElement;
+// const leaderboardElement = document.getElementById('leaderboard') as HTMLElement;
 const finalScoreElement = document.getElementById('final-score') as HTMLElement;
 
 let prevW = -1;

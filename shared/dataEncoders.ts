@@ -1,10 +1,10 @@
-import { Encoder, FieldEncoder } from "./encoder.js";
+import { BooleanEncoder, Encoder, RangeEncoder, UintEncoder } from "./encoder.js";
 
-const idEncoder = new FieldEncoder("uint32");
-const positionEncoder = new FieldEncoder("range16", -100, 100);
-const angleEncoder = new FieldEncoder("range16", 0, Math.PI * 2);
-const sizeEncoder = new FieldEncoder("range16", 0, 20);
-const booleanEncoder = new FieldEncoder("uint8");
+const idEncoder = new UintEncoder(32);
+const positionEncoder = new RangeEncoder(16, -100, 100);
+const angleEncoder = new RangeEncoder(16, 0, Math.PI * 2);
+const sizeEncoder = new RangeEncoder(16, 0, 20);
+const booleanEncoder = new BooleanEncoder();
 
 export const beetleEncoder = new Encoder({
     "globId": idEncoder,
@@ -12,7 +12,7 @@ export const beetleEncoder = new Encoder({
     "y": positionEncoder,
     "angle": angleEncoder,
     "size": sizeEncoder,
-    "score": new FieldEncoder("uint32"),
+    "score": new UintEncoder(32),
     "targetAngle": angleEncoder,
 });
 
@@ -21,8 +21,8 @@ export const rubyEncoder = new Encoder({
     x: positionEncoder,
     y: positionEncoder,
     baseSize: sizeEncoder,
-    hp: new FieldEncoder("range16", 0, 1),
-    protection: new FieldEncoder("range16", 0, 1),
+    hp: new RangeEncoder(16, 0, 1),
+    protection: new RangeEncoder(16, 0, 1),
 });
 
 export const obstacleEncoder = new Encoder({
@@ -52,15 +52,16 @@ export const pointRemovalEncoder = new Encoder({
 
 export const headerEncoder = new Encoder({
     globId: idEncoder,
-    numBeetles: new FieldEncoder("uint8"),
-    numRubys: new FieldEncoder("uint8"),
-    numObstacles: new FieldEncoder("uint8"),
-    numPointCreations: new FieldEncoder("uint16"),
-    numPointRemovals: new FieldEncoder("uint16"),
+    numBeetles: new UintEncoder(8),
+    numRubys: new UintEncoder(8),
+    numObstacles: new UintEncoder(8),
+    numPointCreations: new UintEncoder(16),
+    numPointRemovals: new UintEncoder(16),
+    numLooks: new UintEncoder(8),
 });
 
 export const clientMessageEncoder = new Encoder({
-    clickMode: new FieldEncoder("uint8"),
+    clickMode: new UintEncoder(8),
     targetAngle: angleEncoder
 });
 

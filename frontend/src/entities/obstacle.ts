@@ -20,8 +20,8 @@ export class LocalObstacle {
 
     constructor(o: MessageObstacle) {
         this.id = o.id;
-        this.isAggressive = o.isAggressive == 1;
-        this.isCircle = o.isCircle == 1;
+        this.isAggressive = o.isAggressive;
+        this.isCircle = o.isCircle;
         this.x1 = new Interpolator(o.x1, false);
         this.y1 = new Interpolator(o.y1, false);
         this.x2 = new Interpolator(o.x2, false);

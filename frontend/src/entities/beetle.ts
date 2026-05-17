@@ -1,5 +1,5 @@
 import type { MessageBeetle } from "../../../shared/dataEncoders";
-import type { Looks } from "../../../shared/types";
+import { type Looks, colors } from "../../../shared/looks";
 import { angleDifference } from "../../../shared/utils";
 import { Interpolator } from "../interpolator";
 import type { RenderInfo } from "../types";
@@ -83,7 +83,7 @@ export function renderBeetle(renderInfo: RenderInfo, x: number, y: number, angle
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(angle);
-    ctx.strokeStyle = looks.antennaColor;
+    ctx.strokeStyle = colors[looks.antennaColor];
     ctx.lineCap = 'round';
     ctx.lineWidth = size / 10;
     if (looks.antennaSize > 0) {
@@ -100,19 +100,19 @@ export function renderBeetle(renderInfo: RenderInfo, x: number, y: number, angle
         path.arc(cx, cy, size * antennaDotsSize, 0, 2 * Math.PI);
         path.moveTo(cx, -cy);
         path.arc(cx, -cy, size * antennaDotsSize, 0, 2 * Math.PI);
-        ctx.fillStyle = looks.antennaColor;
+        ctx.fillStyle = colors[looks.antennaColor];
         ctx.fill(path);
     }
     ctx.restore();
 
     // inside body
-    ctx.fillStyle = looks.insideColor;
+    ctx.fillStyle = colors[looks.insideColor];
     ctx.beginPath();
     ctx.arc(x, y, size * insideSize(t), 0, Math.PI * 2);
     ctx.fill();
 
     // main body
-    ctx.fillStyle = looks.mainColor;
+    ctx.fillStyle = colors[looks.mainColor];
     ctx.beginPath();
     ctx.moveTo(cpx, cpy);
     ctx.arc(x, y, size, angle - Math.PI + Math.max(offsetFrom, offsetTo), angle + Math.PI - Math.max(offsetFrom, offsetTo));
@@ -225,9 +225,9 @@ export class LocalBeetle {
         if (look === undefined) {
             // server skill issue, this should never happen
             look = {
-                mainColor: renderInfo.t % 1000 > 500 ? 'black' : 'cyan',
-                insideColor: 'white',
-                antennaColor: 'black',
+                mainColor: renderInfo.t % 1000 > 500 ? 3 : 36,
+                insideColor: 56,
+                antennaColor: 3,
                 antennaDots: false,
                 antennaSize: 0,
                 nickname: ''

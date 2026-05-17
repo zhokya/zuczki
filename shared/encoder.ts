@@ -7,85 +7,193 @@ export class PointedDataView {
     }
 }
 
-export type FieldEncoderTypes =
-    "int64" | "uint64" | "float64" | "range64" |
-    "int32" | "uint32" | "float32" | "range32" |
-    "int16" | "uint16" | "float16" | "range16" |
-    "int8" | "uint8" | "range8";
-export class FieldEncoder {
-    type: FieldEncoderTypes;
-    min: number = 0;
-    max: number = 1;
-
-    subtype: 'i' | 'u' | 'f' | 'r';
-    bits: number;
+export interface IFieldEncoder<T> {
     bytes: number;
-    setFn: string;
-    getFn: string;
+    bytesVariable: boolean;
+    writeToBuffer(view: PointedDataView, value: T): void;
+    readFromBuffer(view: PointedDataView): T;
+}
+
+export class IntEncoder implements IFieldEncoder<number> {
+    bits: 8 | 16 | 32;
+    bytes: number;
+    bytesVariable = false;
     maxValue: number;
     maxValueInt: number;
 
-    constructor(type: FieldEncoderTypes, min?: number, max?: number) {
-        this.type = type;
-
-        this.subtype = type[0] as 'i' | 'u' | 'f' | 'r';
-        this.bits = this.type.includes("32") ? 32 : (this.type.includes("16") ? 16 : 8);
+    constructor(bits: 8 | 16 | 32) {
+        this.bits = bits;
         this.bytes = Math.round(this.bits / 8);
-
-        const isBig = (this.subtype == 'i' || this.subtype == 'u') && this.bits == 64;
-        const fnName = (isBig ? 'Big' : '') + { 'i': 'Int', 'u': 'Uint', 'f': 'Float', 'r': 'Uint' }[this.subtype] + this.bits;
-        this.setFn = 'set' + fnName;
-        this.getFn = 'get' + fnName;
-
         this.maxValue = (2 ** this.bits) - 1;
         this.maxValueInt = Math.round(this.maxValue);
-
-        if (min !== undefined) {
-            this.min = min;
-        }
-        if (max !== undefined) {
-            this.max = max;
-        }
     }
 
     writeToBuffer(view: PointedDataView, value: number) {
-        if (this.subtype == 'r') {
-            value = Math.round((value - this.min) / (this.max - this.min) * this.maxValue);
-            if (value < 0) {
-                value = 0;
-            } else if (value > this.maxValueInt) {
-                value = this.maxValueInt;
-            }
+        if (this.bytes == 1) {
+            view.view.setInt8(view.pointer, value);
+        } else if (this.bytes == 2) {
+            view.view.setInt16(view.pointer, value, false);
+        } else {
+            view.view.setInt32(view.pointer, value, false);
         }
-        // @ts-ignore
-        view.view[this.setFn](view.pointer, value, true);
         view.pointer += this.bytes;
     }
 
     readFromBuffer(view: PointedDataView): number {
-        // @ts-ignore
-        let value = view.view[this.getFn](view.pointer, true);
-        view.pointer += this.bytes;
-        if (this.subtype == 'r') {
-            value = value / this.maxValue * (this.max - this.min) + this.min;
+        let value;
+        if (this.bytes == 1) {
+            value = view.view.getInt8(view.pointer);
+        } else if (this.bytes == 2) {
+            value = view.view.getInt16(view.pointer, false);
+        } else {
+            value = view.view.getInt32(view.pointer, false);
         }
+        view.pointer += this.bytes;
         return value;
     }
 }
 
-export class Encoder<T extends Record<string, FieldEncoder>> {
-    prototype: T;
-    bytes: number = 0;
-    sortedFields: [keyof T, FieldEncoder][] = [];
+export class UintEncoder implements IFieldEncoder<number> {
+    bits: 8 | 16 | 32;
+    bytes: number;
+    bytesVariable = false;
+    maxValue: number;
+    maxValueInt: number;
 
-    declare type: { [K in keyof T]: number };
+    constructor(bits: 8 | 16 | 32) {
+        this.bits = bits;
+        this.bytes = Math.round(this.bits / 8);
+        this.maxValue = (2 ** this.bits) - 1;
+        this.maxValueInt = Math.round(this.maxValue);
+    }
+
+    writeToBuffer(view: PointedDataView, value: number) {
+        if (this.bytes == 1) {
+            view.view.setUint8(view.pointer, value);
+        } else if (this.bytes == 2) {
+            view.view.setUint16(view.pointer, value, false);
+        } else {
+            view.view.setUint32(view.pointer, value, false);
+        }
+        view.pointer += this.bytes;
+    }
+
+    readFromBuffer(view: PointedDataView): number {
+        let value;
+        if (this.bytes == 1) {
+            value = view.view.getUint8(view.pointer);
+        } else if (this.bytes == 2) {
+            value = view.view.getUint16(view.pointer, false);
+        } else {
+            value = view.view.getUint32(view.pointer, false);
+        }
+        view.pointer += this.bytes;
+        return value;
+    }
+}
+
+export class FloatEncoder implements IFieldEncoder<number> {
+    bits: 32 | 64;
+    bytes: number;
+    bytesVariable = false;
+
+    constructor(bits: 32 | 64) {
+        this.bits = bits;
+        this.bytes = Math.round(this.bits / 8);
+    }
+
+    writeToBuffer(view: PointedDataView, value: number) {
+        if (this.bytes == 4) {
+            view.view.setFloat32(view.pointer, value, false);
+        } else {
+            view.view.setFloat64(view.pointer, value, false);
+        }
+        view.pointer += this.bytes;
+    }
+
+    readFromBuffer(view: PointedDataView): number {
+        let value;
+        if (this.bytes == 4) {
+            value = view.view.getFloat32(view.pointer, false);
+        } else {
+            value = view.view.getFloat64(view.pointer, false);
+        }
+        view.pointer += this.bytes;
+        return value;
+    }
+}
+
+export class RangeEncoder extends UintEncoder {
+    min: number;
+    max: number;
+
+    constructor(bits: 8 | 16 | 32, min: number = 0, max: number = 1) {
+        super(bits);
+        this.min = min;
+        this.max = max;
+    }
+
+    writeToBuffer(view: PointedDataView, value: number) {
+        value = Math.round((value - this.min) / (this.max - this.min) * this.maxValue);
+        if (value < 0) {
+            value = 0;
+        } else if (value > this.maxValueInt) {
+            value = this.maxValueInt;
+        }
+
+        super.writeToBuffer(view, value);
+    }
+
+    readFromBuffer(view: PointedDataView): number {
+        return super.readFromBuffer(view) / this.maxValue * (this.max - this.min) + this.min;
+    }
+}
+
+export class BooleanEncoder implements IFieldEncoder<boolean> {
+    bits = 8;
+    bytes = 1;
+    bytesVariable = false;
+
+    writeToBuffer(view: PointedDataView, value: boolean) {
+        view.view.setUint8(view.pointer, value ? 1 : 0);
+        view.pointer++;
+    }
+
+    readFromBuffer(view: PointedDataView): boolean {
+        const value = view.view.getUint8(view.pointer) != 0;
+        view.pointer++;
+        return value;
+    }
+}
+
+export type EncoderSchema = Record<string, IFieldEncoder<any>>;
+
+export type EncoderType<T extends EncoderSchema> = {
+    [K in keyof T]: T[K] extends IFieldEncoder<infer V>
+    ? V
+    : never;
+};
+
+export class Encoder<T extends EncoderSchema> {
+    prototype: T;
+    bytes = 0;
+    bytesVariable = false;
+
+    sortedFields: [keyof T, T[keyof T]][] = [];
+
+    declare type: EncoderType<T>;
 
     constructor(prototype: T) {
         this.prototype = prototype;
 
         for (const [fieldName, fieldEncoder] of Object.entries(prototype)) {
             this.bytes += fieldEncoder.bytes;
-            this.sortedFields.push([fieldName, fieldEncoder]);
+            fieldEncoder.bytesVariable ||= fieldEncoder.bytesVariable;
+
+            this.sortedFields.push([
+                fieldName as keyof T,
+                fieldEncoder as T[keyof T]
+            ]);
         }
 
         this.sortedFields.sort((a, b) => {
