@@ -149,7 +149,7 @@ export class GameServer {
                 header.numObstacles * obstacleEncoder.bytes +
                 header.numPointCreations * pointCreationEncoder.bytes +
                 header.numPointRemovals * pointRemovalEncoder.bytes +
-                header.numLooks * (looksEntryEncoder.bytes + 64) + numNicknameStringBytes
+                header.numLooks * looksEntryEncoder.bytes + numNicknameStringBytes
             );
             const view = new PointedDataView(new DataView(
                 buffer.buffer,

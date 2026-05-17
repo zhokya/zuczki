@@ -28,12 +28,13 @@ export function utf8ByteLength(str: string) {
 }
 
 export class StringEncoder implements IFieldEncoder<string> {
-    bytes = 0;
+    bytes: number;
     bytesVariable = true;
     lengthEncoder: UintEncoder;
 
     constructor(lengthEncoderBits: 8 | 16 | 32) {
         this.lengthEncoder = new UintEncoder(lengthEncoderBits);
+        this.bytes = this.lengthEncoder.bytes;
     }
 
     writeToBuffer(view: PointedDataView, value: string) {
