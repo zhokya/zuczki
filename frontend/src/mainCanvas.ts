@@ -11,7 +11,7 @@ import { updateFpsCounter } from "./visuals/fpsCounter";
 import { LocalObstacle } from "./entities/obstacle";
 import { getVisionBoundsFromCenter } from "./visionBounds";
 import { looksEntryEncoder, type Looks, type LooksEntry } from "../../shared/looks";
-import { beetleEncoder, headerEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, type MessageBeetle, type MessageObstacle, type MessageRuby, type PointCreation, type PointRemoval } from "../../shared/dataEncoders";
+import { beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, type LeaderboardEntry, type MessageBeetle, type MessageObstacle, type MessageRuby, type PointCreation, type PointRemoval } from "../../shared/dataEncoders";
 import { PointedDataView } from "../../shared/encoder/types";
 import { formatPoints } from "../../shared/utils";
 
@@ -21,7 +21,7 @@ const visibleAreaExponent = 0.4;
 const c = document.getElementById('c') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
 const menu = document.getElementById('menu') as HTMLDivElement;
-// const leaderboardElement = document.getElementById('leaderboard') as HTMLElement;
+const leaderboardElement = document.getElementById('leaderboard') as HTMLElement;
 const finalScoreElement = document.getElementById('final-score') as HTMLElement;
 
 let prevW = -1;
@@ -32,7 +32,7 @@ export let isAlive = false;
 let prevIsAlive = false;
 let selfGlobId = -1;
 
-let looks = new Map<number, Looks>();
+let looksMap = new Map<number, Looks>();
 let localBeetles = new Map<number, LocalBeetle>();
 let localRubys = new Map<number, LocalRuby>();
 let localObstacles = new Map<number, LocalObstacle>();
@@ -48,6 +48,7 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     const pointCreations: PointCreation[] = pointCreationEncoder.readListFromBuffer(view, header.numPointCreations);
     const pointRemovals: PointRemoval[] = pointRemovalEncoder.readListFromBuffer(view, header.numPointRemovals);
     const lookUpdates: LooksEntry[] = looksEntryEncoder.readListFromBuffer(view, header.numLooks);
+    const leaderboardData: LeaderboardEntry[] = leaderboardEntryEncoder.readListFromBuffer(view, header.numLeaderboardEntries);
 
     selfGlobId = header.globId;
 
@@ -71,7 +72,7 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     prevIsAlive = isAlive;
 
     if(isFirstMessage) {
-        looks = new Map<number, Looks>();
+        looksMap = new Map<number, Looks>();
         localBeetles = new Map<number, LocalBeetle>();
         localRubys = new Map<number, LocalRuby>();
         localObstacles = new Map<number, LocalObstacle>();
@@ -121,7 +122,7 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     }
 
     lookUpdates.forEach(lookEntry => {
-        looks.set(lookEntry.globId, lookEntry.looks);
+        looksMap.set(lookEntry.globId, lookEntry.looks);
     });
 
     pointCreations.forEach(point => {
@@ -135,19 +136,19 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
         }
     });
 
-    // if (d.leaderboard !== undefined) {
-    //     const newChildren: HTMLSpanElement[] = [];
-    //     d.leaderboard.forEach((elem) => {
-    //         const [idx, nickname, score, isSelf] = elem;
-    //         const spanElem = document.createElement('span');
-    //         spanElem.innerText = `${idx}. ${nickname} (${score})`;
-    //         if (isSelf) {
-    //             spanElem.className = 'leaderboard-self';
-    //         }
-    //         newChildren.push(spanElem);
-    //     })
-    //     leaderboardElement.replaceChildren(...newChildren);
-    // }
+    if (leaderboardData.length != 0) {
+        const newChildren: HTMLSpanElement[] = [];
+        leaderboardData.forEach((elem) => {
+            const spanElem = document.createElement('span');
+            const looks = looksMap.get(elem.globId);
+            spanElem.innerText = `${elem.place}. ${looks ? looks.nickname : '???'} (${elem.score})`;
+            if (elem.globId == selfGlobId) {
+                spanElem.className = 'leaderboard-self';
+            }
+            newChildren.push(spanElem);
+        })
+        leaderboardElement.replaceChildren(...newChildren);
+    }
 });
 
 export function mainCanvasRenderLoop(t: number) {
@@ -219,7 +220,7 @@ export function mainCanvasRenderLoop(t: number) {
     renderWorldEdge(renderInfo);
 
     localBeetles.forEach(b => {
-        let look = looks.get(b.globId);
+        let look = looksMap.get(b.globId);
 
         b.render(renderInfo, look);
 

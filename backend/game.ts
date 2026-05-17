@@ -1,4 +1,3 @@
-import { getRandomLook, getRandomNickname, type Looks } from "../shared/looks.js";
 import { NumericIdGenerator, samplePointInCircle } from "../shared/utils.js";
 import env from "./env.js";
 
@@ -13,11 +12,8 @@ const mapSize = parseInt(env('VITE_MAP_SIZE'));
 
 export class Game {
     beetles: Map<string, Beetle>;
-    globIdMap: Map<string, number>;
     globId: NumericIdGenerator;
-
-    looksMap: Map<number, Looks>;
-    looksMapIdEdits: number[] = [];
+    looksMapIdEdits: string[] = [];
 
     points: Map<number, Point>;
     pointId: NumericIdGenerator;
@@ -36,8 +32,6 @@ export class Game {
 
     constructor(url: string) {
         this.beetles = new Map();
-        this.looksMap = new Map();
-        this.globIdMap = new Map();
         this.points = new Map();
         this.rubys = new Map();
         this.obstacles = new Map();
@@ -54,19 +48,6 @@ export class Game {
         this.looksMapIdEdits = [];
         this.pointCreations = [];
         this.pointRemovals = [];
-    }
-
-    resolveGlobalId(id: string): number {
-        let globId = this.globIdMap.get(id);
-        if (globId === undefined) {
-            globId = this.globId.next();
-            this.globIdMap.set(id, globId);
-        }
-        if (!this.looksMap.has(globId)) {
-            this.looksMap.set(globId, getRandomLook(getRandomNickname()));
-            this.looksMapIdEdits.push(globId);
-        }
-        return globId;
     }
 
     distanceFromObjects(x: number, y: number): number {

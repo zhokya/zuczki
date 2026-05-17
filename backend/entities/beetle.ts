@@ -1,3 +1,4 @@
+import { getRandomLook, getRandomNickname, type Looks } from "../../shared/looks.js";
 import { angleDifference, rotateAngleTowards, samplePointInCircle } from "../../shared/utils.js";
 import env from "../env.js";
 import type { Game } from "../game.js";
@@ -66,8 +67,10 @@ export class Beetle {
     // other
     id: string;
     lastBrainActive: number;
+    looks: Looks;
+    globId: number;
 
-    constructor(id: string, isBot: boolean, game: Game) {
+    constructor(id: string, isBot: boolean, game: Game, looks?: Looks) {
         const [x, y] = game.getSpawnPointWithMargin(4);
         this.x = x;
         this.y = y;
@@ -78,6 +81,10 @@ export class Beetle {
 
         this.id = id;
         this.lastBrainActive = isBot ? -1e9 : performance.now();
+
+        this.globId = game.globId.next();
+        this.looks = looks === undefined ? getRandomLook(isBot ? getRandomNickname() : '') : looks;
+        game.looksMapIdEdits.push(id);
     }
 
     update() {

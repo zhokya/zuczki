@@ -1,4 +1,4 @@
-import { idEncoder } from "./dataEncoders.js";
+import { globIdEncoder } from "./dataEncoders.js";
 import { Encoder } from "./encoder/encoder.js";
 import { BooleanEncoder, RangeEncoder, UintEncoder } from "./encoder/numberEncoders.js";
 import { StringEncoder } from "./encoder/stringEncoder.js";
@@ -12,7 +12,7 @@ export const looksEncoder = new Encoder({
     nickname: new StringEncoder(8)
 });
 export const looksEntryEncoder = new Encoder({
-    globId: idEncoder,
+    globId: globIdEncoder,
     looks: looksEncoder
 });
 export type Looks = typeof looksEncoder.type;
@@ -140,6 +140,7 @@ export function normalizeLooks(looks: Looks) {
     if (looks.antennaColor < 0 || looks.antennaColor >= colors.length) {
         looks.antennaColor = getRandomColor();
     }
+    return looks;
 }
 
 export const randomNicknames = [

@@ -1,11 +1,11 @@
 import WebSocket, { WebSocketServer } from "ws";
-import { isLooks, looksEntryEncoder, type Looks, type LooksEntry } from "../shared/looks.js";
+import { isLooks, looksEntryEncoder, type LooksEntry } from "../shared/looks.js";
 import env from "./env.js";
 import type { Game } from "./game.js";
 import type { IncomingMessage } from "http";
 import { Beetle } from "./entities/beetle.js";
 import { rubyProtectionTicks } from "./entities/ruby.js";
-import { beetleEncoder, clientMessageEncoder, headerEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder } from "../shared/dataEncoders.js";
+import { beetleEncoder, clientMessageEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, type LeaderboardEntry } from "../shared/dataEncoders.js";
 import { moduloAngle } from "../shared/utils.js";
 import { normalizeLooks } from "../shared/looks.js";
 import { PointedDataView } from "../shared/encoder/types.js";
@@ -37,14 +37,15 @@ export class GameServer {
         return null;
     }
 
-    getLeaderboardData(game: Game, selfId: string | null): [number, string, number, boolean][] {
-        const opts: [string, number, boolean][] = [];
+    getLeaderboardData(game: Game): LeaderboardEntry[] {
+        const opts: { globId: number, score: number }[] = [];
         game.beetles.forEach(b => {
-            const looks = game.looksMap.get(game.resolveGlobalId(b.id));
-            opts.push([looks === undefined ? '' : looks.nickname, b.score, b.id === selfId]);
+            opts.push({ globId: b.globId, score: b.score });
         });
-        opts.sort((a, b) => b[1] - a[1]);
-        return opts.slice(0, 10).map((o, idx) => [idx + 1, o[0], o[1], o[2]]);
+        opts.sort((a, b) => b.score - a.score);
+        return opts.slice(0, 10).map((o, idx) => {
+            return { place: idx + 1, globId: o.globId, score: o.score };
+        });
     }
 
     onConnection(ws: WebSocket, request: IncomingMessage) {
@@ -94,14 +95,8 @@ export class GameServer {
                     }
                 }
 
-                if (isLooks(data.looks) && beetleId !== null && !game.beetles.has(beetleId)) {
-                    normalizeLooks(data.looks);
-                    game.looksMap.set(game.resolveGlobalId(beetleId), data.looks);
-                    game.looksMapIdEdits.push(game.resolveGlobalId(beetleId));
-                }
-
                 if (data.type === 'play' && beetleId !== null && !game.beetles.has(beetleId)) {
-                    const beetle = new Beetle(beetleId, false, game);
+                    const beetle = new Beetle(beetleId, false, game, isLooks(data.looks) ? normalizeLooks(data.looks) : undefined);
                     game.beetles.set(beetleId, beetle);
                 }
             } catch (e) {
@@ -117,14 +112,14 @@ export class GameServer {
             // TODO: do not send everything!
             const looksToSend: LooksEntry[] = [];
             if (numMessages == 0) {
-                game.looksMap.forEach((looks, globId) => {
-                    looksToSend.push({ globId, looks });
+                game.beetles.forEach(beetle => {
+                    looksToSend.push({ globId: beetle.globId, looks: beetle.looks });
                 });
             } else {
                 for (let i = 0; i < game.looksMapIdEdits.length; i++) {
-                    const globId = game.looksMapIdEdits[i];
-                    const looks = game.looksMap.get(globId) as Looks;
-                    looksToSend.push({ globId, looks });
+                    const id = game.looksMapIdEdits[i];
+                    const beetle = game.beetles.get(id) as Beetle;
+                    looksToSend.push({ globId: beetle.globId, looks: beetle.looks });
                 }
             }
             let numNicknameStringBytes = 0;
@@ -132,14 +127,17 @@ export class GameServer {
                 numNicknameStringBytes += utf8ByteLength(lookEntry.looks.nickname);
             });
 
+            const leaderboardData = numMessages % 50 == 0 ? this.getLeaderboardData(game) : [];
+
             const header = {
-                globId: beetle ? game.resolveGlobalId(beetle.id) : 0,
+                globId: beetle ? beetle.globId : 0,
                 numBeetles: game.beetles.size,
                 numRubys: game.rubys.size,
                 numObstacles: game.obstacles.size,
                 numPointCreations: numMessages == 0 ? game.points.size : game.pointCreations.length,
                 numPointRemovals: numMessages == 0 ? 0 : game.pointRemovals.length,
-                numLooks: looksToSend.length
+                numLooks: looksToSend.length,
+                numLeaderboardEntries: leaderboardData.length
             }
 
             const buffer = Buffer.alloc(
@@ -149,7 +147,8 @@ export class GameServer {
                 header.numObstacles * obstacleEncoder.bytes +
                 header.numPointCreations * pointCreationEncoder.bytes +
                 header.numPointRemovals * pointRemovalEncoder.bytes +
-                header.numLooks * looksEntryEncoder.bytes + numNicknameStringBytes
+                header.numLooks * looksEntryEncoder.bytes + numNicknameStringBytes +
+                header.numLeaderboardEntries * leaderboardEntryEncoder.bytes
             );
             const view = new PointedDataView(new DataView(
                 buffer.buffer,
@@ -166,7 +165,7 @@ export class GameServer {
                     size: b.size,
                     score: b.score,
                     targetAngle: b.targetAngle,
-                    globId: game.resolveGlobalId(b.id)
+                    globId: b.globId
                 });
             });
             game.rubys.forEach(r => {
@@ -211,9 +210,9 @@ export class GameServer {
                 looksEntryEncoder.writeToBuffer(view, lookEntry);
             });
 
-            // if(numMessages % 50 == 0) {
-            //     msg.leaderboard = this.getLeaderboardData(game, beetleId);
-            // }
+            leaderboardData.forEach(leaderboardEntry => {
+                leaderboardEntryEncoder.writeToBuffer(view, leaderboardEntry);
+            });
 
             numMessages++;
 
