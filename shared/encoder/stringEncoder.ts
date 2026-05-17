@@ -1,3 +1,4 @@
+import { Encoder, type EncoderSchema, type EncoderType } from "./encoder.js";
 import { UintEncoder } from "./numberEncoders.js";
 import type { IFieldEncoder, PointedDataView } from "./types.js";
 
@@ -27,6 +28,45 @@ export function utf8ByteLength(str: string) {
     return bytes;
 }
 
+export class ConstantLengthAsciiEncoder implements IFieldEncoder<string> {
+    bytes: number;
+    bytesVariable = false;
+
+    constructor(stringLength: number) {
+        this.bytes = stringLength;
+    }
+
+    writeToBuffer(view: PointedDataView, value: string) {
+        for (let i = 0; i < this.bytes; i++) {
+            view.view.setUint8(view.pointer, value.charCodeAt(i));
+            view.pointer++;
+        }
+    }
+
+    readFromBuffer(view: PointedDataView): string {
+        let res = '';
+        for (let i = 0; i < this.bytes; i++) {
+            res += String.fromCharCode(view.view.getUint8(view.pointer));
+        }
+        return res;
+    }
+}
+
+export function getBufferVariableByteSize<T extends EncoderSchema>(update: EncoderType<T>, encoder: Encoder<T>) {
+    let bytes = 0;
+    for(const [key, value] of Object.entries(update)) {
+        if(encoder.prototype[key].bytesVariable) {
+            if(typeof value == 'string' && encoder.prototype[key].bytesVariable) {
+                bytes += utf8ByteLength(value);
+            } else if(typeof value == 'object') {
+                // @ts-ignore
+                bytes += getBufferVariableByteSize(update[key] as any, encoder.prototype[key]);
+            }
+        }
+    }
+    return bytes;
+}
+
 export class StringEncoder implements IFieldEncoder<string> {
     bytes: number;
     bytesVariable = true;
@@ -38,13 +78,13 @@ export class StringEncoder implements IFieldEncoder<string> {
     }
 
     writeToBuffer(view: PointedDataView, value: string) {
-        if(value == '') {
+        if (value == '') {
             this.lengthEncoder.writeToBuffer(view, 0);
             return;
         }
 
         const encoded = textEncoder.encode(value);
-        if(encoded.length != utf8ByteLength(value)) {
+        if (encoded.length != utf8ByteLength(value)) {
             console.log('wtf???')
         }
 
@@ -69,7 +109,7 @@ export class StringEncoder implements IFieldEncoder<string> {
     readFromBuffer(view: PointedDataView): string {
         const byteLength = this.lengthEncoder.readFromBuffer(view);
 
-        if(byteLength == 0) {
+        if (byteLength == 0) {
             return '';
         }
 

@@ -1,6 +1,7 @@
+import { clientUpdateEncoder, clientUpdateId } from "../../shared/dataEncoders";
 import { moduloAngle } from "../../shared/utils";
-import { sendUpdate } from "./wsManager";
 import { isAlive } from "./mainCanvas";
+import { send } from "./wsManager";
 
 let targetAngle = Math.random() * Math.PI * 2;
 window.addEventListener('mousemove', (ev) => {
@@ -64,6 +65,6 @@ export function updateSendingLoop() {
     if (clickMode != 0 || prevTargetAngle != targetAngle || performance.now() - lastSendT > 1000) {
         prevTargetAngle = targetAngle;
         lastSendT = performance.now();
-        sendUpdate({ clickMode, targetAngle });
+        send(clientUpdateId, { clickMode, targetAngle }, clientUpdateEncoder);
     }
 }

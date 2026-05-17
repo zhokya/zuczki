@@ -1,17 +1,21 @@
-import { clientMessageEncoder, type ClientMessage } from "../../shared/dataEncoders";
+import { clientRegisterId, getClientRegisterEncoder } from "../../shared/dataEncoders";
+import type { Encoder, EncoderSchema, EncoderType } from "../../shared/encoder/encoder";
+import { getBufferVariableByteSize } from "../../shared/encoder/stringEncoder";
 import { PointedDataView } from "../../shared/encoder/types";
 import { generateId } from "../../shared/utils";
 
+const idLength = parseInt(import.meta.env.VITE_ID_LENGTH);
+
 function getBeetleId(): string {
     // TODO: uncomment to make automatic rejoining work
-    
+
     // const localStorageId = localStorage.getItem('zuczki_id');
 
-    // if (localStorageId !== null && localStorageId.length === parseInt(import.meta.env.VITE_ID_LENGTH)) {
+    // if (localStorageId !== null && localStorageId.length === idLength) {
     //     return localStorageId;
     // }
 
-    const newId = generateId(parseInt(import.meta.env.VITE_ID_LENGTH));
+    const newId = generateId(idLength);
     localStorage.setItem('zuczki_id', newId);
     return newId;
 }
@@ -30,22 +34,19 @@ export function rejoin() {
     isFirstMessage = true;
 
     globalWs.onopen = () => {
-        if(globalWs === null) return;
-        globalWs.send(JSON.stringify({
-            type: 'register',
-            id: beetleId
-        }))
+        if (globalWs === null) return;
+        send(clientRegisterId, { id: beetleId }, getClientRegisterEncoder(idLength), false);
     };
     globalWs.onclose = () => {
         isRunning = false;
-        if(globalWs !== null) {
+        if (globalWs !== null) {
             globalWs.close();
         }
         globalWs = null;
         setTimeout(rejoin, 500);
     };
     globalWs.onmessage = (ev) => {
-        if(globalWs === null) return;
+        if (globalWs === null) return;
         isRunning = true;
 
         messageListeners.forEach(fn => {
@@ -54,27 +55,22 @@ export function rejoin() {
         isFirstMessage = false;
 
         const lastQueueElement = jsonQueue.pop();
-        if(lastQueueElement !== undefined) {
+        if (lastQueueElement !== undefined) {
             globalWs.send(lastQueueElement);
         }
     };
 }
 
-export function sendJson(json: any) {
-    const msg = JSON.stringify(json);
-    if(globalWs === null || !isRunning) {
-        jsonQueue.push(msg);
-    } else {
-        globalWs.send(msg);
-    }
-}
+export function send<T extends EncoderSchema>(type: number, update: EncoderType<T>, encoder: Encoder<T>, mustBeRunning: boolean = true) {
+    if (globalWs === null) return;
+    if (!isRunning && mustBeRunning) return;
 
-export function sendUpdate(update: ClientMessage) {
-    if(globalWs === null || !isRunning) return;
-
-    const buffer = new ArrayBuffer(clientMessageEncoder.bytes);
+    const buffer = new ArrayBuffer(1 + encoder.bytes + getBufferVariableByteSize(update, encoder));
     const view = new PointedDataView(new DataView(buffer));
-    clientMessageEncoder.writeToBuffer(view, update);
+
+    view.view.setUint8(0, type);
+    view.pointer++;
+    encoder.writeToBuffer(view, update);
 
     globalWs.send(buffer);
 }

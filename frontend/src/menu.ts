@@ -3,10 +3,11 @@ import checkImg from './assets/check.png';
 import diceImg from './assets/dice.png';
 import type { RenderInfo } from "./types";
 import { isAlive } from "./mainCanvas";
-import { sendJson } from "./wsManager";
 import { VisionBounds } from "../../shared/visionBounds";
 import { isLooks, type Looks } from "../../shared/looks";
 import { colors, getRandomLook } from "../../shared/looks";
+import { send } from "./wsManager";
+import { clientPlayEncoder, clientPlayId } from "../../shared/dataEncoders";
 
 const c = document.getElementById('s') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
@@ -125,10 +126,7 @@ nicknameElement.addEventListener('input', () => {
 
 document.getElementById('play')?.addEventListener('click', () => {
     chosenLooks.nickname = nicknameElement.value;
-    sendJson({
-        type: 'play',
-        looks: chosenLooks
-    });
+    send(clientPlayId, { looks: chosenLooks }, clientPlayEncoder);
 });
 
 export function onDead() {
@@ -148,12 +146,12 @@ export function menuRenderLoop(t: number) {
         prevT = t;
     }
 
-    if(isAlive) {
+    if (isAlive) {
         aliveT += t - prevT;
     } else {
         aliveT = 0;
     }
-    if(aliveT < 1000) {
+    if (aliveT < 1000) {
         ctx.clearRect(0, 0, w, h);
 
         const bounds = new VisionBounds(0, 0, w, h);

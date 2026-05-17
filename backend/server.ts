@@ -5,7 +5,13 @@ import type { Game } from "./game.js";
 import type { IncomingMessage } from "http";
 import { Beetle } from "./entities/beetle.js";
 import { rubyProtectionTicks } from "./entities/ruby.js";
-import { beetleEncoder, clientMessageEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, type LeaderboardEntry } from "../shared/dataEncoders.js";
+import { 
+    beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder,
+    clientPlayEncoder, clientUpdateEncoder, getClientRegisterEncoder, 
+    type LeaderboardEntry, 
+    clientRegisterId,
+    clientPlayId,
+    clientUpdateId} from "../shared/dataEncoders.js";
 import { moduloAngle } from "../shared/utils.js";
 import { normalizeLooks } from "../shared/looks.js";
 import { PointedDataView } from "../shared/encoder/types.js";
@@ -22,6 +28,8 @@ function filterMapValues<T>(map: Map<any, T>, filterFn: (element: T) => boolean)
     });
     return result;
 }
+
+const clientRegisterEncoder = getClientRegisterEncoder(parseInt(env('VITE_ID_LENGTH')));
 
 export class GameServer {
     port: number;
@@ -76,40 +84,43 @@ export class GameServer {
 
         ws.on('message', (rawData, isBinary) => {
             try {
-                if (isBinary) {
+                if (!isBinary) return;
+
+                const buffer = rawData as Buffer;
+                const view = new PointedDataView(new DataView(
+                    buffer.buffer,
+                    buffer.byteOffset,
+                    buffer.byteLength
+                ));
+
+                const msgTypeId = view.view.getUint8(0);
+                view.pointer++;
+
+                if(msgTypeId == clientRegisterId) {
+                    const msg = clientRegisterEncoder.readFromBuffer(view);
+                    if(beetleId === null) {
+                        beetleId = msg.id;
+                    }
+                } else if(msgTypeId == clientPlayId) {
+                    const msg = clientPlayEncoder.readFromBuffer(view);
+
+                    if (beetleId === null) return;
+                    if(game.beetles.has(beetleId)) return;
+
+                    const beetle = new Beetle(beetleId, false, game, msg.looks);
+                    game.beetles.set(beetleId, beetle);
+                } else if(msgTypeId == clientUpdateId) {
+                    const msg = clientUpdateEncoder.readFromBuffer(view);
+
                     if (beetleId === null) return;
                     const beetle = game.beetles.get(beetleId);
                     if (beetle === undefined) return;
-
-                    const buffer = rawData as Buffer;
-                    const view = new PointedDataView(new DataView(
-                        buffer.buffer,
-                        buffer.byteOffset,
-                        buffer.byteLength
-                    ));
-                    const message = clientMessageEncoder.readFromBuffer(view);
-
+                    
                     beetle.lastBrainActive = performance.now();
-                    beetle.targetAngle = moduloAngle(message.targetAngle);
-                    if (message.clickMode == 1) {
+                    beetle.targetAngle = moduloAngle(msg.targetAngle);
+                    if (msg.clickMode == 1) {
                         beetle.clicked = true;
                     }
-
-                    return;
-                }
-
-                const data = JSON.parse(rawData.toString());
-
-                if (data.type === 'register') {
-                    const id = data.id;
-                    if (typeof (id) == 'string' && id.length === parseInt(env('VITE_ID_LENGTH'))) {
-                        beetleId = id;
-                    }
-                }
-
-                if (data.type === 'play' && beetleId !== null && !game.beetles.has(beetleId)) {
-                    const beetle = new Beetle(beetleId, false, game, isLooks(data.looks) ? normalizeLooks(data.looks) : undefined);
-                    game.beetles.set(beetleId, beetle);
                 }
             } catch (e) {
                 // TODO: potentially remove this in the future?
@@ -119,7 +130,8 @@ export class GameServer {
 
         let numMessages = 0;
         const updateFn = () => {
-            const beetle = beetleId === null ? undefined : game.beetles.get(beetleId);
+            if(beetleId === null) return;  // Only send messages after client registers
+            const beetle = game.beetles.get(beetleId);
 
             const centerX = beetle ? beetle.x : 0;
             const centerY = beetle ? beetle.y : 0;

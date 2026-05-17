@@ -22,7 +22,7 @@ export class Encoder<T extends EncoderSchema> {
 
         for (const [fieldName, fieldEncoder] of Object.entries(prototype)) {
             this.bytes += fieldEncoder.bytes;
-            fieldEncoder.bytesVariable ||= fieldEncoder.bytesVariable;
+            this.bytesVariable ||= fieldEncoder.bytesVariable;
 
             this.sortedFields.push([
                 fieldName as keyof T,

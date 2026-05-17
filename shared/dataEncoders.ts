@@ -1,7 +1,8 @@
 import { Encoder } from "./encoder/encoder.js";
 import { BooleanEncoder, RangeEncoder, UintEncoder } from "./encoder/numberEncoders.js";
+import { ConstantLengthAsciiEncoder } from "./encoder/stringEncoder.js";
+import { looksEncoder } from "./looks.js";
 
-export const globIdEncoder = new UintEncoder(8);
 const positionEncoder = new RangeEncoder(16, -100, 100);
 const angleEncoder = new RangeEncoder(16, 0, Math.PI * 2);
 const sizeEncoder = new RangeEncoder(16, 0, 20);
@@ -9,7 +10,7 @@ const booleanEncoder = new BooleanEncoder();
 const scoreEncoder = new UintEncoder(32);
 
 export const beetleEncoder = new Encoder({
-    "globId": globIdEncoder,
+    "globId": new UintEncoder(8),
     "x": positionEncoder,
     "y": positionEncoder,
     "angle": angleEncoder,
@@ -55,11 +56,11 @@ export const pointRemovalEncoder = new Encoder({
 export const leaderboardEntryEncoder = new Encoder({
     place: new UintEncoder(8),
     score: scoreEncoder,
-    globId: globIdEncoder
+    globId: new UintEncoder(8)
 });
 
 export const headerEncoder = new Encoder({
-    globId: globIdEncoder,
+    globId: new UintEncoder(8),
     numBeetles: new UintEncoder(8),
     numRubys: new UintEncoder(8),
     numObstacles: new UintEncoder(8),
@@ -69,10 +70,22 @@ export const headerEncoder = new Encoder({
     numLeaderboardEntries: new UintEncoder(8)
 });
 
-export const clientMessageEncoder = new Encoder({
+// Needs to be a function, because we need to read idLength from env, which is different for frontend and backend
+export function getClientRegisterEncoder(idLength: number) {
+    return new Encoder({
+        id: new ConstantLengthAsciiEncoder(idLength)
+    });
+}
+export const clientPlayEncoder = new Encoder({
+    looks: looksEncoder
+});
+export const clientUpdateEncoder = new Encoder({
     clickMode: new UintEncoder(8),
     targetAngle: angleEncoder
 });
+export const clientRegisterId = 67;
+export const clientPlayId = 68;
+export const clientUpdateId = 69;
 
 export type MessageBeetle = typeof beetleEncoder.type;
 export type MessageRuby = typeof rubyEncoder.type;
@@ -81,4 +94,3 @@ export type PointCreation = typeof pointCreationEncoder.type;
 export type PointRemoval = typeof pointRemovalEncoder.type;
 export type LeaderboardEntry = typeof leaderboardEntryEncoder.type;
 export type Header = typeof headerEncoder.type;
-export type ClientMessage = typeof clientMessageEncoder.type;
