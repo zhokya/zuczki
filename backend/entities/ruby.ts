@@ -4,7 +4,7 @@ import { vectorDecay, vectorMagnitudes } from "../sharedConstants.js";
 import type { Beetle } from "./beetle.js";
 
 export const rubyProtectionTicks = 30;
-const rubyVectorMagnitude = 0.1;
+const rubyVectorMagnitude = 0.2;
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
 
 const decreaseHpSpeed = 0.0015;
@@ -71,7 +71,7 @@ export class Ruby {
                 const hp = removeIfHit ? this.hp : Math.min(this.hp - minRubyHp, this.sampleHpTaken());
 
                 this.vx += ndx * rubyVectorMagnitude;
-                this.vy += ndx * rubyVectorMagnitude;
+                this.vy += ndy * rubyVectorMagnitude;
                 anyHits = true;
                 totalHpTaken += hp;
 
