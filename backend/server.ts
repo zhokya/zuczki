@@ -1,5 +1,5 @@
 import WebSocket, { WebSocketServer } from "ws";
-import { isLooks, looksEntryEncoder, type LooksEntry } from "../shared/looks.js";
+import { looksEntryEncoder, type LooksEntry } from "../shared/looks.js";
 import env from "./env.js";
 import type { Game } from "./game.js";
 import type { IncomingMessage } from "http";
@@ -13,7 +13,6 @@ import {
     clientPlayId,
     clientUpdateId} from "../shared/dataEncoders.js";
 import { moduloAngle } from "../shared/utils.js";
-import { normalizeLooks } from "../shared/looks.js";
 import { PointedDataView } from "../shared/encoder/types.js";
 import { utf8ByteLength } from "../shared/encoder/stringEncoder.js";
 import { getVisionBoundsFromCenter } from "../shared/visionBounds.js";
@@ -107,7 +106,7 @@ export class GameServer {
                     if (beetleId === null) return;
                     if(game.beetles.has(beetleId)) return;
 
-                    const beetle = new Beetle(beetleId, false, game, msg.looks);
+                    const beetle = new Beetle(beetleId, false, game, msg.powerupType, msg.looks);
                     game.beetles.set(beetleId, beetle);
                 } else if(msgTypeId == clientUpdateId) {
                     const msg = clientUpdateEncoder.readFromBuffer(view);
@@ -120,6 +119,13 @@ export class GameServer {
                     beetle.targetAngle = moduloAngle(msg.targetAngle);
                     if (msg.clickMode == 1) {
                         beetle.clicked = true;
+                        beetle.poweruping = false;
+                    } else if(msg.clickMode == 2) {
+                        beetle.poweruping = true;
+                        beetle.clicked = false;
+                    } else if(msg.clickMode == 3) {
+                        beetle.poweruping = false;
+                        beetle.clicked = false;
                     }
                 }
             } catch (e) {
@@ -210,7 +216,9 @@ export class GameServer {
                     size: b.size,
                     score: b.score,
                     targetAngle: b.targetAngle,
-                    globId: b.globId
+                    globId: b.globId,
+                    powerupNumber: b.powerupNumber,
+                    powerupTicks: b.powerupTicks === null ? 0 : Math.min(255, b.powerupTicks)
                 });
             });
             rubysToSend.forEach(r => {

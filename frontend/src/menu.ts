@@ -1,4 +1,4 @@
-import { renderBeetle } from "./entities/beetle";
+import { LocalBeetle } from "./entities/beetle";
 import checkImg from './assets/check.png';
 import diceImg from './assets/dice.png';
 import type { RenderInfo } from "./types";
@@ -127,7 +127,7 @@ nicknameElement.addEventListener('input', () => {
 
 document.getElementById('play')?.addEventListener('click', () => {
     chosenLooks.nickname = nicknameElement.value;
-    send(clientPlayId, { looks: chosenLooks }, clientPlayEncoder);
+    send(clientPlayId, { looks: chosenLooks, powerupType: 2 }, clientPlayEncoder);
 });
 
 export function onDead() {
@@ -140,6 +140,17 @@ export function onDead() {
 
 let prevT: number | null = null;
 export let aliveT = 0;
+const menuBeetle = new LocalBeetle({
+    x: w * 0.5,
+    y: h * 0.64,
+    size: w * 0.33,
+    angle: -Math.PI / 2,
+    targetAngle:  -Math.PI / 2,
+    powerupTicks: 0,
+    score: 0,
+    globId: -1,
+    powerupNumber: -1
+});
 export function menuRenderLoop(t: number) {
     requestAnimationFrame(menuRenderLoop);
 
@@ -157,7 +168,7 @@ export function menuRenderLoop(t: number) {
 
         const bounds = new VisionBounds(0, 0, w, h);
         const renderInfo: RenderInfo = { ctx, w, h, prevT, t, scale: 1, bounds };
-        renderBeetle(renderInfo, w * 0.5, h * 0.64, -Math.PI / 2, -Math.PI / 2, w * 0.33, chosenLooks);
+        menuBeetle.render(renderInfo, chosenLooks);
     }
 
     prevT = t;

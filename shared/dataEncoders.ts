@@ -10,13 +10,15 @@ const booleanEncoder = new BooleanEncoder();
 const scoreEncoder = new UintEncoder(32);
 
 export const beetleEncoder = new Encoder({
-    "globId": new UintEncoder(8),
-    "x": positionEncoder,
-    "y": positionEncoder,
-    "angle": angleEncoder,
-    "size": sizeEncoder,
-    "score": scoreEncoder,
-    "targetAngle": angleEncoder,
+    globId: new UintEncoder(8),
+    x: positionEncoder,
+    y: positionEncoder,
+    angle: angleEncoder,
+    size: sizeEncoder,
+    score: scoreEncoder,
+    targetAngle: angleEncoder,
+    powerupNumber: new UintEncoder(8),
+    powerupTicks: new UintEncoder(8)
 });
 
 export const rubyEncoder = new Encoder({
@@ -77,7 +79,8 @@ export function getClientRegisterEncoder(idLength: number) {
     });
 }
 export const clientPlayEncoder = new Encoder({
-    looks: looksEncoder
+    looks: looksEncoder,
+    powerupType: new UintEncoder(8)
 });
 export const clientUpdateEncoder = new Encoder({
     clickMode: new UintEncoder(8),

@@ -1,5 +1,6 @@
 import { getRandomLook, getRandomNickname, type Looks } from "../../shared/looks.js";
-import { angleDifference, rotateAngleTowards, samplePointInCircle } from "../../shared/utils.js";
+import { powerups } from "../../shared/powerups.js";
+import { angleDifference, lerp, rotateAngleTowards, samplePointInCircle } from "../../shared/utils.js";
 import env from "../env.js";
 import type { Game } from "../game.js";
 import { infSum, vectorDecay, vectorMagnitudes } from "../sharedConstants.js";
@@ -17,6 +18,16 @@ const maxSize = parseFloat(env('VITE_MAX_SIZE'));
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
 const irrelevanceTicks = 24;
 const beetleCollisionAngleZeroPoint = 0.25;
+
+const powerupParams = {
+    protectSize: {
+        sizeReduction: 0.4,
+        rotSpeedMult: 0.2
+    },
+    rotateFaster: {
+        rotSpeedMult: 1.6
+    }
+};
 
 function shiftX(x: number, zeroPoint: number) {
     return (x - zeroPoint) / (1 - zeroPoint * x);
@@ -50,19 +61,23 @@ export class Beetle {
     // state
     x: number;
     y: number;
-    size: number = 1;
+    size = 1;
     angle: number;
 
-    vx: number = 0;
-    vy: number = 0;
-    vsize: number = 0;
+    vx = 0;
+    vy = 0;
+    vsize = 0;
 
-    score: number = 0;
+    score = 0;
     irrelevants: { id: string, ticks: number }[] = [];
+    powerupTicks: number | null = null;
 
     // decissions
     targetAngle: number;
-    clicked: boolean = false;
+    clicked = false;
+    poweruping = false;
+    powerupType: string;
+    powerupNumber: number;
 
     // other
     game: Game;
@@ -71,7 +86,7 @@ export class Beetle {
     looks: Looks;
     globId: number;
 
-    constructor(id: string, isBot: boolean, game: Game, looks?: Looks) {
+    constructor(id: string, isBot: boolean, game: Game, powerupNumber?: number, looks?: Looks) {
         const [x, y] = game.getSpawnPointWithMargin(4);
         this.x = x;
         this.y = y;
@@ -87,14 +102,36 @@ export class Beetle {
         this.globId = game.globId.next();
         this.looks = looks === undefined ? getRandomLook(isBot ? getRandomNickname() : '') : looks;
         game.looksMapIdEdits.push(id);
+        
+        if(powerupNumber === undefined || powerupNumber < 0 || powerupNumber >= powerups.length) {
+            powerupNumber = Math.floor(Math.random() * powerups.length);
+        }
+        this.powerupNumber = powerupNumber;
+        this.powerupType = powerups[powerupNumber];
+    }
+
+    getPowerupLoad(loadingSpeed: number) {
+        if(this.powerupTicks === null) return 0;
+        return 1 - Math.exp(-this.powerupTicks * loadingSpeed);
     }
 
     update() {
         const magnitude = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
 
-        const rotationSpeed = 0.12 / this.size;
-        const speedMultiplier = 1 + (maxSpeed / minSpeed - 1) * (this.size - 1) / (maxSize - 1);
-        const speed = minSpeed * speedMultiplier * Math.max(0, Math.min(1, (magnitude - magnitude1) / (magnitude2 - magnitude1)));
+        let rotSpeedMult = 1;
+        if(this.powerupType == 'protectSize') {
+            rotSpeedMult = lerp(1, powerupParams.protectSize.rotSpeedMult, this.getPowerupLoad(0.3));
+        } else if(this.powerupType == 'rotateFaster') {
+            rotSpeedMult = lerp(1, powerupParams.rotateFaster.rotSpeedMult, this.getPowerupLoad(0.18));
+        } else {
+            rotSpeedMult = lerp(1, 0.1, this.getPowerupLoad(0.3));
+        }
+        const rotationSpeed = rotSpeedMult * 0.12 / this.size;
+
+        const speedMultBySize = 1 + (maxSpeed / minSpeed - 1) * (this.size - 1) / (maxSize - 1);
+        const speedMultByVector = Math.max(0, Math.min(1, (magnitude - magnitude1) / (magnitude2 - magnitude1)));
+        const speedMultByPowerup = 1 - this.getPowerupLoad(0.22);
+        const speed = minSpeed * speedMultBySize * speedMultByVector * speedMultByPowerup;
 
         this.angle = rotateAngleTowards(this.angle, this.targetAngle, rotationSpeed);
 
@@ -120,17 +157,37 @@ export class Beetle {
             this.vsize += vectorMagnitudes.mapEdgeCollision.size;
         }
 
+        // Powerup
+        const dashAngle = rotateAngleTowards(
+            this.angle,
+            this.targetAngle,
+            Math.min(angleDifference(this.angle, this.targetAngle), maxDashDirectionChange)
+        );
+        if(this.poweruping) {
+            if(!(this.powerupTicks === null && this.powerupType == 'dash' && magnitude >= magnitude1)) {
+                if(this.powerupTicks === null) this.powerupTicks = 0;
+                this.powerupTicks++;
+            }
+        } else {
+            if(this.powerupTicks !== null) {
+                if(this.powerupType == 'dash') {
+                    const mag = lerp(vectorMagnitudes.click.position, vectorMagnitudes.powerupDash.position, this.getPowerupLoad(0.04));
+                    console.log(this.getPowerupLoad(0.02));
+                    this.vx += Math.cos(dashAngle) * speedMultBySize * mag;
+                    this.vy += Math.sin(dashAngle) * speedMultBySize * mag;
+                } else if(this.powerupType == 'projectile') {
+
+                }
+                this.powerupTicks = null;
+            }
+        }
+
         // Dashing
-        if (this.clicked) {
+        if (this.clicked && !this.poweruping) {
             this.clicked = false;
             if (magnitude < magnitude1) {
-                const jumpAngle = rotateAngleTowards(
-                    this.angle,
-                    this.targetAngle,
-                    Math.min(angleDifference(this.angle, this.targetAngle), maxDashDirectionChange)
-                );
-                this.vx += Math.cos(jumpAngle) * speedMultiplier * vectorMagnitudes.click.position;
-                this.vy += Math.sin(jumpAngle) * speedMultiplier * vectorMagnitudes.click.position;
+                this.vx += Math.cos(dashAngle) * speedMultBySize * vectorMagnitudes.click.position;
+                this.vy += Math.sin(dashAngle) * speedMultBySize * vectorMagnitudes.click.position;
                 this.vsize += vectorMagnitudes.click.size;
             }
         }
@@ -177,6 +234,15 @@ export class Beetle {
         this.game.globId.unregister(this.globId);
     }
 
+    // Protect from increasing size with powerup
+    sizeDeltaWithProtection(delta: number) {
+        if(delta < 0) return delta;
+        if(this.powerupType == 'protectSize' && this.powerupTicks !== null && this.powerupTicks > 0) {
+            return delta * lerp(1, 1 - powerupParams.protectSize.sizeReduction, this.getPowerupLoad(0.24));
+        }
+        return delta;
+    }
+
     handleBeetleCollision(other: Beetle) {
         const dx = other.x - this.x;
         const dy = other.y - this.y;
@@ -209,12 +275,12 @@ export class Beetle {
 
         this.vx -= vectorMagnitudes.beetleCollision.position * ndx;
         this.vy -= vectorMagnitudes.beetleCollision.position * ndy;
-        this.vsize -= vectorMagnitudes.beetleCollision.size * scoreB;
+        this.vsize += this.sizeDeltaWithProtection(-vectorMagnitudes.beetleCollision.size * scoreB);
         this.score += Math.max(0, Math.round(67.4 * scoreB));
 
         other.vx += vectorMagnitudes.beetleCollision.position * ndx;
         other.vy += vectorMagnitudes.beetleCollision.position * ndy;
-        other.vsize -= vectorMagnitudes.beetleCollision.size * scoreO;
+        other.vsize += other.sizeDeltaWithProtection(-vectorMagnitudes.beetleCollision.size * scoreO);
         other.score += Math.max(0, Math.round(67.4 * scoreO));
     }
 }
