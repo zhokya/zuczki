@@ -4,7 +4,7 @@ import diceImg from './assets/dice.png';
 import type { RenderInfo } from "./types";
 import { isAlive } from "./mainCanvas";
 import { VisionBounds } from "../../shared/visionBounds";
-import { isLooks, type Looks } from "../../shared/looks";
+import { isLooks, numUsedColors, type Looks } from "../../shared/looks";
 import { colors, getRandomLook } from "../../shared/looks";
 import { send } from "./wsManager";
 import { clientPlayEncoder, clientPlayId } from "../../shared/dataEncoders";
@@ -68,6 +68,7 @@ colorProperties.forEach(property => {
     const container = document.getElementById('looks-' + property) as HTMLDivElement;
     const elementsHere: HTMLDivElement[] = [];
     colors.forEach((_hex, idx) => {
+        if(idx >= numUsedColors) return;
         const element = document.createElement('div');
         elementsHere.push(element);
         element.className = 'color-option';

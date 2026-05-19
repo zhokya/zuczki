@@ -110,10 +110,20 @@ export const colors = [
     "#e6197f",
     "#d81b60",
     "#ad1457",
+
+    "#000000",
+    "#ffffff",
+    "#ff0000",
+    "#00ff00",
+    "#0000ff",
+    "#00ffff",
+    "#ff00ff",
+    "#ffff00",
 ];
+export const numUsedColors = 64;
 
 function getRandomColor() {
-    return Math.floor(Math.random() * colors.length);
+    return Math.floor(Math.random() * numUsedColors);
 }
 
 export function getRandomLook(nickname: string): Looks {
