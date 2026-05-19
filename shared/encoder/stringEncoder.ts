@@ -47,6 +47,7 @@ export class ConstantLengthAsciiEncoder implements IFieldEncoder<string> {
         let res = '';
         for (let i = 0; i < this.bytes; i++) {
             res += String.fromCharCode(view.view.getUint8(view.pointer));
+            view.pointer++;
         }
         return res;
     }
