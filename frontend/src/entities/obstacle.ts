@@ -12,9 +12,8 @@ export class LocalObstacle {
     x2: Interpolator;
     y2: Interpolator;
     size: Interpolator;
+    timeExisting: number;
 
-    color1: string;
-    color2: string;
     toothCount: number;
     toothOffset: number;
 
@@ -27,9 +26,7 @@ export class LocalObstacle {
         this.x2 = new Interpolator(o.x2, false);
         this.y2 = new Interpolator(o.y2, false);
         this.size = new Interpolator(o.size, false);
-
-        this.color1 = '#e1e7e7';
-        this.color2 = '#889292';
+        this.timeExisting = 0;
 
         let len = this.isCircle ? o.size * Math.PI * 2 : this.getCapsulePerimeter(o.size);
         this.toothCount = Math.round(2.5 * len) * 2;
@@ -149,13 +146,18 @@ export class LocalObstacle {
     }
 
     render(renderInfo: RenderInfo) {
-        const { ctx } = renderInfo;
+        const { ctx, t, prevT } = renderInfo;
 
         this.x1.onRender();
         this.y1.onRender();
         this.x2.onRender();
         this.y2.onRender();
         this.size.onRender();
+        this.timeExisting += t - prevT;
+
+        ctx.globalAlpha = Math.min(1, Math.pow(this.timeExisting / 300, 4));
+        const color1 = 'rgb(225,231,231)';
+        const color2 = 'rgb(136,146,146)';
 
         if (this.isCircle) {
             const x = this.x1.value;
@@ -164,8 +166,8 @@ export class LocalObstacle {
 
             if (this.isAggressive) {
                 ctx.lineWidth = 0.15;
-                ctx.fillStyle = this.color1;
-                ctx.strokeStyle = this.color2;
+                ctx.fillStyle = color1;
+                ctx.strokeStyle = color2;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
 
@@ -183,12 +185,12 @@ export class LocalObstacle {
                 });
             } else {
                 this.renderShadowed(renderInfo, () => {
-                    ctx.fillStyle = this.color2;
+                    ctx.fillStyle = color2;
                     ctx.beginPath();
                     ctx.arc(x, y, r, 0, Math.PI * 2);
                     ctx.fill();
 
-                    ctx.fillStyle = this.color1;
+                    ctx.fillStyle = color1;
                     ctx.beginPath();
                     ctx.arc(x, y, r - 0.15, 0, Math.PI * 2);
                     ctx.fill();
@@ -203,8 +205,8 @@ export class LocalObstacle {
 
             if (this.isAggressive) {
                 ctx.lineWidth = 0.15;
-                ctx.fillStyle = this.color1;
-                ctx.strokeStyle = this.color2;
+                ctx.fillStyle = color1;
+                ctx.strokeStyle = color2;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
 
@@ -224,14 +226,14 @@ export class LocalObstacle {
                 ctx.lineCap = 'round';
 
                 this.renderShadowed(renderInfo, () => {
-                    ctx.strokeStyle = this.color2;
+                    ctx.strokeStyle = color2;
                     ctx.lineWidth = r * 2;
                     ctx.beginPath();
                     ctx.moveTo(x1, y1);
                     ctx.lineTo(x2, y2);
                     ctx.stroke();
 
-                    ctx.strokeStyle = this.color1;
+                    ctx.strokeStyle = color1;
                     ctx.lineWidth = r * 2 - 0.15;
                     ctx.beginPath();
                     ctx.moveTo(x1, y1);
@@ -240,5 +242,6 @@ export class LocalObstacle {
                 });
             }
         }
+        ctx.globalAlpha = 1;
     }
 }
