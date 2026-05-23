@@ -145,7 +145,7 @@ export class GameServer {
             const beetlesToSend = filterMapValues(game.beetles, b => b.filterMessage(bounds));
             const rubysToSend = filterMapValues(game.rubys, r => r.filterMessage(bounds));
             const obstaclesToSend = filterMapValues(game.obstacles, o => o.filterMessage(bounds));
-            const particlesToSend = game.particles.filter(p => p.filterMessage(bounds));
+            const particlesToSend = game.particles.filter(p => p.filterMessage(bounds, beetle ? beetle.globId : -1));
 
             const looksToSend: LooksEntry[] = [];
             if (numMessages == 0) {

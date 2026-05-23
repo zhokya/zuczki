@@ -15,7 +15,7 @@ import { beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder,
 import { PointedDataView } from "../../shared/encoder/types";
 import { formatPoints } from "../../shared/utils";
 import { defaultAspect, getVisibleArea } from "../../shared/getVisibleArea";
-import { ParticleSystem, randomRepeat, RubyParticle, SizeIncreaseParticle } from "./visuals/particleSystem";
+import { ParticleSystem, randomRepeat, RubyParticle, SizeDecreaseParticle, SizeIncreaseParticle } from "./visuals/particleSystem";
 import { Interpolator } from "./interpolator";
 
 const mainCanvas = document.getElementById('main-canvas') as HTMLCanvasElement;
@@ -132,12 +132,16 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
 
     particles.forEach(p => {
         randomRepeat(() => {
-            if(p.type == 'obstacle') {
-                particleSystem.addParticle(new SizeIncreaseParticle(p.x, p.y, 1 + Math.abs(p.size * 4)));
+            if(p.type == 'nonRuby') {
+                if(p.size < 0) {
+                    particleSystem.addParticle(new SizeDecreaseParticle(p.x, p.y, 1 + Math.abs(p.size * 8)));
+                } else if(p.size > 0) {
+                    particleSystem.addParticle(new SizeIncreaseParticle(p.x, p.y, 1 + Math.abs(p.size * 4)));
+                }
             } else {
                 particleSystem.addParticle(new RubyParticle(p.x, p.y, 1 + Math.abs(p.size * 4), p.type == 'rubyRemoval'));
             }
-        }, Math.abs(p.size * 100));
+        }, Math.abs(p.size * 100) + 4);
     });
 
     lookUpdates.forEach(lookEntry => {

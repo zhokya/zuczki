@@ -2,8 +2,6 @@ import { lerp } from "../../../shared/utils";
 import type { RenderInfo } from "../types";
 
 /*
-- beetle-beetle collision
-- aggressive obstacle-beetle collision
 - beetle death
 */
 
@@ -172,6 +170,41 @@ export class SizeIncreaseParticle extends ParticleBase {
         ctx.lineTo(this.x + size, this.y + size);
         ctx.moveTo(this.x - size, this.y + size);
         ctx.lineTo(this.x + size, this.y - size);
+        ctx.stroke();
+    }
+}
+
+export class SizeDecreaseParticle extends ParticleBase {
+    x; y; vx; vy; ax; ay; maxAliveT; size;
+    
+    constructor(x: number, y: number, strength: number) {
+        super();
+        
+        this.x = x;
+        this.y = y;
+        this.size = lerp(0.4, 0.6, Math.random());
+
+        [this.vx, this.vy] = this.init(lerp(0, 3 * strength, Math.sqrt(Math.random())));
+        [this.ax, this.ay] = this.init(lerp(0, 2 * strength, Math.random()));
+
+        this.maxAliveT = lerp(0.2, 0.6, Math.random()) * Math.pow(strength, 0.4);
+    }
+
+    subRender(renderInfo: RenderInfo, fract: number) {
+        const { ctx, scale } = renderInfo;
+
+        const size = this.size * fract * (1 - fract);
+
+        ctx.shadowColor = 'rgb(40,190,60)';
+        ctx.strokeStyle = 'rgb(40,250,60)';
+        ctx.shadowBlur = scale * 0.8;
+        ctx.lineWidth = size;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(this.x - size, this.y);
+        ctx.lineTo(this.x + size, this.y);
+        ctx.moveTo(this.x, this.y - size);
+        ctx.lineTo(this.x, this.y + size);
         ctx.stroke();
     }
 }

@@ -12,6 +12,7 @@ import {
     minSpeed, maxSpeed, clickSpeed, magnitude1, magnitude2,
     getAverageDashDistance, getAverageDashDuration,
 } from "../sharedConstants.js";
+import { Particle } from "./particle.js";
 import { Point } from "./point.js";
 import { Ruby } from "./ruby.js";
 
@@ -277,15 +278,39 @@ export class Beetle {
         const scoreB = qualityO - (qualityB > 0 ? qualityB : 0);
         const scoreO = qualityB - (qualityO > 0 ? qualityO : 0);
 
+        const deltaB = this.sizeDeltaWithProtection(-vectorMagnitudes.beetleCollision.size * scoreB);
+        const deltaO = other.sizeDeltaWithProtection(-vectorMagnitudes.beetleCollision.size * scoreO);
+
         this.vx -= vectorMagnitudes.beetleCollision.position * ndx;
         this.vy -= vectorMagnitudes.beetleCollision.position * ndy;
-        this.vsize += this.sizeDeltaWithProtection(-vectorMagnitudes.beetleCollision.size * scoreB);
+        this.vsize += deltaB;
         this.score += Math.max(0, Math.round(67.4 * scoreB));
 
         other.vx += vectorMagnitudes.beetleCollision.position * ndx;
         other.vy += vectorMagnitudes.beetleCollision.position * ndy;
-        other.vsize += other.sizeDeltaWithProtection(-vectorMagnitudes.beetleCollision.size * scoreO);
+        other.vsize += deltaO;
         other.score += Math.max(0, Math.round(67.4 * scoreO));
+
+        const collisionX = this.x + ndx * this.size;
+        const collisionY = this.y + ndy * this.size;
+        this.game.particles.push(new Particle(
+            collisionX, collisionY,
+            Math.max(deltaB, deltaO) * infSum,
+            'nonRuby',
+            [this.globId, other.globId], null
+        ));
+        this.game.particles.push(new Particle(
+            collisionX, collisionY,
+            deltaB * infSum,
+            'nonRuby',
+            [], this.globId
+        ));
+        this.game.particles.push(new Particle(
+            collisionX, collisionY,
+            deltaO * infSum,
+            'nonRuby',
+            [], other.globId
+        ));
     }
 
     getUint8MotionBlur() {

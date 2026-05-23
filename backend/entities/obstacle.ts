@@ -173,7 +173,7 @@ export class Obstacle {
                 other.x - ndx * other.size,
                 other.y - ndy * other.size,
                 vectorMagnitudes.aggresiveObstacle.size * infSum,
-                'obstacle'
+                'nonRuby'
             ));
             this.applyCollisionVector(other, ndx, ndy, vectorMagnitudes.aggresiveObstacle);
         } else if (this.animation > 1) {
