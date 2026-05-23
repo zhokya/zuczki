@@ -72,6 +72,9 @@ export const leaderboardEntryEncoder = new Encoder({
 export const headerEncoder = new Encoder({
     globId: new UintEncoder(8),
     motionBlur: new UintEncoder(8),
+    cameraX: positionEncoder,
+    cameraY: positionEncoder,
+    
     numBeetles: new UintEncoder(8),
     numRubys: new UintEncoder(8),
     numObstacles: new UintEncoder(8),
@@ -79,7 +82,7 @@ export const headerEncoder = new Encoder({
     numPointCreations: new UintEncoder(16),
     numPointRemovals: new UintEncoder(16),
     numLooks: new UintEncoder(8),
-    numLeaderboardEntries: new UintEncoder(8)
+    numLeaderboardEntries: new UintEncoder(8),
 });
 
 // Needs to be a function, because we need to read idLength from env, which is different for frontend and backend

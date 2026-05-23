@@ -32,9 +32,12 @@ let prevH = -1;
 let prevT = -1;
 
 export let isAlive = false;
-let prevIsAlive = false;
+let prevDelayedIsAlive = false;
+let unaliveStartT: number | null = -1e9;
 let selfGlobId = -1;
 const motionBlurAmount = new Interpolator(0, false);
+let cameraX = new Interpolator(0, false);
+let cameraY = new Interpolator(0, false);
 
 let looksMap = new Map<number, Looks>();
 let localBeetles = new Map<number, LocalBeetle>();
@@ -68,7 +71,13 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
         }
     });
 
-    if (isAlive !== prevIsAlive) {
+    if(isAlive) {
+        unaliveStartT = null;
+    } else if(unaliveStartT === null) {
+        unaliveStartT = performance.now();
+    }
+    const delayedIsAlive = unaliveStartT === null || performance.now() - unaliveStartT < 3000;
+    if (delayedIsAlive !== prevDelayedIsAlive) {
         if (isAlive) {
             mainCanvas.style = 'filter: none; opacity: 1;';
             menu.style = 'opacity: 0; pointer-events: none;'
@@ -78,7 +87,7 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
             onDead();
         }
     }
-    prevIsAlive = isAlive;
+    prevDelayedIsAlive = delayedIsAlive;
 
     if(isFirstMessage) {
         looksMap = new Map<number, Looks>();
@@ -86,6 +95,11 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
         localRubys = new Map<number, LocalRuby>();
         localObstacles = new Map<number, LocalObstacle>();
         localPoints = new Map<number, LocalPoint>();
+        cameraX = new Interpolator(header.cameraX, false);
+        cameraY = new Interpolator(header.cameraY, false);
+    } else {
+        cameraX.update(header.cameraX);
+        cameraY.update(header.cameraY);
     }
 
     const updatedIds = new Set();
@@ -317,8 +331,10 @@ export function mainCanvasRenderLoop(t: number) {
     const motionBlurOpacity = 1 - motionBlurAmount.value / 255 * 0.9;
     const renderMotionBlurEffect = motionBlurOpacity < 0.99;
 
-    let centerX = 0;
-    let centerY = 0;
+    cameraX.onRender();
+    cameraY.onRender();
+    let centerX = cameraX.value;
+    let centerY = cameraY.value;
     let visibleArea = getVisibleArea(null);
     const selfBeetle = localBeetles.get(selfGlobId);
     if (selfBeetle !== undefined) {

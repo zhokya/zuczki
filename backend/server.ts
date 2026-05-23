@@ -8,13 +8,15 @@ import {
     beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, particleEncoder,
     clientPlayEncoder, clientUpdateEncoder, getClientRegisterEncoder, 
     type LeaderboardEntry, 
-    clientRegisterId, clientPlayId, clientUpdateId
+    clientRegisterId, clientPlayId, clientUpdateId,
+    type Header
 } from "../shared/dataEncoders.js";
 import { moduloAngle } from "../shared/utils.js";
 import { PointedDataView } from "../shared/encoder/types.js";
 import { utf8ByteLength } from "../shared/encoder/stringEncoder.js";
 import { getVisionBoundsFromCenter } from "../shared/visionBounds.js";
 import { defaultAspect, getVisibleArea } from "../shared/getVisibleArea.js";
+import { Camera } from "./entities/camera.js";
 
 function filterMapValues<T>(map: Map<any, T>, filterFn: (element: T) => boolean): T[] {
     const result: T[] = [];
@@ -78,6 +80,7 @@ export class GameServer {
         var game = game_;
 
         var beetleId: string | null = null;
+        const camera = new Camera();
 
         ws.on('message', (rawData, isBinary) => {
             try {
@@ -137,10 +140,9 @@ export class GameServer {
             if(beetleId === null) return;  // Only send messages after client registers
             const beetle = game.beetles.get(beetleId);
 
-            const centerX = beetle ? beetle.x : 0;
-            const centerY = beetle ? beetle.y : 0;
+            camera.update(beetle);
             const visibleArea = getVisibleArea(beetle ? beetle.size : null);
-            const bounds = getVisionBoundsFromCenter(centerX, centerY, visibleArea * defaultAspect, visibleArea);
+            const bounds = getVisionBoundsFromCenter(camera.x, camera.y, visibleArea * defaultAspect, visibleArea);
 
             const beetlesToSend = filterMapValues(game.beetles, b => b.filterMessage(bounds));
             const rubysToSend = filterMapValues(game.rubys, r => r.filterMessage(bounds));
@@ -166,9 +168,12 @@ export class GameServer {
 
             const leaderboardData = numMessages % 50 == 0 ? this.getLeaderboardData(game) : [];
 
-            const header = {
+            const header: Header = {
                 globId: beetle ? beetle.globId : 0,
                 motionBlur: beetle ? beetle.getUint8MotionBlur() : 0,
+                cameraX: camera.x,
+                cameraY: camera.y,
+
                 numBeetles: beetlesToSend.length,
                 numRubys: rubysToSend.length,
                 numObstacles: obstaclesToSend.length,
