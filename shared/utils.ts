@@ -14,24 +14,24 @@ export class NumericIdGenerator {
 
     constructor(maxId: number) {
         // first few ids for special use (id = 0 used as 'null', required by data encoders)
-        for(let id = 4; id < maxId; id ++) {
+        for (let id = 4; id < maxId; id++) {
             this.queue.push(id);
         }
         this.maxId = maxId;
     }
 
     update() {
-        while(this.unregisteredQueue2.length > 0) {
+        while (this.unregisteredQueue2.length > 0) {
             this.queue.push(this.unregisteredQueue2.pop() as number);
         }
-        while(this.unregisteredQueue1.length > 0) {
+        while (this.unregisteredQueue1.length > 0) {
             this.unregisteredQueue2.push(this.unregisteredQueue1.pop() as number);
         }
     }
 
     next() {
         const id = this.queue.pop();
-        if(id === undefined) {
+        if (id === undefined) {
             throw new Error('Not enough IDs in NumericIdGenerator - used all up to ' + this.maxId);
         }
         return id;
@@ -113,4 +113,19 @@ export function formatPoints(pkt: number) {
         return "punkty";
     }
     return "punktów";
+}
+
+export function binarySearch(fn: (x: number) => number, y: number, xMin: number, xMax: number): { x: number, error: number } {
+    let a = xMin;
+    let b = xMax;
+    while (b - a > 1e-6) {
+        const mid = (a + b) / 2;
+        if (fn(mid) > y) {
+            b = mid;
+        } else {
+            a = mid;
+        }
+    }
+    const x = (a + b) / 2;
+    return { x, error: Math.abs(fn(x) - y) };
 }
