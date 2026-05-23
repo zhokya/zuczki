@@ -87,11 +87,6 @@ export class Game {
     }
 
     update() {
-        this.globId.update();
-        this.rubyId.update();
-        this.obstacleId.update();
-        this.pointId.update();
-
         // Remove points first, so that there are no points that are created and removed in the same tick
         this.beetles.forEach(beetle => {
             this.points.forEach((point, id) => {

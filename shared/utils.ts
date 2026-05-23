@@ -7,38 +7,38 @@ export function generateId(id_length: number): string {
 }
 
 export class NumericIdGenerator {
-    queue: number[] = [];
-    unregisteredQueue1: number[] = [];
-    unregisteredQueue2: number[] = [];
+    queue1: number[] = [];
+    queue2: number[] = [];
     maxId: number;
 
     constructor(maxId: number) {
         // first few ids for special use (id = 0 used as 'null', required by data encoders)
         for (let id = 4; id < maxId; id++) {
-            this.queue.push(id);
+            this.queue1.push(id);
         }
         this.maxId = maxId;
     }
 
-    update() {
-        while (this.unregisteredQueue2.length > 0) {
-            this.queue.push(this.unregisteredQueue2.pop() as number);
-        }
-        while (this.unregisteredQueue1.length > 0) {
-            this.unregisteredQueue2.push(this.unregisteredQueue1.pop() as number);
-        }
-    }
-
     next() {
-        const id = this.queue.pop();
+        const id = this.queue1.pop();
         if (id === undefined) {
-            throw new Error('Not enough IDs in NumericIdGenerator - used all up to ' + this.maxId);
+            this.queue2.reverse();
+
+            const q2 = this.queue2;
+            this.queue2 = this.queue1;
+            this.queue1 = q2;
+
+            const newId = this.queue1.pop();
+            if (newId === undefined) {
+                throw new Error('Not enough IDs in NumericIdGenerator - used all up to ' + this.maxId);
+            }
+            return newId;
         }
         return id;
     }
 
     unregister(id: number) {
-        this.unregisteredQueue1.push(id);
+        this.queue2.push(id);
     }
 }
 
