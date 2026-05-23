@@ -16,9 +16,13 @@ import { PointedDataView } from "../../shared/encoder/types";
 import { formatPoints } from "../../shared/utils";
 import { defaultAspect, getVisibleArea } from "../../shared/getVisibleArea";
 import { ParticleSystem, randomRepeat, RubyParticle, SizeIncreaseParticle } from "./visuals/particleSystem";
+import { Interpolator } from "./interpolator";
 
-const c = document.getElementById('c') as HTMLCanvasElement;
-const ctx = c.getContext('2d') as CanvasRenderingContext2D;
+const mainCanvas = document.getElementById('main-canvas') as HTMLCanvasElement;
+const mainCanvasCtx = mainCanvas.getContext('2d') as CanvasRenderingContext2D;
+const effectCanvas = document.createElement('canvas');
+const effectCanvasCtx = effectCanvas.getContext('2d') as CanvasRenderingContext2D;
+
 const menu = document.getElementById('menu') as HTMLDivElement;
 const leaderboardElement = document.getElementById('leaderboard') as HTMLElement;
 const finalScoreElement = document.getElementById('final-score') as HTMLElement;
@@ -30,6 +34,7 @@ let prevT = -1;
 export let isAlive = false;
 let prevIsAlive = false;
 let selfGlobId = -1;
+const motionBlurAmount = new Interpolator(0, false);
 
 let looksMap = new Map<number, Looks>();
 let localBeetles = new Map<number, LocalBeetle>();
@@ -54,6 +59,7 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     const leaderboardData = leaderboardEntryEncoder.readListFromBuffer(view, header.numLeaderboardEntries);
 
     selfGlobId = header.globId;
+    motionBlurAmount.update(header.motionBlur);
 
     isAlive = false;
     beetles.forEach(b => {
@@ -64,10 +70,10 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
 
     if (isAlive !== prevIsAlive) {
         if (isAlive) {
-            c.style = 'filter: none; opacity: 1;';
+            mainCanvas.style = 'filter: none; opacity: 1;';
             menu.style = 'opacity: 0; pointer-events: none;'
         } else {
-            c.style = 'filter: blur(10px); opacity: 0.5;';
+            mainCanvas.style = 'filter: blur(10px); opacity: 0.5;';
             menu.style = 'opacity: 1; pointer-events: all;';
             onDead();
         }
@@ -164,49 +170,15 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     }
 });
 
-export function mainCanvasRenderLoop(t: number) {
-    const frameStartTime = performance.now();
+interface Text {
+    x: number;
+    y: number;
+    text: string;
+}
 
-    requestAnimationFrame(mainCanvasRenderLoop);
-
-    const w = window.innerWidth * window.devicePixelRatio;
-    const h = window.innerHeight * window.devicePixelRatio;
-    if (prevW != w || prevH != h) {
-        c.width = w;
-        c.height = h;
-        prevW = w;
-        prevH = h;
-    }
-
-    if (prevT === -1) {
-        prevT = t;
-    }
-
-    for (const b of localBeetles.values()) {
-        b.onRender();
-    }
-
-    let centerX = 0;
-    let centerY = 0;
-    let visibleArea = getVisibleArea(null);
-    const selfBeetle = localBeetles.get(selfGlobId);
-    if (selfBeetle !== undefined) {
-        centerX = selfBeetle.x.value;
-        centerY = selfBeetle.y.value;
-        visibleArea = getVisibleArea(selfBeetle.size.value);
-    }
-    const scale = Math.max(h / visibleArea, w / defaultAspect / visibleArea);
-
-    const bounds = getVisionBoundsFromCenter(centerX, centerY, w, h, scale);
-    const renderInfo: RenderInfo = { w, h, ctx, t, prevT, scale, bounds, particleSystem };
-
-    renderBeforeTransform(renderInfo);
-
-    ctx.save();
-    ctx.translate(w / 2, h / 2);
-    ctx.scale(scale, scale);
-    ctx.translate(-centerX, -centerY);
-
+function renderWorld(renderInfo: RenderInfo): Text[] {
+    const { ctx } = renderInfo;
+    
     renderEnvironment(renderInfo);
 
     // ctx.fillStyle = 'rgba(0,0,0,.5)';
@@ -218,7 +190,7 @@ export function mainCanvasRenderLoop(t: number) {
     // ctx.fillStyle = 'rgba(0,255,0,.2)';
     // ctx.fillRect(centerX - vx / 4, centerY - vy / 4, vx / 2, vy / 2);
 
-    const texts: { x: number, y: number, text: string }[] = [];
+    const texts: Text[] = [];
     const matrix = ctx.getTransform();
 
     localPoints.forEach(p => {
@@ -242,7 +214,7 @@ export function mainCanvasRenderLoop(t: number) {
     renderWorldEdge(renderInfo);
 
     localBeetles.forEach(b => {
-        let look = looksMap.get(b.globId);
+        const look = looksMap.get(b.globId);
 
         b.render(renderInfo, look);
 
@@ -259,6 +231,21 @@ export function mainCanvasRenderLoop(t: number) {
 
     particleSystem.render(renderInfo);
 
+    return texts;
+}
+
+function render(renderInfo: RenderInfo, selfBeetle: LocalBeetle | undefined) {
+    const { ctx, scale, w, h, centerX, centerY } = renderInfo;
+
+    renderBeforeTransform(renderInfo);
+
+    ctx.save();
+    ctx.translate(w / 2, h / 2);
+    ctx.scale(scale, scale);
+    ctx.translate(-centerX, -centerY);
+
+    const texts = renderWorld(renderInfo);
+
     ctx.restore();
 
     ctx.fillStyle = 'black';
@@ -268,13 +255,67 @@ export function mainCanvasRenderLoop(t: number) {
     texts.forEach(t => {
         ctx.fillText(t.text, t.x, t.y);
     });
-
+    
     if (selfBeetle !== undefined) {
         renderMinimap(renderInfo, selfBeetle);
         renderSizeWarning(renderInfo, selfBeetle.size.value);
         if (aliveT > 1000) {
             finalScoreElement.innerText = selfBeetle.score + ' ' + formatPoints(selfBeetle.score);
         }
+    }
+}
+
+export function mainCanvasRenderLoop(t: number) {
+    const frameStartTime = performance.now();
+
+    requestAnimationFrame(mainCanvasRenderLoop);
+
+    const w = window.innerWidth * window.devicePixelRatio;
+    const h = window.innerHeight * window.devicePixelRatio;
+    if (prevW != w || prevH != h) {
+        mainCanvas.width = w;
+        mainCanvas.height = h;
+        effectCanvas.width = w;
+        effectCanvas.height = h;
+        prevW = w;
+        prevH = h;
+    }
+
+    if (prevT === -1) {
+        prevT = t;
+    }
+
+    for (const b of localBeetles.values()) {
+        b.onRender();
+    }
+
+    motionBlurAmount.onRender();
+    const motionBlurOpacity = 1 - motionBlurAmount.value / 255 * 0.9;
+    const renderMotionBlurEffect = motionBlurOpacity < 0.99;
+
+    let centerX = 0;
+    let centerY = 0;
+    let visibleArea = getVisibleArea(null);
+    const selfBeetle = localBeetles.get(selfGlobId);
+    if (selfBeetle !== undefined) {
+        centerX = selfBeetle.x.value;
+        centerY = selfBeetle.y.value;
+        visibleArea = getVisibleArea(selfBeetle.size.value);
+    }
+    const scale = Math.max(h / visibleArea, w / defaultAspect / visibleArea);
+
+    const bounds = getVisionBoundsFromCenter(centerX, centerY, w, h, scale);
+    const renderInfo: RenderInfo = {
+        ctx: renderMotionBlurEffect ? effectCanvasCtx : mainCanvasCtx,
+        w, h, t, prevT, scale, bounds, particleSystem, centerX, centerY 
+    };
+
+    render(renderInfo, selfBeetle);
+
+    if(renderMotionBlurEffect) {
+        mainCanvasCtx.globalAlpha = motionBlurOpacity;
+        mainCanvasCtx.drawImage(effectCanvas, 0, 0);
+        mainCanvasCtx.globalAlpha = 1;
     }
 
     updateFpsCounter(frameStartTime);

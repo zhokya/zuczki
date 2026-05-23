@@ -1,5 +1,5 @@
 import type { VisionBounds } from "../../shared/visionBounds";
-import type { particleSystem } from "./visuals/particleSystem";
+import type { ParticleSystem } from "./visuals/particleSystem";
 
 export interface RenderInfo {
     ctx: CanvasRenderingContext2D;
@@ -8,6 +8,8 @@ export interface RenderInfo {
     w: number;
     h: number;
     scale: number;
+    centerX: number;
+    centerY: number;
     bounds: VisionBounds;
-    particleSystem: particleSystem;
+    particleSystem: ParticleSystem;
 }

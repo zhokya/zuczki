@@ -172,6 +172,7 @@ export class GameServer {
 
             const header = {
                 globId: beetle ? beetle.globId : 0,
+                motionBlur: beetle ? beetle.getUint8MotionBlur() : 0,
                 numBeetles: beetlesToSend.length,
                 numRubys: rubysToSend.length,
                 numObstacles: obstaclesToSend.length,

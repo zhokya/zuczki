@@ -8,8 +8,9 @@ import { isLooks, numUsedColors, type Looks } from "../../shared/looks";
 import { colors, getRandomLook } from "../../shared/looks";
 import { send } from "./wsManager";
 import { clientPlayEncoder, clientPlayId } from "../../shared/dataEncoders";
+import { ParticleSystem } from "./visuals/particleSystem";
 
-const c = document.getElementById('s') as HTMLCanvasElement;
+const c = document.getElementById('small-canvas') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
 
 const w = c.width;
@@ -140,6 +141,7 @@ export function onDead() {
 
 let prevT: number | null = null;
 export let aliveT = 0;
+const particleSystem = new ParticleSystem();
 const menuBeetle = new LocalBeetle({
     x: w * 0.5,
     y: h * 0.64,
@@ -167,7 +169,7 @@ export function menuRenderLoop(t: number) {
         ctx.clearRect(0, 0, w, h);
 
         const bounds = new VisionBounds(0, 0, w, h);
-        const renderInfo: RenderInfo = { ctx, w, h, prevT, t, scale: 1, bounds };
+        const renderInfo: RenderInfo = { ctx, w, h, prevT, t, scale: 1, bounds, particleSystem, centerX: w / 2, centerY: h / 2 };
         menuBeetle.render(renderInfo, chosenLooks);
     }
 

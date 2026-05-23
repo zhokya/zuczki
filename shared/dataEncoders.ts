@@ -71,6 +71,7 @@ export const leaderboardEntryEncoder = new Encoder({
 
 export const headerEncoder = new Encoder({
     globId: new UintEncoder(8),
+    motionBlur: new UintEncoder(8),
     numBeetles: new UintEncoder(8),
     numRubys: new UintEncoder(8),
     numObstacles: new UintEncoder(8),

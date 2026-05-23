@@ -103,9 +103,13 @@ export class Beetle {
         return 1 - Math.exp(-this.powerupTicks * loadingSpeed);
     }
 
+    getSpeedMultBySize() {
+        return 1 + (maxSpeed / minSpeed - 1) * (this.size - 1) / (maxSize - 1);
+    }
+
     update() {
         let magnitude = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-        const speedMultBySize = 1 + (maxSpeed / minSpeed - 1) * (this.size - 1) / (maxSize - 1);
+        const speedMultBySize = this.getSpeedMultBySize();
         const speedMultByPowerup = 1 - this.getPowerupLoad(0.22);
 
         // Powerup
@@ -279,5 +283,13 @@ export class Beetle {
         other.vy += vectorMagnitudes.beetleCollision.position * ndy;
         other.vsize += other.sizeDeltaWithProtection(-vectorMagnitudes.beetleCollision.size * scoreO);
         other.score += Math.max(0, Math.round(67.4 * scoreO));
+    }
+
+    getUint8MotionBlur() {
+        const magnitude = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        const speed = minSpeed * this.getSpeedMultBySize();
+        if(magnitude <= speed) return 0;
+        const motionBlur = 1 - 1 / (1 + 2 * (magnitude - speed));
+        return Math.max(0, Math.min(255, Math.round(motionBlur * 255)));
     }
 }

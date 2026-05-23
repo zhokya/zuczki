@@ -15,7 +15,7 @@
         }
 
 
-        #c {
+        #main-canvas {
             width: 100%;
             height: 100%;
             transition: 0.4s;
@@ -55,7 +55,7 @@
             height: 100%;
             transition: 0.4s;
         }
-        #s {
+        #small-canvas {
             position: absolute;
             transition:
                 filter 0.4s,
@@ -358,14 +358,14 @@
 </head>
 
 <body>
-    <canvas id="c"></canvas>
+    <canvas id="main-canvas"></canvas>
     <span id="fps-counter"></span>
     <div id="leaderboard"></div>
 
     <div id="menu">
         <div id="menu-fade"></div>
 
-        <canvas id="s" width="1024" height="1024" class="notChoosingLooks"></canvas>
+        <canvas id="small-canvas" width="1024" height="1024" class="notChoosingLooks"></canvas>
 
         <div id="not-looks">
             <span id="final-score"></span>
