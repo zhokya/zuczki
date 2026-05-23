@@ -6,6 +6,7 @@ import { Point, spawnNewPoints } from "./entities/point.js";
 import { Ruby } from "./entities/ruby.js";
 import { Obstacle, spawnNewObstacles } from "./entities/obstacle.js";
 import type { PointCreation, PointRemoval } from "../shared/dataEncoders.js";
+import type { Particle } from "./entities/particle.js";
 
 const maxSize = parseFloat(env('VITE_MAX_SIZE'));
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
@@ -28,6 +29,8 @@ export class Game {
     obstacles: Map<number, Obstacle>;
     obstacleId: NumericIdGenerator;
 
+    particles: Particle[] = [];
+
     url: string;
 
     constructor(url: string) {
@@ -48,6 +51,7 @@ export class Game {
         this.looksMapIdEdits = [];
         this.pointCreations = [];
         this.pointRemovals = [];
+        this.particles = [];
     }
 
     distanceFromObjects(x: number, y: number): number {

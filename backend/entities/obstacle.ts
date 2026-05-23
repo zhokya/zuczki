@@ -1,6 +1,7 @@
 import type { Game } from "../game.js";
-import { vectorMagnitudes } from "../sharedConstants.js";
+import { infSum, vectorMagnitudes } from "../sharedConstants.js";
 import { Beetle } from "./beetle.js";
+import { Particle } from "./particle.js";
 import type { Ruby } from "./ruby.js";
 
 export class Obstacle {
@@ -164,14 +165,20 @@ export class Obstacle {
     }
 
     resolveCollision(other: Beetle | Ruby, ndx: number, ndy: number, dds: number) {
-        other.x += ndx * dds;
-        other.y += ndy * dds;
-
         if (this.isAggressive) {
+            this.game.particles.push(new Particle(
+                other.x - ndx * other.size,
+                other.y - ndy * other.size,
+                vectorMagnitudes.aggresiveObstacle.size * infSum,
+                'obstacle'
+            ));
             this.applyCollisionVector(other, ndx, ndy, vectorMagnitudes.aggresiveObstacle);
         } else if (this.animation > 1) {
             this.applyCollisionVector(other, ndx, ndy, vectorMagnitudes.animatedObstacle);
         }
+        
+        other.x += ndx * dds;
+        other.y += ndy * dds;
     }
 
     applyCollisionVector(other: Beetle | Ruby, ndx: number, ndy: number, vector: { size: number, position: number }) {

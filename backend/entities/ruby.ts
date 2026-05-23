@@ -1,7 +1,8 @@
 import env from "../env.js";
 import type { Game } from "../game.js";
-import { vectorDecay, vectorMagnitudes } from "../sharedConstants.js";
+import { infSum, vectorDecay, vectorMagnitudes } from "../sharedConstants.js";
 import type { Beetle } from "./beetle.js";
+import { Particle } from "./particle.js";
 
 export const rubyProtectionTicks = 30;
 const rubyVectorMagnitude = 0.2;
@@ -37,6 +38,9 @@ export class Ruby {
     getSize() {
         return this.baseSize * this.hp;
     }
+    get size() {
+        return this.getSize();
+    }
 
     sampleHpTaken() {
         return Math.random() * 0.3 + 0.1;
@@ -47,7 +51,7 @@ export class Ruby {
         let anyHits = false;
         let totalHpTaken = 0;
 
-        if(this.hp > decreaseHpThreshold) {
+        if (this.hp > decreaseHpThreshold) {
             this.hp -= decreaseHpSpeed;
         }
 
@@ -79,12 +83,19 @@ export class Ruby {
                 b.vy -= ndy * vectorMagnitudes.ruby.position * hp;
                 b.vsize += vectorMagnitudes.ruby.size * hp;
                 b.score += Math.round(100 * hp * this.baseSize * this.baseSize);
+
+                this.game.particles.push(new Particle(
+                    this.x - ndx * this.getSize(),
+                    this.y - ndy * this.getSize(),
+                    vectorMagnitudes.ruby.size * hp * infSum,
+                    removeIfHit ? 'rubyRemoval' : 'ruby'
+                ));
             }
         });
 
         if (anyHits) {
             this.protectionTicks = rubyProtectionTicks;
-            if(removeIfHit) {
+            if (removeIfHit) {
                 this.hp = -1;
             }
         }

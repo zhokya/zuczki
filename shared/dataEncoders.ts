@@ -1,4 +1,5 @@
 import { Encoder } from "./encoder/encoder.js";
+import { EnumEncoder } from "./encoder/enumEncoder.js";
 import { BooleanEncoder, RangeEncoder, UintEncoder } from "./encoder/numberEncoders.js";
 import { ConstantLengthAsciiEncoder } from "./encoder/stringEncoder.js";
 import { looksEncoder } from "./looks.js";
@@ -55,6 +56,13 @@ export const pointRemovalEncoder = new Encoder({
     y: positionEncoder,
 });
 
+export const particleEncoder = new Encoder({
+    type: new EnumEncoder(['ruby', 'rubyRemoval', 'obstacle'] as const),
+    size: new RangeEncoder(16, -20, 20),
+    x: positionEncoder,
+    y: positionEncoder,
+});
+
 export const leaderboardEntryEncoder = new Encoder({
     place: new UintEncoder(8),
     score: scoreEncoder,
@@ -66,6 +74,7 @@ export const headerEncoder = new Encoder({
     numBeetles: new UintEncoder(8),
     numRubys: new UintEncoder(8),
     numObstacles: new UintEncoder(8),
+    numParticles: new UintEncoder(8),
     numPointCreations: new UintEncoder(16),
     numPointRemovals: new UintEncoder(16),
     numLooks: new UintEncoder(8),

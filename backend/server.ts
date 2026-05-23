@@ -6,12 +6,11 @@ import type { IncomingMessage } from "http";
 import { Beetle } from "./entities/beetle.js";
 import { rubyProtectionTicks } from "./entities/ruby.js";
 import { 
-    beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder,
+    beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, particleEncoder,
     clientPlayEncoder, clientUpdateEncoder, getClientRegisterEncoder, 
     type LeaderboardEntry, 
-    clientRegisterId,
-    clientPlayId,
-    clientUpdateId} from "../shared/dataEncoders.js";
+    clientRegisterId, clientPlayId, clientUpdateId
+} from "../shared/dataEncoders.js";
 import { moduloAngle } from "../shared/utils.js";
 import { PointedDataView } from "../shared/encoder/types.js";
 import { utf8ByteLength } from "../shared/encoder/stringEncoder.js";
@@ -150,6 +149,7 @@ export class GameServer {
                 game.obstacles, 
                 o => bounds.isInsideWithMargin(o.x1, o.y1, o.size + 2) || (!o.isCircle && bounds.isInsideWithMargin(o.x2, o.y2, o.size + 1))
             );
+            const particlesToSend = game.particles.filter(p => bounds.isInsideWithMargin(p.x, p.y, 5));
 
             const looksToSend: LooksEntry[] = [];
             if (numMessages == 0) {
@@ -175,10 +175,11 @@ export class GameServer {
                 numBeetles: beetlesToSend.length,
                 numRubys: rubysToSend.length,
                 numObstacles: obstaclesToSend.length,
+                numParticles: particlesToSend.length,
                 numPointCreations: numMessages == 0 ? game.points.size : game.pointCreations.length,
                 numPointRemovals: numMessages == 0 ? 0 : game.pointRemovals.length,
                 numLooks: looksToSend.length,
-                numLeaderboardEntries: leaderboardData.length
+                numLeaderboardEntries: leaderboardData.length,
             }
 
             const buffer = Buffer.alloc(
@@ -186,6 +187,7 @@ export class GameServer {
                 header.numBeetles * beetleEncoder.bytes +
                 header.numRubys * rubyEncoder.bytes +
                 header.numObstacles * obstacleEncoder.bytes +
+                header.numParticles * particleEncoder.bytes +
                 header.numPointCreations * pointCreationEncoder.bytes +
                 header.numPointRemovals * pointRemovalEncoder.bytes +
                 header.numLooks * looksEntryEncoder.bytes + numNicknameStringBytes +
@@ -243,6 +245,14 @@ export class GameServer {
                     size: o.getSize(),
 
                     isAggressive: o.isAggressive
+                });
+            });
+            particlesToSend.forEach(p => {
+                particleEncoder.writeToBuffer(view, {
+                    x: p.x, 
+                    y: p.y, 
+                    size: p.size, 
+                    type: p.type
                 });
             });
 

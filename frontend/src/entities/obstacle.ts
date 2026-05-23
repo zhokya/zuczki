@@ -1,6 +1,8 @@
 import type { MessageObstacle } from "../../../shared/dataEncoders";
+import { lerp } from "../../../shared/utils";
 import { Interpolator } from "../interpolator";
 import type { RenderInfo } from "../types";
+import { ObstacleDestructionParticle, randomRepeat, type ParticleSystem } from "../visuals/particleSystem";
 
 export class LocalObstacle {
     id: number;
@@ -145,8 +147,99 @@ export class LocalObstacle {
         fn();
     }
 
+    private spawnParticles(particleSystem: ParticleSystem, dt: number) {
+        const mapSize = parseInt(import.meta.env.VITE_MAP_SIZE);
+        
+        if(this.isCircle) {
+            const x0 = this.x1.value;
+            const y0 = this.y1.value;
+            const r0 = this.size.value;
+
+            const x1 = 0;
+            const y1 = 0;
+            const r1 = mapSize;
+
+            const dx = x1 - x0;
+            const dy = y1 - y0;
+            const d = Math.sqrt(dx * dx + dy * dy);
+            const ndx = dx / d;
+            const ndy = dy / d;
+
+            if (d > r0 + r1) return;
+            if (d < Math.abs(r0 - r1)) return;
+            if (d === 0 && r0 === r1) return;
+
+            const a = (r0 * r0 - r1 * r1 + d * d) / (2 * d);
+            const h = Math.sqrt(r0 * r0 - a * a);
+
+            const xm = x0 + a * ndx;
+            const ym = y0 + a * ndy;
+
+            const rx = -ndy * h;
+            const ry = ndx * h;
+
+            // intersection points:
+            const p1x = xm + rx;
+            const p1y = ym + ry;
+            const p2x = xm - rx;
+            const p2y = ym - ry;
+
+            randomRepeat(() => {
+                const t = Math.random();
+
+                const x = lerp(p1x, p2x, t);
+                const y = lerp(p1y, p2y, t);
+                const norm = Math.sqrt(x * x + y * y);
+
+                const nx = x / norm;
+                const ny = y / norm;
+
+                particleSystem.addParticle(new ObstacleDestructionParticle(nx * mapSize, ny * mapSize));
+            }, h * dt * 0.03);
+        } else {
+            const x1 = this.x1.value;
+            const y1 = this.y1.value;
+            const x2 = this.x2.value;
+            const y2 = this.y2.value;
+
+            const maxd = mapSize + (Math.random() > 0.5 ? 1 : -1) * this.size.value;
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+
+            const a = dx * dx + dy * dy;
+            const b = 2 * (x1 * dx + y1 * dy);
+            const c = x1 * x1 + y1 * y1 - maxd * maxd;
+
+            const discriminant = b * b - 4 * a * c;
+            if (discriminant < 0) return;
+
+            const considerT = (t: number) => {
+                if (0 <= t && t <= 1) {
+                    randomRepeat(() => {
+                        const t2 = Math.random() * 2 - 1;
+
+                        const x = x1 + t * dx;
+                        const y = y1 + t * dy;
+                        const norm = Math.sqrt(x * x + y * y);
+
+                        const nx = x / norm;
+                        const ny = y / norm;
+
+                        particleSystem.addParticle(new ObstacleDestructionParticle(nx * mapSize - ny * t2, ny * mapSize + nx * t2));
+                    }, dt * 0.12);
+                }
+            };
+            
+            const sqrtD = Math.sqrt(discriminant);
+            considerT((-b - sqrtD) / (2 * a));
+            considerT((-b + sqrtD) / (2 * a));
+        }
+    }
+
     render(renderInfo: RenderInfo) {
-        const { ctx, t, prevT } = renderInfo;
+        const { ctx, t, prevT, particleSystem } = renderInfo;
+
+        this.spawnParticles(particleSystem, t - prevT);
 
         this.x1.onRender();
         this.y1.onRender();

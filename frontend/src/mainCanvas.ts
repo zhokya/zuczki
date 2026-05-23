@@ -11,10 +11,11 @@ import { registerWebsocketDataReceived, updateFpsCounter } from "./visuals/fpsCo
 import { LocalObstacle } from "./entities/obstacle";
 import { getVisionBoundsFromCenter } from "../../shared/visionBounds";
 import { looksEntryEncoder, type Looks, type LooksEntry } from "../../shared/looks";
-import { beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, type LeaderboardEntry, type MessageBeetle, type MessageObstacle, type MessageRuby, type PointCreation, type PointRemoval } from "../../shared/dataEncoders";
+import { beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, particleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, type LeaderboardEntry, type MessageBeetle, type MessageObstacle, type MessageRuby, type PointCreation, type PointRemoval } from "../../shared/dataEncoders";
 import { PointedDataView } from "../../shared/encoder/types";
 import { formatPoints } from "../../shared/utils";
 import { defaultAspect, getVisibleArea } from "../../shared/getVisibleArea";
+import { ParticleSystem, randomRepeat, RubyParticle, SizeIncreaseParticle } from "./visuals/particleSystem";
 
 const c = document.getElementById('c') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
@@ -35,6 +36,7 @@ let localBeetles = new Map<number, LocalBeetle>();
 let localRubys = new Map<number, LocalRuby>();
 let localObstacles = new Map<number, LocalObstacle>();
 let localPoints = new Map<number, LocalPoint>();
+const particleSystem = new ParticleSystem();
 
 onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     registerWebsocketDataReceived(data.byteLength);
@@ -42,13 +44,14 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     const view = new PointedDataView(new DataView(data));
     const header = headerEncoder.readFromBuffer(view);
 
-    const beetles: MessageBeetle[] = beetleEncoder.readListFromBuffer(view, header.numBeetles);
-    const rubys: MessageRuby[] = rubyEncoder.readListFromBuffer(view, header.numRubys);
-    const obstacles: MessageObstacle[] = obstacleEncoder.readListFromBuffer(view, header.numObstacles);
-    const pointCreations: PointCreation[] = pointCreationEncoder.readListFromBuffer(view, header.numPointCreations);
-    const pointRemovals: PointRemoval[] = pointRemovalEncoder.readListFromBuffer(view, header.numPointRemovals);
-    const lookUpdates: LooksEntry[] = looksEntryEncoder.readListFromBuffer(view, header.numLooks);
-    const leaderboardData: LeaderboardEntry[] = leaderboardEntryEncoder.readListFromBuffer(view, header.numLeaderboardEntries);
+    const beetles = beetleEncoder.readListFromBuffer(view, header.numBeetles);
+    const rubys = rubyEncoder.readListFromBuffer(view, header.numRubys);
+    const obstacles = obstacleEncoder.readListFromBuffer(view, header.numObstacles);
+    const particles = particleEncoder.readListFromBuffer(view, header.numParticles);
+    const pointCreations = pointCreationEncoder.readListFromBuffer(view, header.numPointCreations);
+    const pointRemovals = pointRemovalEncoder.readListFromBuffer(view, header.numPointRemovals);
+    const lookUpdates = looksEntryEncoder.readListFromBuffer(view, header.numLooks);
+    const leaderboardData = leaderboardEntryEncoder.readListFromBuffer(view, header.numLeaderboardEntries);
 
     selfGlobId = header.globId;
 
@@ -121,6 +124,16 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
         }
     }
 
+    particles.forEach(p => {
+        randomRepeat(() => {
+            if(p.type == 'obstacle') {
+                particleSystem.addParticle(new SizeIncreaseParticle(p.x, p.y, 1 + Math.abs(p.size * 4)));
+            } else {
+                particleSystem.addParticle(new RubyParticle(p.x, p.y, 1 + Math.abs(p.size * 4), p.type == 'rubyRemoval'));
+            }
+        }, Math.abs(p.size * 100));
+    });
+
     lookUpdates.forEach(lookEntry => {
         looksMap.set(lookEntry.globId, lookEntry.looks);
     });
@@ -185,7 +198,7 @@ export function mainCanvasRenderLoop(t: number) {
     const scale = Math.max(h / visibleArea, w / defaultAspect / visibleArea);
 
     const bounds = getVisionBoundsFromCenter(centerX, centerY, w, h, scale);
-    const renderInfo: RenderInfo = { w, h, ctx, t, prevT, scale, bounds };
+    const renderInfo: RenderInfo = { w, h, ctx, t, prevT, scale, bounds, particleSystem };
 
     renderBeforeTransform(renderInfo);
 
@@ -243,6 +256,8 @@ export function mainCanvasRenderLoop(t: number) {
     localRubys.forEach(r => {
         r.renderHpBar(renderInfo);
     });
+
+    particleSystem.render(renderInfo);
 
     ctx.restore();
 
