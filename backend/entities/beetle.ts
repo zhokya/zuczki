@@ -195,6 +195,12 @@ export class Beetle {
             this.vx = -vectorMagnitudes.mapEdgeCollision.position * normx;
             this.vy = -vectorMagnitudes.mapEdgeCollision.position * normy;
             this.vsize += vectorMagnitudes.mapEdgeCollision.size;
+
+            this.game.particles.push(new Particle(
+                normx * mapSize, normy * mapSize, 
+                vectorMagnitudes.mapEdgeCollision.size * infSum,
+                'nonRuby'
+            ));
         }
 
         // Irrelevances to other beetles
@@ -235,6 +241,10 @@ export class Beetle {
             const point = new Point(px + this.x, py + this.y, false, this.game);
             this.game.points.set(point.id, point);
         }
+
+        this.game.particles.push(new Particle(
+            this.x, this.y, this.size, 'death'
+        ));
 
         this.game.globId.unregister(this.globId);
     }

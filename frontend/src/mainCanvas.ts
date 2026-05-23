@@ -13,9 +13,9 @@ import { getVisionBoundsFromCenter } from "../../shared/visionBounds";
 import { looksEntryEncoder, type Looks } from "../../shared/looks";
 import { beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, particleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder } from "../../shared/dataEncoders";
 import { PointedDataView } from "../../shared/encoder/types";
-import { formatPoints } from "../../shared/utils";
+import { formatPoints, samplePointInCircle } from "../../shared/utils";
 import { defaultAspect, getVisibleArea } from "../../shared/getVisibleArea";
-import { ParticleSystem, randomRepeat, RubyParticle, SizeDecreaseParticle, SizeIncreaseParticle } from "./visuals/particleSystem";
+import { DeathParticle, ParticleSystem, randomRepeat, RubyParticle, SizeDecreaseParticle, SizeIncreaseParticle } from "./visuals/particleSystem";
 import { Interpolator } from "./interpolator";
 
 const mainCanvas = document.getElementById('main-canvas') as HTMLCanvasElement;
@@ -131,8 +131,28 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     }
 
     particles.forEach(p => {
+        if(p.type == 'death') {
+            randomRepeat(() => {
+                const [dx, dy] = samplePointInCircle(p.size);
+                particleSystem.addParticle(new DeathParticle(p.x + dx, p.y + dy));
+            }, p.size * 50);
+        } else if(p.type == 'nonRuby') {
+            randomRepeat(() => {
+                if(p.size < 0) {
+                    particleSystem.addParticle(new SizeDecreaseParticle(p.x, p.y, 1 + Math.abs(p.size * 8)));
+                } else if(p.size > 0) {
+                    particleSystem.addParticle(new SizeIncreaseParticle(p.x, p.y, 1 + Math.abs(p.size * 4)));
+                }
+            }, Math.abs(p.size * 100) + 4);
+        } else {
+            randomRepeat(() => {
+                particleSystem.addParticle(new RubyParticle(p.x, p.y, 1 + Math.abs(p.size * 4), p.type == 'rubyRemoval'));
+            }, Math.abs(p.size * 100) + 4);
+        }
         randomRepeat(() => {
-            if(p.type == 'nonRuby') {
+            if(p.type == 'death') {
+
+            } else if(p.type == 'nonRuby') {
                 if(p.size < 0) {
                     particleSystem.addParticle(new SizeDecreaseParticle(p.x, p.y, 1 + Math.abs(p.size * 8)));
                 } else if(p.size > 0) {

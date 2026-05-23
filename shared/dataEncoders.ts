@@ -57,7 +57,7 @@ export const pointRemovalEncoder = new Encoder({
 });
 
 export const particleEncoder = new Encoder({
-    type: new EnumEncoder(['ruby', 'rubyRemoval', 'nonRuby'] as const),
+    type: new EnumEncoder(['ruby', 'rubyRemoval', 'nonRuby', 'death'] as const),
     size: new RangeEncoder(16, -20, 20),
     x: positionEncoder,
     y: positionEncoder,

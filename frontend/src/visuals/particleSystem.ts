@@ -1,10 +1,6 @@
 import { lerp } from "../../../shared/utils";
 import type { RenderInfo } from "../types";
 
-/*
-- beetle death
-*/
-
 export function randomRepeat(fn: () => any, times: number) {
     if (Math.random() < times % 1) {
         times = Math.ceil(times);
@@ -52,7 +48,7 @@ abstract class ParticleBase implements IParticle {
         this.vy += this.ay * dt;
 
         const fract = this.aliveT / this.maxAliveT;
-        if(fract >= 1) return true;
+        if (fract >= 1) return true;
 
         ctx.globalAlpha = this.getOpacity(fract);
         this.subRender(renderInfo, fract);
@@ -69,7 +65,7 @@ export class ObstacleDestructionParticle extends ParticleBase {
 
     constructor(x: number, y: number) {
         super();
-        
+
         this.x = x;
         this.y = y;
 
@@ -100,7 +96,7 @@ export class RubyParticle extends ParticleBase {
 
     constructor(x: number, y: number, strength: number, removal: boolean) {
         super();
-        
+
         this.x = x;
         this.y = y;
         this.removal = removal;
@@ -117,7 +113,7 @@ export class RubyParticle extends ParticleBase {
     subRender(renderInfo: RenderInfo) {
         const { ctx, scale } = renderInfo;
 
-        if(this.removal) {
+        if (this.removal) {
             ctx.shadowColor = 'rgb(50,90,250)';
             ctx.strokeStyle = 'rgb(140,170,250)';
         } else {
@@ -139,12 +135,44 @@ export class RubyParticle extends ParticleBase {
     }
 }
 
+export class DeathParticle extends ParticleBase {
+    x; y; vx; vy; ax = 0; ay = 0; maxAliveT;
+    hue; opacity; size;
+
+    constructor(x: number, y: number) {
+        super();
+
+        this.x = x;
+        this.y = y;
+
+        [this.vx, this.vy] = this.init(lerp(0.2, 0.6, Math.random()));
+        this.maxAliveT = lerp(0.6, 1.4, Math.random());
+
+        this.hue = Math.floor(Math.random() * 360);
+        this.opacity = lerp(0.3, 0.6, Math.random());
+        this.size = lerp(0.3, 0.8, Math.random());
+    }
+
+    getOpacity(fract: number): number {
+        return super.getOpacity(fract) * this.opacity;
+    }
+
+    subRender(): void {
+        // const { ctx } = renderInfo;
+
+        // ctx.fillStyle = 'hsl(' + this.hue + ',70%,60%)';
+        // ctx.beginPath();
+        // ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        // ctx.fill();
+    }
+}
+
 export class SizeIncreaseParticle extends ParticleBase {
     x; y; vx; vy; ax; ay; maxAliveT; size;
-    
+
     constructor(x: number, y: number, strength: number) {
         super();
-        
+
         this.x = x;
         this.y = y;
         this.size = lerp(0.3, 0.5, Math.random());
@@ -176,10 +204,10 @@ export class SizeIncreaseParticle extends ParticleBase {
 
 export class SizeDecreaseParticle extends ParticleBase {
     x; y; vx; vy; ax; ay; maxAliveT; size;
-    
+
     constructor(x: number, y: number, strength: number) {
         super();
-        
+
         this.x = x;
         this.y = y;
         this.size = lerp(0.4, 0.6, Math.random());

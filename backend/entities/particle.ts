@@ -10,7 +10,7 @@ export class Particle {
     includeBeetleId: null | number = null;
 
     constructor(
-        x: number, y: number, size: number, type: 'ruby' | 'rubyRemoval' | 'nonRuby',
+        x: number, y: number, size: number, type: 'ruby' | 'rubyRemoval' | 'nonRuby' | 'death',
         excludeBeetleIds?: number[], includeBeetleId?: null | number
     ) {
         this.x = x;
