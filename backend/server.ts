@@ -4,7 +4,6 @@ import env from "./env.js";
 import type { Game } from "./game.js";
 import type { IncomingMessage } from "http";
 import { Beetle } from "./entities/beetle.js";
-import { rubyProtectionTicks } from "./entities/ruby.js";
 import { 
     beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, particleEncoder,
     clientPlayEncoder, clientUpdateEncoder, getClientRegisterEncoder, 
@@ -143,13 +142,10 @@ export class GameServer {
             const visibleArea = getVisibleArea(beetle ? beetle.size : null);
             const bounds = getVisionBoundsFromCenter(centerX, centerY, visibleArea * defaultAspect, visibleArea);
 
-            const beetlesToSend = filterMapValues(game.beetles, b => bounds.isInsideWithMargin(b.x, b.y, b.size * 1.5 + 1));
-            const rubysToSend = filterMapValues(game.rubys, r => bounds.isInsideWithMargin(r.x, r.y, r.baseSize + 2));
-            const obstaclesToSend = filterMapValues(
-                game.obstacles, 
-                o => bounds.isInsideWithMargin(o.x1, o.y1, o.size + 2) || (!o.isCircle && bounds.isInsideWithMargin(o.x2, o.y2, o.size + 1))
-            );
-            const particlesToSend = game.particles.filter(p => bounds.isInsideWithMargin(p.x, p.y, 5));
+            const beetlesToSend = filterMapValues(game.beetles, b => b.filterMessage(bounds));
+            const rubysToSend = filterMapValues(game.rubys, r => r.filterMessage(bounds));
+            const obstaclesToSend = filterMapValues(game.obstacles, o => o.filterMessage(bounds));
+            const particlesToSend = game.particles.filter(p => p.filterMessage(bounds));
 
             const looksToSend: LooksEntry[] = [];
             if (numMessages == 0) {
@@ -194,16 +190,6 @@ export class GameServer {
                 header.numLooks * looksEntryEncoder.bytes + numNicknameStringBytes +
                 header.numLeaderboardEntries * leaderboardEntryEncoder.bytes
             );
-            // console.log(
-            //     'h', headerEncoder.bytes,
-            //     'b', header.numBeetles * beetleEncoder.bytes,
-            //     'r', header.numRubys * rubyEncoder.bytes,
-            //     'o', header.numObstacles * obstacleEncoder.bytes,
-            //     'pc', header.numPointCreations * pointCreationEncoder.bytes,
-            //     'pr', header.numPointRemovals * pointRemovalEncoder.bytes,
-            //     'l', header.numLooks * looksEntryEncoder.bytes + numNicknameStringBytes,
-            //     'l', header.numLeaderboardEntries * leaderboardEntryEncoder.bytes
-            // );
             const view = new PointedDataView(new DataView(
                 buffer.buffer,
                 buffer.byteOffset,
@@ -211,55 +197,14 @@ export class GameServer {
             ));
 
             headerEncoder.writeToBuffer(view, header);
-            beetlesToSend.forEach(b => {
-                beetleEncoder.writeToBuffer(view, {
-                    x: b.x,
-                    y: b.y,
-                    angle: b.angle,
-                    size: b.size,
-                    score: b.score,
-                    targetAngle: b.targetAngle,
-                    globId: b.globId,
-                    powerupNumber: b.powerupNumber,
-                    powerupTicks: b.powerupTicks === null ? 0 : Math.min(255, b.powerupTicks)
-                });
-            });
-            rubysToSend.forEach(r => {
-                rubyEncoder.writeToBuffer(view, {
-                    id: r.id,
-                    x: r.x,
-                    y: r.y,
-                    baseSize: r.baseSize,
-                    hp: r.hp,
-                    protection: r.protectionTicks / rubyProtectionTicks
-                });
-            });
-            obstaclesToSend.forEach(o => {
-                obstacleEncoder.writeToBuffer(view, {
-                    id: o.id,
-
-                    isCircle: o.isCircle,
-                    x1: o.x1,
-                    y1: o.y1,
-                    x2: o.x2,
-                    y2: o.y2,
-                    size: o.getSize(),
-
-                    isAggressive: o.isAggressive
-                });
-            });
-            particlesToSend.forEach(p => {
-                particleEncoder.writeToBuffer(view, {
-                    x: p.x, 
-                    y: p.y, 
-                    size: p.size, 
-                    type: p.type
-                });
-            });
+            beetlesToSend.forEach(b => b.writeToBuffer(view));
+            rubysToSend.forEach(r => r.writeToBuffer(view));
+            obstaclesToSend.forEach(o => o.writeToBuffer(view));
+            particlesToSend.forEach(p => p.writeToBuffer(view));
 
             if (numMessages == 0) {
                 game.points.forEach(p => {
-                    pointCreationEncoder.writeToBuffer(view, { id: p.id, x: p.x, y: p.y });
+                    pointCreationEncoder.writeToBuffer(view, p);
                 });
             } else {
                 game.pointCreations.forEach(p => {

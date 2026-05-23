@@ -1,3 +1,6 @@
+import { rubyEncoder } from "../../shared/dataEncoders.js";
+import type { PointedDataView } from "../../shared/encoder/types.js";
+import type { VisionBounds } from "../../shared/visionBounds.js";
 import env from "../env.js";
 import type { Game } from "../game.js";
 import { infSum, vectorDecay, vectorMagnitudes } from "../sharedConstants.js";
@@ -123,5 +126,20 @@ export class Ruby {
 
     onDead() {
         this.game.rubyId.unregister(this.id);
+    }
+
+
+    filterMessage(bounds: VisionBounds): boolean {
+        return bounds.isInsideWithMargin(this.x, this.y, this.baseSize + 2);
+    }
+    writeToBuffer(view: PointedDataView) {
+        rubyEncoder.writeToBuffer(view, {
+            id: this.id,
+            x: this.x,
+            y: this.y,
+            baseSize: this.baseSize,
+            hp: this.hp,
+            protection: this.protectionTicks / rubyProtectionTicks
+        });
     }
 }

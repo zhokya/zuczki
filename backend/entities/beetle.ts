@@ -1,6 +1,9 @@
+import { beetleEncoder } from "../../shared/dataEncoders.js";
+import type { PointedDataView } from "../../shared/encoder/types.js";
 import { getRandomLook, getRandomNickname, type Looks } from "../../shared/looks.js";
 import { powerups } from "../../shared/powerups.js";
 import { angleDifference, binarySearch, lerp, rotateAngleTowards, samplePointInCircle } from "../../shared/utils.js";
+import type { VisionBounds } from "../../shared/visionBounds.js";
 import env from "../env.js";
 import type { Game } from "../game.js";
 import {
@@ -291,5 +294,23 @@ export class Beetle {
         if(magnitude <= speed) return 0;
         const motionBlur = 1 - 1 / (1 + 2 * (magnitude - speed));
         return Math.max(0, Math.min(255, Math.round(motionBlur * 255)));
+    }
+
+
+    filterMessage(bounds: VisionBounds): boolean {
+        return bounds.isInsideWithMargin(this.x, this.y, this.size * 1.5 + 1);
+    }
+    writeToBuffer(view: PointedDataView) {
+        beetleEncoder.writeToBuffer(view, {
+            x: this.x,
+            y: this.y,
+            angle: this.angle,
+            size: this.size,
+            score: this.score,
+            targetAngle: this.targetAngle,
+            globId: this.globId,
+            powerupNumber: this.powerupNumber,
+            powerupTicks: this.powerupTicks === null ? 0 : Math.min(255, this.powerupTicks)
+        });
     }
 }

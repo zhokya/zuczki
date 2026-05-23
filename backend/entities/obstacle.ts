@@ -1,3 +1,6 @@
+import { obstacleEncoder } from "../../shared/dataEncoders.js";
+import type { PointedDataView } from "../../shared/encoder/types.js";
+import type { VisionBounds } from "../../shared/visionBounds.js";
 import type { Game } from "../game.js";
 import { infSum, vectorMagnitudes } from "../sharedConstants.js";
 import { Beetle } from "./beetle.js";
@@ -187,6 +190,27 @@ export class Obstacle {
         if (other instanceof Beetle) {
             other.vsize += vector.size;
         }
+    }
+    
+    
+    filterMessage(bounds: VisionBounds): boolean {
+        if(bounds.isInsideWithMargin(this.x1, this.y1, this.size + 2)) return true;
+        if(!this.isCircle && bounds.isInsideWithMargin(this.x2, this.y2, this.size + 1)) return true;
+        return false;
+    }
+    writeToBuffer(view: PointedDataView) {
+        obstacleEncoder.writeToBuffer(view, {
+            id: this.id,
+
+            isCircle: this.isCircle,
+            x1: this.x1,
+            y1: this.y1,
+            x2: this.x2,
+            y2: this.y2,
+            size: this.getSize(),
+
+            isAggressive: this.isAggressive
+        });
     }
 }
 
