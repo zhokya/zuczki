@@ -10,8 +10,8 @@ import { renderBeforeTransform, renderEnvironment, renderWorldEdge } from "./vis
 import { registerWebsocketDataReceived, updateFpsCounter } from "./visuals/fpsCounter";
 import { LocalObstacle } from "./entities/obstacle";
 import { getVisionBoundsFromCenter } from "../../shared/visionBounds";
-import { looksEntryEncoder, type Looks, type LooksEntry } from "../../shared/looks";
-import { beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, particleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder, type LeaderboardEntry, type MessageBeetle, type MessageObstacle, type MessageRuby, type PointCreation, type PointRemoval } from "../../shared/dataEncoders";
+import { looksEntryEncoder, type Looks } from "../../shared/looks";
+import { beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, particleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder } from "../../shared/dataEncoders";
 import { PointedDataView } from "../../shared/encoder/types";
 import { formatPoints } from "../../shared/utils";
 import { defaultAspect, getVisibleArea } from "../../shared/getVisibleArea";
