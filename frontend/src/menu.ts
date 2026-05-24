@@ -7,6 +7,7 @@ import { colors, getRandomLook } from "../../shared/looks";
 import { send } from "./wsManager";
 import { clientPlayEncoder, clientPlayId } from "../../shared/dataEncoders";
 import { ParticleSystem } from "./visuals/particleSystem";
+import { renderPowerupIcon } from "./visuals/powerupIcons";
 
 const c = document.getElementById('small-canvas') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
@@ -24,6 +25,9 @@ try {
         }
     }
 } catch { }
+
+const savedPowerupNumber = localStorage.getItem('zuczki_powerup');
+export let chosenPowerup = savedPowerupNumber === null || isNaN(parseInt(savedPowerupNumber)) ? 0 : parseInt(savedPowerupNumber);
 
 const looksSave = document.getElementById('looks-save') as HTMLDivElement;
 const looksRandom = document.getElementById('looks-random') as HTMLDivElement;
@@ -122,9 +126,38 @@ nicknameElement.addEventListener('input', () => {
     saveToStorage();
 });
 
+const powerupIconsElement = document.getElementById('powerup-icons') as HTMLDivElement;
+const powerupIcons: HTMLDivElement[] = [];
+[0, 1, 2, 3].forEach(powerupNumber => {
+    const size = 36;
+    const child = document.createElement('div');
+    const icon = document.createElement('canvas');
+    child.className = 'powerupIcon';
+    child.appendChild(icon);
+    child.style = 'width:' + size + 'px;height:' + size + 'px;';
+    renderPowerupIcon(powerupNumber, size, size, icon);
+    child.addEventListener('click', () => {
+        localStorage.setItem('zuczki_powerup', powerupNumber.toString());
+        chosenPowerup = powerupNumber;
+        updatePowerupButtons();
+    });
+    powerupIconsElement.appendChild(child);
+    powerupIcons.push(child);
+});
+function updatePowerupButtons() {
+    for(let i = 0; i < 4; i ++) {
+        if(i == chosenPowerup) {
+            powerupIcons[i].className = 'powerupIcon chosenPowerup';
+        } else {
+            powerupIcons[i].className = 'powerupIcon unchosenPowerup';
+        }
+    }
+}
+updatePowerupButtons();
+
 document.getElementById('play')?.addEventListener('click', () => {
     chosenLooks.nickname = nicknameElement.value;
-    send(clientPlayId, { looks: chosenLooks, powerupType: 2 }, clientPlayEncoder);
+    send(clientPlayId, { looks: chosenLooks, powerupType: chosenPowerup }, clientPlayEncoder);
 });
 
 export function onDead() {

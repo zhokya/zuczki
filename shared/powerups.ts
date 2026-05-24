@@ -1,12 +1,12 @@
 export const powerups = [
-    "protectSize",
-    "rotateFaster",
     "dash",
-    "projectile"
+    "protectSize",
+    "projectile",
+    "rotateFaster",
 ];
 export const powerupString2Id = {
-    "protectSize": 0,
-    "rotateFaster": 1,
-    "dash": 2,
-    "projectile": 3
+    "dash": 0,
+    "protectSize": 1,
+    "projectile": 2,
+    "rotateFaster": 3,
 };
