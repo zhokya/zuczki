@@ -10,9 +10,10 @@ Balance nice looks over faking and showing past, make it be look as well as poss
 
 export class Interpolator {
     value: number;
+    uninterpolatedValue: number;
 
     private readonly isAngle: boolean;
-    private buffer: Array<{ value: number; time: number }>;
+    private buffer: { value: number; time: number }[];
     private avgInterval: number;
     private avgJitter: number;
     private lastReceiveTime: number;
@@ -21,6 +22,7 @@ export class Interpolator {
 
     constructor(value: number, isAngle: boolean) {
         this.value = value;
+        this.uninterpolatedValue = value;
         this.isAngle = isAngle;
 
         const now = performance.now();
@@ -33,6 +35,8 @@ export class Interpolator {
     }
 
     update(x: number): void {
+        this.uninterpolatedValue = x;
+
         const now = performance.now();
         const interval = now - this.lastReceiveTime;
 

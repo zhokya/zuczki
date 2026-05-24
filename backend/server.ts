@@ -9,7 +9,8 @@ import {
     clientPlayEncoder, clientUpdateEncoder, getClientRegisterEncoder, 
     type LeaderboardEntry, 
     clientRegisterId, clientPlayId, clientUpdateId,
-    type Header
+    type Header,
+    projectileEncoder
 } from "../shared/dataEncoders.js";
 import { moduloAngle } from "../shared/utils.js";
 import { PointedDataView } from "../shared/encoder/types.js";
@@ -147,6 +148,7 @@ export class GameServer {
             const beetlesToSend = filterMapValues(game.beetles, b => b.filterMessage(bounds));
             const rubysToSend = filterMapValues(game.rubys, r => r.filterMessage(bounds));
             const obstaclesToSend = filterMapValues(game.obstacles, o => o.filterMessage(bounds));
+            const projectilesToSend = filterMapValues(game.projectiles, p => p.filterMessage(bounds));
             const particlesToSend = game.particles.filter(p => p.filterMessage(bounds, beetle ? beetle.globId : -1));
 
             const looksToSend: LooksEntry[] = [];
@@ -177,6 +179,7 @@ export class GameServer {
                 numBeetles: beetlesToSend.length,
                 numRubys: rubysToSend.length,
                 numObstacles: obstaclesToSend.length,
+                numProjectiles: projectilesToSend.length,
                 numParticles: particlesToSend.length,
                 numPointCreations: numMessages == 0 ? game.points.size : game.pointCreations.length,
                 numPointRemovals: numMessages == 0 ? 0 : game.pointRemovals.length,
@@ -189,6 +192,7 @@ export class GameServer {
                 header.numBeetles * beetleEncoder.bytes +
                 header.numRubys * rubyEncoder.bytes +
                 header.numObstacles * obstacleEncoder.bytes +
+                header.numProjectiles * projectileEncoder.bytes + 
                 header.numParticles * particleEncoder.bytes +
                 header.numPointCreations * pointCreationEncoder.bytes +
                 header.numPointRemovals * pointRemovalEncoder.bytes +
@@ -205,6 +209,7 @@ export class GameServer {
             beetlesToSend.forEach(b => b.writeToBuffer(view));
             rubysToSend.forEach(r => r.writeToBuffer(view));
             obstaclesToSend.forEach(o => o.writeToBuffer(view));
+            projectilesToSend.forEach(p => p.writeToBuffer(view));
             particlesToSend.forEach(p => p.writeToBuffer(view));
 
             if (numMessages == 0) {

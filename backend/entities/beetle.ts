@@ -14,6 +14,7 @@ import {
 } from "../sharedConstants.js";
 import { Particle } from "./particle.js";
 import { Point } from "./point.js";
+import { Projectile } from "./projectile.js";
 import { Ruby } from "./ruby.js";
 
 const sizeIncreaseSpeed = 0.001;
@@ -36,6 +37,11 @@ const powerupParams = {
     },
     dash: {
         maxDistance: 40
+    },
+    projectile: {
+        loadingDuration: 50,
+        hitSpeedMult: 0.2,
+        hitRotSpeedMult: 0.2
     }
 };
 const maxSuperdashTicks = powerupParams.dash.maxDistance / clickSpeed - getAverageDashDuration(powerupParams.dash.maxDistance / infSum);
@@ -63,6 +69,7 @@ export class Beetle {
     score = 0;
     irrelevants: { id: string, ticks: number }[] = [];
     powerupTicks: number | null = null;
+    freezedTicks: number = 0;
 
     // decissions
     targetAngle: number;
@@ -115,16 +122,21 @@ export class Beetle {
         let magnitude = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         const speedMultBySize = this.getSpeedMultBySize();
         const speedMultByPowerup = 1 - this.getPowerupLoad(0.22);
+        const speedMultByFreeze = this.freezedTicks > 0 ? powerupParams.projectile.hitSpeedMult : 1;
 
         // Powerup
+        this.freezedTicks = Math.max(0, this.freezedTicks - 1);
         const dashAngle = rotateAngleTowards(
             this.angle,
             this.targetAngle,
             Math.min(angleDifference(this.angle, this.targetAngle), maxDashDirectionChange)
         );
         const dashRelease = this.powerupType == 'dash' && this.powerupTicks !== null && this.powerupTicks >= maxSuperdashTicks;
+        if(this.powerupType == 'projectile' && this.powerupTicks !== null && this.powerupTicks >= powerupParams.projectile.loadingDuration) {
+            this.poweruping = false;
+        }
         if(this.poweruping && !dashRelease) {
-            if(!(this.powerupTicks === null && this.powerupType == 'dash' && magnitude >= magnitude1)) {
+            if(!(this.powerupTicks === null && this.powerupType == 'dash' && (magnitude >= magnitude1 || this.freezedTicks != 0))) {
                 if(this.powerupTicks === null) this.powerupTicks = 0;
                 this.powerupTicks++;
             }
@@ -139,7 +151,10 @@ export class Beetle {
                     this.vy += Math.sin(dashAngle) * speedMultBySize * mag;
                     this.vsize += vectorMagnitudes.click.size;
                 } else if(this.powerupType == 'projectile') {
-
+                    if(this.powerupTicks >= powerupParams.projectile.loadingDuration) {
+                        const projectile = new Projectile(this, this.game);
+                        this.game.projectiles.set(projectile.id, projectile);
+                    }
                 }
                 this.powerupTicks = null;
             }
@@ -153,10 +168,13 @@ export class Beetle {
         } else {
             rotSpeedMult = lerp(1, 0.1, this.getPowerupLoad(0.1));
         }
+        if(this.freezedTicks != 0) {
+            rotSpeedMult *= powerupParams.projectile.hitRotSpeedMult;
+        }
         const rotationSpeed = rotSpeedMult * 0.12 / this.size;
 
         // Dashing
-        if (this.clicked && !this.poweruping) {
+        if (this.clicked && !this.poweruping && this.freezedTicks == 0) {
             this.clicked = false;
             if (magnitude < magnitude1) {
                 this.vx += Math.cos(dashAngle) * speedMultBySize * vectorMagnitudes.click.position;
@@ -172,7 +190,7 @@ export class Beetle {
 
         for(let i = 0; i < movementSubTicks; i ++) {
             const speedMultByVector = Math.max(0, Math.min(1, (magnitude - magnitude1) / (magnitude2 - magnitude1)));
-            const speed = minSpeed * speedMultBySize * speedMultByVector * speedMultByPowerup;
+            const speed = minSpeed * speedMultBySize * speedMultByVector * speedMultByPowerup * speedMultByFreeze;
 
             this.x += (speed * Math.cos(this.angle) + this.vx) / movementSubTicks;
             this.y += (speed * Math.sin(this.angle) + this.vy) / movementSubTicks;

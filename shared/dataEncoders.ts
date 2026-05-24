@@ -44,6 +44,12 @@ export const obstacleEncoder = new Encoder({
     isAggressive: booleanEncoder,
 });
 
+export const projectileEncoder = new Encoder({
+    id: new UintEncoder(16),
+    x: positionEncoder,
+    y: positionEncoder
+});
+
 export const pointCreationEncoder = new Encoder({
     id: new UintEncoder(16),
     x: positionEncoder,
@@ -76,8 +82,9 @@ export const headerEncoder = new Encoder({
     cameraY: positionEncoder,
     
     numBeetles: new UintEncoder(8),
-    numRubys: new UintEncoder(8),
+    numRubys: new UintEncoder(16),
     numObstacles: new UintEncoder(8),
+    numProjectiles: new UintEncoder(16),
     numParticles: new UintEncoder(8),
     numPointCreations: new UintEncoder(16),
     numPointRemovals: new UintEncoder(16),
@@ -106,6 +113,7 @@ export const clientUpdateId = 69;
 export type MessageBeetle = typeof beetleEncoder.type;
 export type MessageRuby = typeof rubyEncoder.type;
 export type MessageObstacle = typeof obstacleEncoder.type;
+export type MessageProjectile = typeof projectileEncoder.type;
 export type PointCreation = typeof pointCreationEncoder.type;
 export type PointRemoval = typeof pointRemovalEncoder.type;
 export type LeaderboardEntry = typeof leaderboardEntryEncoder.type;

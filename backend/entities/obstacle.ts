@@ -5,6 +5,7 @@ import type { Game } from "../game.js";
 import { infSum, vectorMagnitudes } from "../sharedConstants.js";
 import { Beetle } from "./beetle.js";
 import { Particle } from "./particle.js";
+import { Projectile } from "./projectile.js";
 import type { Ruby } from "./ruby.js";
 
 export class Obstacle {
@@ -120,9 +121,9 @@ export class Obstacle {
         return this.size + (this.isAggressive ? 0 : (1 - this.animation % 1) * 0.4);
     }
 
-    handleCollision(other: Beetle | Ruby) {
+    handleCollision(other: Beetle | Ruby | Projectile) {
         const selfSize = this.getSize();
-        const otherSize = other instanceof Beetle ? other.size : other.getSize();
+        const otherSize = other.size;
         const ds = otherSize + selfSize;
 
         if (this.isCircle) {
@@ -167,7 +168,12 @@ export class Obstacle {
         }
     }
 
-    resolveCollision(other: Beetle | Ruby, ndx: number, ndy: number, dds: number) {
+    resolveCollision(other: Beetle | Ruby | Projectile, ndx: number, ndy: number, dds: number) {
+        if(other instanceof Projectile) {
+            other.onCollisionWithObject();
+            return;
+        }
+
         if (this.isAggressive) {
             this.game.particles.push(new Particle(
                 other.x - ndx * other.size,

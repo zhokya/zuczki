@@ -4,6 +4,7 @@ import { powerups } from "../../../shared/powerups";
 import { angleDifference, lerp } from "../../../shared/utils";
 import { Interpolator } from "../interpolator";
 import type { RenderInfo } from "../types";
+import { renderProjectile } from "./projectile";
 
 const motionBlurSteps = 10;
 
@@ -272,5 +273,23 @@ export class LocalBeetle {
         // ctx.fillRect(x + Math.cos(Math.PI / 2 * (1 - 0.5)) * size - 10, y + Math.sin(Math.PI / 2 * (1 - 0.5)) * size - 10, 20, 20);
         // ctx.fillRect(x + Math.cos(Math.PI / 2 * (1 - 0.33)) * size - 10, y + Math.sin(Math.PI / 2 * (1 - 0.33)) * size - 10, 20, 20);
         // ctx.fillRect(x + Math.cos(Math.PI / 2 * (1 - 0.66)) * size - 10, y + Math.sin(Math.PI / 2 * (1 - 0.66)) * size - 10, 20, 20);
+
+        // projectile creation
+        if(powerupType == 'projectile' && this.powerupTicks.value != 0) {
+            const tt = this.powerupTicks.value / 50;
+            const prx = x + Math.cos(angle) * (size + 0.7);
+            const pry = y + Math.sin(angle) * (size + 0.7);
+
+            ctx.lineWidth = 0.15;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = 'rgba(20,154,163,' + Math.min(1, tt * 10) + ')';
+            ctx.beginPath();
+            ctx.arc(prx, pry, 0.5, angle, angle + Math.PI * 2 * tt);
+            ctx.stroke();
+
+            if(this.powerupTicks.uninterpolatedValue != 0) {
+                renderProjectile(renderInfo, prx, pry, (Math.pow(tt, 0.3) - 1) * 15, Math.min(1, tt * 5));
+            }
+        }
     }
 }

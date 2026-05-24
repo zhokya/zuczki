@@ -7,43 +7,37 @@ import { Ruby } from "./entities/ruby.js";
 import { Obstacle, spawnNewObstacles } from "./entities/obstacle.js";
 import type { PointCreation, PointRemoval } from "../shared/dataEncoders.js";
 import type { Particle } from "./entities/particle.js";
+import type { Projectile } from "./entities/projectile.js";
 
 const maxSize = parseFloat(env('VITE_MAX_SIZE'));
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
 
 export class Game {
-    beetles: Map<string, Beetle>;
-    globId: NumericIdGenerator;
+    beetles: Map<string, Beetle> = new Map();
+    globId: NumericIdGenerator = new NumericIdGenerator(255);
     looksMapIdEdits: string[] = [];
 
-    points: Map<number, Point>;
-    pointId: NumericIdGenerator;
+    points: Map<number, Point> = new Map();
+    pointId: NumericIdGenerator = new NumericIdGenerator(65535);
     numEnvironmentDensityPoints = 0;
     numBeetleDeathPoints = 0;
     pointCreations: PointCreation[] = [];
     pointRemovals: PointRemoval[] = [];
 
-    rubys: Map<number, Ruby>;
-    rubyId: NumericIdGenerator;
+    rubys: Map<number, Ruby> = new Map();
+    rubyId: NumericIdGenerator = new NumericIdGenerator(65535);
 
-    obstacles: Map<number, Obstacle>;
-    obstacleId: NumericIdGenerator;
+    obstacles: Map<number, Obstacle> = new Map();
+    obstacleId: NumericIdGenerator = new NumericIdGenerator(255);
+
+    projectiles: Map<number, Projectile> = new Map();
+    projectileId: NumericIdGenerator = new NumericIdGenerator(65535);
 
     particles: Particle[] = [];
 
     url: string;
 
     constructor(url: string) {
-        this.beetles = new Map();
-        this.points = new Map();
-        this.rubys = new Map();
-        this.obstacles = new Map();
-
-        this.globId = new NumericIdGenerator(255);
-        this.pointId = new NumericIdGenerator(65535);
-        this.rubyId = new NumericIdGenerator(65535);
-        this.obstacleId = new NumericIdGenerator(255);
-
         this.url = url;
     }
 
@@ -135,14 +129,21 @@ export class Game {
             }
         });
 
+        this.projectiles.forEach(projectile => {
+            projectile.update();
+        });
+
         this.obstacles.forEach(obstacle => {
-            this.beetles.forEach(beetle => {
-                obstacle.handleCollision(beetle);
-            });
-            this.rubys.forEach(ruby => {
-                obstacle.handleCollision(ruby);
+            [this.beetles, this.rubys, this.projectiles].forEach(objectMap => {
+                objectMap.forEach(object => obstacle.handleCollision(object));
             });
             obstacle.finishUpdate();
+        });
+
+        this.projectiles.forEach(projectile => {
+            if(projectile.isDead) {
+                this.projectiles.delete(projectile.id);
+            }
         });
 
         spawnNewPoints(this);

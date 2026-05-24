@@ -11,12 +11,13 @@ import { registerWebsocketDataReceived, updateFpsCounter } from "./visuals/fpsCo
 import { LocalObstacle } from "./entities/obstacle";
 import { getVisionBoundsFromCenter } from "../../shared/visionBounds";
 import { looksEntryEncoder, type Looks } from "../../shared/looks";
-import { beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, particleEncoder, pointCreationEncoder, pointRemovalEncoder, rubyEncoder } from "../../shared/dataEncoders";
+import { beetleEncoder, headerEncoder, leaderboardEntryEncoder, obstacleEncoder, particleEncoder, pointCreationEncoder, pointRemovalEncoder, projectileEncoder, rubyEncoder } from "../../shared/dataEncoders";
 import { PointedDataView } from "../../shared/encoder/types";
 import { formatPoints, samplePointInCircle } from "../../shared/utils";
 import { defaultAspect, getVisibleArea } from "../../shared/getVisibleArea";
 import { DeathParticle, ParticleSystem, randomRepeat, RubyParticle, SizeDecreaseParticle, SizeIncreaseParticle } from "./visuals/particleSystem";
 import { Interpolator } from "./interpolator";
+import { LocalProjectile } from "./entities/projectile";
 
 const mainCanvas = document.getElementById('main-canvas') as HTMLCanvasElement;
 const mainCanvasCtx = mainCanvas.getContext('2d') as CanvasRenderingContext2D;
@@ -44,6 +45,7 @@ let looksMap = new Map<number, Looks>();
 let localBeetles = new Map<number, LocalBeetle>();
 let localRubys = new Map<number, LocalRuby>();
 let localObstacles = new Map<number, LocalObstacle>();
+let localProjectiles = new Map<number, LocalProjectile>();
 let localPoints = new Map<number, LocalPoint>();
 const particleSystem = new ParticleSystem();
 
@@ -56,6 +58,7 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     const beetles = beetleEncoder.readListFromBuffer(view, header.numBeetles);
     const rubys = rubyEncoder.readListFromBuffer(view, header.numRubys);
     const obstacles = obstacleEncoder.readListFromBuffer(view, header.numObstacles);
+    const projectiles = projectileEncoder.readListFromBuffer(view, header.numProjectiles);
     const particles = particleEncoder.readListFromBuffer(view, header.numParticles);
     const pointCreations = pointCreationEncoder.readListFromBuffer(view, header.numPointCreations);
     const pointRemovals = pointRemovalEncoder.readListFromBuffer(view, header.numPointRemovals);
@@ -144,6 +147,20 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     for (const obstacleId of localObstacles.keys()) {
         if (!updatedObstacleIds.has(obstacleId)) {
             localObstacles.delete(obstacleId);
+        }
+    }
+    
+    const updatedProjectileIds = new Set();
+    projectiles.forEach(p => {
+        if (!localProjectiles.has(p.id)) {
+            localProjectiles.set(p.id, new LocalProjectile(p));
+        }
+        localProjectiles.get(p.id)?.update(p);
+        updatedProjectileIds.add(p.id);
+    });
+    for (const projectileId of localProjectiles.keys()) {
+        if (!updatedProjectileIds.has(projectileId)) {
+            (localProjectiles.get(projectileId) as LocalProjectile).removed = true;
         }
     }
 
@@ -250,6 +267,13 @@ function renderWorld(renderInfo: RenderInfo): Text[] {
 
     localObstacles.forEach(o => {
         o.render(renderInfo);
+    });
+
+    localProjectiles.forEach(p => {
+        p.render(renderInfo);
+        if(p.canRemove()) {
+            localProjectiles.delete(p.id);
+        }
     });
 
     renderWorldEdge(renderInfo);
