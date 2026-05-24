@@ -1,6 +1,4 @@
 import { LocalBeetle } from "./entities/beetle";
-import checkImg from './assets/check.png';
-import diceImg from './assets/dice.png';
 import type { RenderInfo } from "./types";
 import { isAlive } from "./mainCanvas";
 import { VisionBounds } from "../../shared/visionBounds";
@@ -29,8 +27,6 @@ try {
 
 const looksSave = document.getElementById('looks-save') as HTMLDivElement;
 const looksRandom = document.getElementById('looks-random') as HTMLDivElement;
-looksSave.innerHTML = `<img src="${checkImg}" alt="Logo">`;
-looksRandom.innerHTML = `<img src="${diceImg}" alt="Logo">`;
 
 let randomize = localStorage.getItem('zuczki_randomize') !== '0';
 function updateRandomizationButton() {
@@ -63,7 +59,7 @@ function updateBorders() {
                 other.style = 'background: ' + colors[idx];
             }
         });
-    })
+    });
 }
 colorProperties.forEach(property => {
     const container = document.getElementById('looks-' + property) as HTMLDivElement;

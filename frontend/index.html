@@ -22,6 +22,12 @@
             opacity: 0.5;
             filter: blur(10px);
         }
+        #game-info {
+            transition: 0.5s;
+            opacity: 0;
+            pointer-events: none;
+            user-select: none;
+        }
         #fps-counter {
             text-align: right;
             color: black;
@@ -88,6 +94,19 @@
             opacity: 0;
             background: white;
             transition: 0.4s;
+        }
+        #github {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            transition: 0.2s;
+        }
+        #github:hover {
+            transform: scale(1.07);
+        }
+        #github img {
+            width: 52px;
+            height: 52px;
         }
 
         #not-looks {
@@ -359,13 +378,20 @@
 
 <body>
     <canvas id="main-canvas"></canvas>
-    <span id="fps-counter"></span>
-    <div id="leaderboard"></div>
+
+    <div id="game-info">
+        <span id="fps-counter"></span>
+        <div id="leaderboard"></div>
+    </div>
 
     <div id="menu">
         <div id="menu-fade"></div>
 
-        <canvas id="small-canvas" width="1024" height="1024" class="notChoosingLooks"></canvas>
+        <canvas id="small-canvas" width="512" height="512" class="notChoosingLooks"></canvas>
+
+        <a id="github" href="https://github.com/zhokya/zuczki" target="_blank">
+            <img src="public/github.png" />
+        </a>
 
         <div id="not-looks">
             <span id="final-score"></span>
@@ -386,13 +412,16 @@
             <div id="looks-mainColor" class="color-picker"></div>
             <div id="looks-insideColor" class="color-picker"></div>
             <div id="looks-save-options">
-                <div id="looks-save"></div>
-                <div id="looks-random"></div>
+                <div id="looks-random">
+                    <img src="public/dice.png" alt="Logo">
+                </div>
+                <div id="looks-save">
+                    <img src="public/check.png" alt="Logo">
+                </div>
             </div>
         </div>
     </div>
+
     <script type="module" src="/src/main.ts"></script>
 </body>
-
-
 </html>

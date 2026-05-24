@@ -26,6 +26,7 @@ const effectCanvasCtx = effectCanvas.getContext('2d') as CanvasRenderingContext2
 const menu = document.getElementById('menu') as HTMLDivElement;
 const leaderboardElement = document.getElementById('leaderboard') as HTMLElement;
 const finalScoreElement = document.getElementById('final-score') as HTMLElement;
+const gameInfoElement = document.getElementById('game-info') as HTMLElement;
 
 let prevW = -1;
 let prevH = -1;
@@ -81,9 +82,11 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
         if (isAlive) {
             mainCanvas.style = 'filter: none; opacity: 1;';
             menu.style = 'opacity: 0; pointer-events: none;'
+            gameInfoElement.style = 'opacity: 1;';
         } else {
             mainCanvas.style = 'filter: blur(10px); opacity: 0.5;';
             menu.style = 'opacity: 1; pointer-events: all;';
+            gameInfoElement.style = 'opacity: 0;';
             onDead();
         }
     }

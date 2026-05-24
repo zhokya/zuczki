@@ -23,7 +23,7 @@ export function renderEnvironment(renderInfo: RenderInfo) {
 export function renderWorldEdge(renderInfo: RenderInfo) {
     const { ctx } = renderInfo;
 
-    ctx.strokeStyle = 'rgb(240,170,190)';
+    ctx.strokeStyle = redAreaColor;
     ctx.lineWidth = redAreaSize;
     ctx.beginPath();
     ctx.arc(0, 0, mapSize + redAreaSize / 2, 0, Math.PI * 2);
