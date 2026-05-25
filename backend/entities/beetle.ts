@@ -165,8 +165,10 @@ export class Beetle {
             rotSpeedMult = lerp(1, powerupParams.protectSize.rotSpeedMult, this.getPowerupLoad(0.3));
         } else if(this.powerupType == 'rotateFaster') {
             rotSpeedMult = lerp(1, powerupParams.rotateFaster.rotSpeedMult, this.getPowerupLoad(0.18));
-        } else {
+        } else if(this.powerupType == 'dash') {
             rotSpeedMult = lerp(1, 0.1, this.getPowerupLoad(0.1));
+        } else {
+            rotSpeedMult = lerp(1, 0.67, this.getPowerupLoad(0.1));
         }
         if(this.freezedTicks != 0) {
             rotSpeedMult *= powerupParams.projectile.hitRotSpeedMult;
