@@ -40,8 +40,8 @@ const powerupParams = {
     },
     projectile: {
         loadingDuration: 50,
-        hitSpeedMult: 0.2,
-        hitRotSpeedMult: 0.2
+        hitSpeedMult: 0.12,
+        hitRotSpeedMult: 0.02
     }
 };
 const maxSuperdashTicks = powerupParams.dash.maxDistance / clickSpeed - getAverageDashDuration(powerupParams.dash.maxDistance / infSum);
@@ -192,10 +192,10 @@ export class Beetle {
 
         for(let i = 0; i < movementSubTicks; i ++) {
             const speedMultByVector = Math.max(0, Math.min(1, (magnitude - magnitude1) / (magnitude2 - magnitude1)));
-            const speed = minSpeed * speedMultBySize * speedMultByVector * speedMultByPowerup * speedMultByFreeze;
+            const speed = minSpeed * speedMultBySize * speedMultByVector * speedMultByPowerup;
 
-            this.x += (speed * Math.cos(this.angle) + this.vx) / movementSubTicks;
-            this.y += (speed * Math.sin(this.angle) + this.vy) / movementSubTicks;
+            this.x += (speed * Math.cos(this.angle) + this.vx) / movementSubTicks * speedMultByFreeze;
+            this.y += (speed * Math.sin(this.angle) + this.vy) / movementSubTicks * speedMultByFreeze;
 
             this.vx *= subVectorDecay;
             this.vy *= subVectorDecay;
