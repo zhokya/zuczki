@@ -195,7 +195,7 @@ export class LocalObstacle {
                 const ny = y / norm;
 
                 particleSystem.addParticle(new ObstacleDestructionParticle(nx * mapSize, ny * mapSize));
-            }, h * dt * 0.03);
+            }, h * Math.min(100, dt) * 0.03);
         } else {
             const x1 = this.x1.value;
             const y1 = this.y1.value;
@@ -226,7 +226,7 @@ export class LocalObstacle {
                         const ny = y / norm;
 
                         particleSystem.addParticle(new ObstacleDestructionParticle(nx * mapSize - ny * t2, ny * mapSize + nx * t2));
-                    }, dt * 0.12);
+                    }, Math.min(100, dt) * 0.12);
                 }
             };
             
