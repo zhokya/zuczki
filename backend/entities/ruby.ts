@@ -13,7 +13,7 @@ const mapSize = parseInt(env('VITE_MAP_SIZE'));
 
 const decreaseHpSpeed = 0.0015;
 const decreaseHpThreshold = 0.25;
-const minRubyHp = 0.15;
+export const minRubyHp = 0.15;
 
 export class Ruby {
     id: number;
@@ -46,20 +46,36 @@ export class Ruby {
     }
 
     sampleHpTaken() {
-        return Math.random() * 0.3 + 0.1;
+        return Math.random() * (Math.random() > 0.65 ? 0.3 : 0.4) + 0.1;
     }
 
-    // Many beetles can collide in the same tick, so we handle all of them at once to be fair
     update(beetles: Map<string, Beetle>) {
-        let anyHits = false;
-        let totalHpTaken = 0;
-
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= vectorDecay;
+        this.vy *= vectorDecay;
+        this.protectionTicks = Math.max(0, this.protectionTicks - 1);
+        
         if (this.hp > decreaseHpThreshold) {
             this.hp -= decreaseHpSpeed;
         }
 
-        const removeIfHit = this.hp - this.sampleHpTaken() < minRubyHp;
+        // Collision with world edge
+        const maxr = mapSize - this.baseSize * this.hp;
+        if (this.x * this.x + this.y * this.y > maxr * maxr) {
+            const norm = Math.sqrt(this.x * this.x + this.y * this.y);
+            const normx = this.x / norm;
+            const normy = this.y / norm;
+            this.x = normx * maxr;
+            this.y = normy * maxr;
 
+            this.vx = -vectorMagnitudes.mapEdgeCollision.position * normx;
+            this.vy = -vectorMagnitudes.mapEdgeCollision.position * normy;
+        }
+
+        // Collisions with beetles
+        // Many beetles can collide in the same tick, so we handle all of them at once to be fair
+        const collisions: [Beetle, number, number][] = [];
         beetles.forEach(b => {
             const dx = this.x - b.x;
             const dy = this.y - b.y;
@@ -73,54 +89,43 @@ export class Ruby {
                 b.x -= ndx * (ds - norm);
                 b.y -= ndy * (ds - norm);
 
-                if (this.protectionTicks > 0) return;
-
-                const hp = removeIfHit ? this.hp : Math.min(this.hp - minRubyHp, this.sampleHpTaken());
-
-                this.vx += ndx * rubyVectorMagnitude;
-                this.vy += ndy * rubyVectorMagnitude;
-                anyHits = true;
-                totalHpTaken += hp;
-
-                b.vx -= ndx * vectorMagnitudes.ruby.position * hp;
-                b.vy -= ndy * vectorMagnitudes.ruby.position * hp;
-                b.vsize += vectorMagnitudes.ruby.size * hp;
-                b.score += Math.round(100 * hp * this.baseSize * this.baseSize);
-
-                this.game.particles.push(new Particle(
-                    this.x - ndx * this.getSize(),
-                    this.y - ndy * this.getSize(),
-                    vectorMagnitudes.ruby.size * hp * infSum,
-                    removeIfHit ? 'rubyRemoval' : 'ruby'
-                ));
+                collisions.push([b, ndx, ndy]);
             }
         });
 
-        if (anyHits) {
-            this.protectionTicks = rubyProtectionTicks;
-            if (removeIfHit) {
-                this.hp = -1;
-            }
+        if(collisions.length == 0 || this.protectionTicks > 0) return;
+
+        let hpTakenPerHit = this.sampleHpTaken();
+        const removeSelf = this.hp - hpTakenPerHit * collisions.length < minRubyHp;
+        if(removeSelf) {
+            hpTakenPerHit = this.hp / collisions.length;
         }
-        this.hp -= totalHpTaken;
 
-        this.x += this.vx;
-        this.y += this.vy;
-        this.vx *= vectorDecay;
-        this.vy *= vectorDecay;
-        this.protectionTicks = Math.max(0, this.protectionTicks - 1);
+        collisions.forEach(collision => {
+            const [b, ndx, ndy] = collision;
 
-        // Collision with world edge
-        const maxr = mapSize - this.baseSize * this.hp;
-        if (this.x * this.x + this.y * this.y > maxr * maxr) {
-            const norm = Math.sqrt(this.x * this.x + this.y * this.y);
-            const normx = this.x / norm;
-            const normy = this.y / norm;
-            this.x = normx * maxr;
-            this.y = normy * maxr;
+            this.vx += ndx * rubyVectorMagnitude;
+            this.vy += ndy * rubyVectorMagnitude;
 
-            this.vx = -vectorMagnitudes.mapEdgeCollision.position * normx;
-            this.vy = -vectorMagnitudes.mapEdgeCollision.position * normy;
+            b.vx -= ndx * vectorMagnitudes.ruby.position * hpTakenPerHit;
+            b.vy -= ndy * vectorMagnitudes.ruby.position * hpTakenPerHit;
+            b.vsize += vectorMagnitudes.ruby.size * hpTakenPerHit;
+            b.score += Math.round(100 * hpTakenPerHit * this.baseSize * this.baseSize);
+
+            this.game.particles.push(new Particle(
+                this.x - ndx * this.getSize(),
+                this.y - ndy * this.getSize(),
+                vectorMagnitudes.ruby.size * hpTakenPerHit * infSum,
+                removeSelf ? 'rubyRemoval' : 'ruby'
+            ));
+        });
+
+        this.protectionTicks = rubyProtectionTicks;
+
+        if(removeSelf) {
+            this.hp = -1;
+        } else {
+            this.hp -= hpTakenPerHit * collisions.length;
         }
     }
 

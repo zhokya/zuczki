@@ -6,7 +6,7 @@ import { infSum, vectorMagnitudes } from "../sharedConstants.js";
 import { Beetle } from "./beetle.js";
 import { Particle } from "./particle.js";
 import { Projectile } from "./projectile.js";
-import type { Ruby } from "./ruby.js";
+import { minRubyHp, type Ruby } from "./ruby.js";
 
 export class Obstacle {
     isCircle: boolean;
@@ -195,6 +195,11 @@ export class Obstacle {
         other.vy += ndy * vector.position;
         if (other instanceof Beetle) {
             other.vsize += vector.size;
+        } else if(this.isAggressive) {
+            other.hp -= 0.2;
+            if(other.hp < minRubyHp) {
+                other.hp = -1;
+            }
         }
     }
     
