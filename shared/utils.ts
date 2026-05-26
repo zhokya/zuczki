@@ -42,9 +42,10 @@ export class NumericIdGenerator {
     }
 }
 
-export function samplePointInCircle(radius: number): [number, number] {
+export function samplePointInCircle(radius: number, minRadius: number = 0): [number, number] {
     const theta = Math.random() * 2 * Math.PI;
-    const r = radius * Math.max(Math.random(), Math.random());
+    const mt = minRadius / radius;
+    const r = radius * (Math.max(Math.random(), Math.random()) * (1 - mt) + mt);
     return [r * Math.cos(theta), r * Math.sin(theta)];
 }
 
@@ -67,10 +68,9 @@ export function angleDifference(a1: number, a2: number) {
 // returns true if adding to a1 will make it closer to a2, otherwise return false
 // TODO: make it smarter
 export function isPositiveRotationCloser(a1: number, a2: number): boolean {
-    a1 = moduloAngle(a1);
     a2 = moduloAngle(a2);
     const h = 0.0001;
-    return angleDifference(a1 + h, a2) < angleDifference(a1 - h, a2);
+    return angleDifference(moduloAngle(a1 + h), a2) < angleDifference(moduloAngle(a1 - h), a2);
 }
 
 export function rotateAngleTowards(angle: number, targetAngle: number, delta: number) {
@@ -95,7 +95,7 @@ export function lerpAngle(a1: number, a2: number, t: number) {
     if (isPositiveRotationCloser(a1, a2)) {
         return moduloAngle(a1 + delta);
     } else {
-        return moduloAngle(a2 - delta);
+        return moduloAngle(a1 - delta);
     }
 }
 export function expLerp(a: number, b: number, dt: number, decay: number) {
