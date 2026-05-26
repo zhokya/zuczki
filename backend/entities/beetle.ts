@@ -132,9 +132,6 @@ export class Beetle {
             Math.min(angleDifference(this.angle, this.targetAngle), maxDashDirectionChange)
         );
         const dashRelease = this.powerupType == 'dash' && this.powerupTicks !== null && this.powerupTicks >= maxSuperdashTicks;
-        if(this.powerupType == 'projectile' && this.powerupTicks !== null && this.powerupTicks >= powerupParams.projectile.loadingDuration) {
-            this.poweruping = false;
-        }
         if(this.poweruping && !dashRelease) {
             if(!(this.powerupTicks === null && this.powerupType == 'dash' && (magnitude >= magnitude1 || this.freezedTicks != 0))) {
                 if(this.powerupTicks === null) this.powerupTicks = 0;
