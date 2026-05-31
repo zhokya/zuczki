@@ -17,6 +17,7 @@ class Home {
     beetle: Beetle | null = null;
     tournament: Tournament;
     ticksSinceChange = 0;
+    center: { x: number, y: number } | null = null;
 
     constructor(game: Game, tournament: Tournament) {
         this.game = game;
@@ -25,6 +26,13 @@ class Home {
 
     update(x: number, y: number, angle: number) {
         const homeSize = 2;
+        const tt = this.tournament.initiated ? 1 : 0.1;
+
+        if (this.center === null) {
+            this.center = { x, y };
+        }
+        this.center.x = lerp(this.center.x, x, tt);
+        this.center.y = lerp(this.center.y, y, tt);
 
         for (let i = 0; i < 3; i++) {
             const phi1 = angle + Math.PI / 4 + Math.PI / 2 * (i + 0.12);
@@ -36,7 +44,6 @@ class Home {
             const y2 = y - Math.sin(phi2) * homeSize;
 
             if (i < this.edges.length) {
-                const tt = this.tournament.initiated ? 1 : 0.1;
                 this.edges[i].x1 = lerp(this.edges[i].x1, x1, tt);
                 this.edges[i].x2 = lerp(this.edges[i].x2, x2, tt);
                 this.edges[i].y1 = lerp(this.edges[i].y1, y1, tt);
@@ -76,8 +83,8 @@ class Home {
 
         this.ticksSinceChange++;
         if (this.beetle !== null) {
-            this.beetle.x = lerp(this.beetle.x, x, 1 - Math.exp(-0.2 * this.ticksSinceChange));
-            this.beetle.y = lerp(this.beetle.y, y, 1 - Math.exp(-0.2 * this.ticksSinceChange));
+            this.beetle.x = lerp(this.beetle.x, this.center.x, 1 - Math.exp(-0.2 * this.ticksSinceChange));
+            this.beetle.y = lerp(this.beetle.y, this.center.y, 1 - Math.exp(-0.2 * this.ticksSinceChange));
             if (this.beetle.powerupTicks !== null && this.beetle.powerupTicks > 48 && this.beetle.looks.nickname == adminId) {
                 this.tournament.initiate();
             }
@@ -146,13 +153,12 @@ export class Tournament {
     }
 
     update() {
-        if(this.started || this.initiated) {
+        if (this.started || this.initiated) {
             this.leaderboardGroups = this.groups;
         }
+        spawnNewPoints(this.game, !this.started);
 
         if (this.started) {
-
-            spawnNewPoints(this.game);
             spawnNewObstacles(this.game);
 
             this.groups.forEach(group => {
@@ -179,8 +185,6 @@ export class Tournament {
 
             return;
         }
-
-        spawnNewPoints(this.game, 0.1);
 
         this.tournamentTicks = 0;
         this.game.mapSize = mapSize;
@@ -212,7 +216,8 @@ export class Tournament {
             });
         }
 
-        const numPairs = Math.ceil(this.game.beetles.size / 2) + 2;
+        // const numPairs = Math.ceil(this.game.beetles.size / 2) + 2;
+        const numPairs = 10;
 
         while (this.groups.length > numPairs) {
             let deleteIndex = 0;

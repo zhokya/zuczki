@@ -74,11 +74,20 @@ export class Point {
 }
 
 const targetPointDensity = 0.05;
-export function spawnNewPoints(game: Game, numPointsMultiplier: number = 1) {
-    const targetNumPoints = targetPointDensity * Math.PI * game.mapSize * game.mapSize;
+export function spawnNewPoints(game: Game, isTournamentLobby: boolean = false) {
+    const targetNumPoints = targetPointDensity * Math.PI * game.mapSize * game.mapSize * (isTournamentLobby ? 0.1 : 1);
 
-    for (let i = 0; i < Math.ceil((targetNumPoints * numPointsMultiplier - game.numEnvironmentDensityPoints) * 0.1); i++) {
-        const [x, y] = samplePointInCircle(game.mapSize - 2);
+    for (let i = 0; i < Math.ceil((targetNumPoints - game.numEnvironmentDensityPoints) * 0.1); i++) {
+        let x, y;
+        if(isTournamentLobby) {
+            const r = Math.random() * game.mapSize / 2;
+            const theta = Math.random() * Math.PI * 2;
+            x = Math.cos(theta) * r;
+            y = Math.sin(theta) * r;
+        } else {
+            [x, y] = samplePointInCircle(game.mapSize - 2);
+        }
+
         let isCorrect = true;
         game.beetles.forEach(b => {
             const dx = b.x - x;
