@@ -1,7 +1,6 @@
 import { rubyEncoder } from "../../shared/dataEncoders.js";
 import type { PointedDataView } from "../../shared/encoder/types.js";
 import type { VisionBounds } from "../../shared/visionBounds.js";
-import env from "../env.js";
 import type { Game } from "../game.js";
 import { infSum, vectorDecay, vectorMagnitudes } from "../sharedConstants.js";
 import type { Beetle } from "./beetle.js";

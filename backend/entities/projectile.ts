@@ -2,7 +2,6 @@ import { projectileEncoder } from "../../shared/dataEncoders.js";
 import type { PointedDataView } from "../../shared/encoder/types.js";
 import { samplePointInCircle } from "../../shared/utils.js";
 import type { VisionBounds } from "../../shared/visionBounds.js";
-import env from "../env.js";
 import type { Game } from "../game.js";
 import type { Beetle } from "./beetle.js";
 import { Point } from "./point.js";

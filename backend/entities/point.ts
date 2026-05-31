@@ -1,5 +1,4 @@
 import { samplePointInCircle } from "../../shared/utils.js";
-import env from "../env.js";
 import type { Game } from "../game.js";
 import type { Beetle } from "./beetle.js";
 
