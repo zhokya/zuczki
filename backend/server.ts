@@ -61,13 +61,13 @@ export class GameServer {
         const opts: { globId: number, score: number }[] = [];
 
         let numPlaces;
-        if(game.tournament === null || !game.tournament.initiated) {
+        if(game.tournament === null) {
             game.beetles.forEach(b => {
                 opts.push({ globId: b.globId, score: b.score });
             });
             numPlaces = 10;
         } else {
-            game.tournament.groups.forEach(group => {
+            game.tournament.leaderboardGroups.forEach(group => {
                 for(let i = 0; i < group.homes.length; i++) {
                     const b = group.homes[i].beetle;
                     if(b !== null) {
