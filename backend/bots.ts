@@ -4,6 +4,8 @@ import { Beetle } from "./entities/beetle.js";
 import env from "./env.js";
 import type { Game } from "./game.js";
 
+const targetNumPlayers = 16;
+
 export function updateBots(game: Game) {
     if(game.tournament !== null) return;
 
@@ -16,7 +18,7 @@ export function updateBots(game: Game) {
         }
     });
 
-    if (game.beetles.size < parseInt(env("TARGET_NUM_PLAYERS")) && Math.random() < 0.04) {
+    if (game.beetles.size < targetNumPlayers && Math.random() < 0.04) {
         const id = generateId(parseInt(env("VITE_ID_LENGTH")));
         game.beetles.set(id, new Beetle(id, true, game));
     }

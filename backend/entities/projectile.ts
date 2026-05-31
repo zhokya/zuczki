@@ -11,8 +11,6 @@ const speed = 0.7;
 const size = 0.3;
 const freezeTicks = 24;
 
-const mapSize = parseInt(env('VITE_MAP_SIZE'));
-
 export class Projectile {
     x: number;
     y: number;
@@ -37,7 +35,7 @@ export class Projectile {
         this.x += this.vx;
         this.y += this.vy;
 
-        if(this.x * this.x + this.y * this.y >= mapSize * mapSize) {
+        if(this.x * this.x + this.y * this.y >= this.game.mapSize * this.game.mapSize) {
             this.onCollisionWithObject();
             return;
         }
@@ -70,7 +68,7 @@ export class Projectile {
             const [dx, dy] = samplePointInCircle(1);
             const x = this.x + dx - this.vx;
             const y = this.y + dy - this.vy;
-            if(x * x + y * y >= mapSize * mapSize) continue;
+            if(x * x + y * y >= this.game.mapSize * this.game.mapSize) continue;
             const point = new Point(x, y, false, this.game);
             this.game.points.set(point.id, point);
         }

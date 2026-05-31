@@ -9,7 +9,6 @@ import { Particle } from "./particle.js";
 
 export const rubyProtectionTicks = 30;
 const rubyVectorMagnitude = 0.2;
-const mapSize = parseInt(env('VITE_MAP_SIZE'));
 
 const decreaseHpSpeed = 0.0015;
 const decreaseHpThreshold = 0.25;
@@ -61,7 +60,7 @@ export class Ruby {
         }
 
         // Collision with world edge
-        const maxr = mapSize - this.baseSize * this.hp;
+        const maxr = this.game.mapSize - this.getSize();
         if (this.x * this.x + this.y * this.y > maxr * maxr) {
             const norm = Math.sqrt(this.x * this.x + this.y * this.y);
             const normx = this.x / norm;

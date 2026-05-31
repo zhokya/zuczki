@@ -21,7 +21,6 @@ const sizeIncreaseSpeed = 0.001;
 const minPossibleSize = 0.75;
 const maxDashDirectionChange = Math.PI / 5;
 const maxSize = parseFloat(env('VITE_MAX_SIZE'));
-const mapSize = parseInt(env('VITE_MAP_SIZE'));
 const irrelevanceTicks = 24;
 const beetleCollisionAngleZeroPoint = 0.25;
 const movementSubTicks = 50;
@@ -200,7 +199,7 @@ export class Beetle {
         }
 
         // Collision with world edge
-        const maxr = mapSize - this.size;
+        const maxr = this.game.mapSize - this.size;
         if (this.x * this.x + this.y * this.y > maxr * maxr) {
             const norm = Math.sqrt(this.x * this.x + this.y * this.y);
             const normx = this.x / norm;
@@ -213,7 +212,7 @@ export class Beetle {
             this.vsize += vectorMagnitudes.mapEdgeCollision.size;
 
             this.game.particles.push(new Particle(
-                normx * mapSize, normy * mapSize, 
+                normx * this.game.mapSize, normy * this.game.mapSize, 
                 vectorMagnitudes.mapEdgeCollision.size * infSum,
                 'nonRuby'
             ));

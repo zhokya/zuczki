@@ -225,8 +225,10 @@ export class Obstacle {
     }
 }
 
+const targetObstacleDensity = 0.001;
 export function spawnNewObstacles(game: Game) {
-    if (game.obstacles.size < 16) {
+    const targetNumObstacles = targetObstacleDensity * Math.PI * game.mapSize * game.mapSize;
+    if (game.obstacles.size < targetNumObstacles) {
         const obstacle = new Obstacle(game);
         game.obstacles.set(obstacle.id, obstacle);
     }

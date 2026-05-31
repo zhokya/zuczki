@@ -193,6 +193,7 @@ export class GameServer {
                 motionBlur: beetle ? beetle.getUint8MotionBlur() : 0,
                 cameraX: camera.x,
                 cameraY: camera.y,
+                mapSize: game.mapSize,
 
                 numBeetles: beetlesToSend.length,
                 numRubys: rubysToSend.length,

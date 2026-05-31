@@ -40,6 +40,7 @@ let selfGlobId = -1;
 const motionBlurAmount = new Interpolator(0, false);
 let cameraX = new Interpolator(0, false);
 let cameraY = new Interpolator(0, false);
+export const mapSize = new Interpolator(parseInt(import.meta.env.VITE_MAP_SIZE), false);
 
 let looksMap = new Map<number, Looks>();
 let localBeetles = new Map<number, LocalBeetle>();
@@ -67,6 +68,7 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
 
     selfGlobId = header.globId;
     motionBlurAmount.update(header.motionBlur);
+    mapSize.update(header.mapSize);
 
     isAlive = false;
     beetles.forEach(b => {
@@ -236,6 +238,7 @@ interface Text {
 
 function renderWorld(renderInfo: RenderInfo): Text[] {
     const { ctx } = renderInfo;
+    mapSize.onRender();
     
     renderEnvironment(renderInfo);
 

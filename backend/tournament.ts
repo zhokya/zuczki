@@ -1,5 +1,5 @@
 import { getRandomLook } from "../shared/looks.js";
-import { lerp, lerpAngle } from "../shared/utils.js";
+import { lerp } from "../shared/utils.js";
 import type { Beetle } from "./entities/beetle.js";
 import { Obstacle, spawnNewObstacles } from "./entities/obstacle.js";
 import { spawnNewPoints } from "./entities/point.js";
@@ -9,6 +9,7 @@ import type { Game } from "./game.js";
 
 const adminId = env('ADMIN_ID');
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
+const tournamentDuration = (1 * 60 + 0) * 24;
 
 class Home {
     edges: Obstacle[] = [];
@@ -77,7 +78,6 @@ class Home {
         if (this.beetle !== null) {
             this.beetle.x = lerp(this.beetle.x, x, 1 - Math.exp(-0.2 * this.ticksSinceChange));
             this.beetle.y = lerp(this.beetle.y, y, 1 - Math.exp(-0.2 * this.ticksSinceChange));
-            this.beetle.angle = lerpAngle(this.beetle.angle, angle + Math.PI, 1 - Math.exp(-0.01 * this.ticksSinceChange));
             if(this.beetle.powerupTicks !== null && this.beetle.powerupTicks > 48 && this.beetle.looks.nickname == adminId) {
                 this.tournament.initiate();
             }
@@ -135,6 +135,7 @@ export class Tournament {
     initiated = false;
     started = false;
     ticksToStart = -1;
+    tournamentTicks = 0;
     groups: Group[] = [];
     assignedBeetleIds = new Set<number>();
     initiatedT = 0;
@@ -163,10 +164,16 @@ export class Tournament {
                 });
             });
 
+            this.tournamentTicks++;
+            this.game.mapSize = lerp(mapSize, 10, Math.min(1, this.tournamentTicks / tournamentDuration));
+
             return;
         }
 
         spawnNewPoints(this.game, 0.1);
+
+        this.tournamentTicks = 0;
+        this.game.mapSize = mapSize;
 
         if(this.initiated) {
             this.initiatedT ++;

@@ -1,6 +1,7 @@
 import type { MessageObstacle } from "../../../shared/dataEncoders";
 import { lerp } from "../../../shared/utils";
 import { Interpolator } from "../interpolator";
+import { mapSize } from "../mainCanvas";
 import type { RenderInfo } from "../types";
 import { ObstacleDestructionParticle, randomRepeat, type ParticleSystem } from "../visuals/particleSystem";
 
@@ -148,8 +149,6 @@ export class LocalObstacle {
     }
 
     private spawnParticles(particleSystem: ParticleSystem, dt: number) {
-        const mapSize = parseInt(import.meta.env.VITE_MAP_SIZE);
-        
         if(this.isCircle) {
             const x0 = this.x1.value;
             const y0 = this.y1.value;
@@ -157,7 +156,7 @@ export class LocalObstacle {
 
             const x1 = 0;
             const y1 = 0;
-            const r1 = mapSize;
+            const r1 = mapSize.value;
 
             const dx = x1 - x0;
             const dy = y1 - y0;
@@ -194,7 +193,7 @@ export class LocalObstacle {
                 const nx = x / norm;
                 const ny = y / norm;
 
-                particleSystem.addParticle(new ObstacleDestructionParticle(nx * mapSize, ny * mapSize));
+                particleSystem.addParticle(new ObstacleDestructionParticle(nx * mapSize.value, ny * mapSize.value));
             }, h * Math.min(100, dt) * 0.03);
         } else {
             const x1 = this.x1.value;
@@ -202,7 +201,7 @@ export class LocalObstacle {
             const x2 = this.x2.value;
             const y2 = this.y2.value;
 
-            const maxd = mapSize + (Math.random() > 0.5 ? 1 : -1) * this.size.value;
+            const maxd = mapSize.value + (Math.random() > 0.5 ? 1 : -1) * this.size.value;
             const dx = x2 - x1;
             const dy = y2 - y1;
 
@@ -225,7 +224,7 @@ export class LocalObstacle {
                         const nx = x / norm;
                         const ny = y / norm;
 
-                        particleSystem.addParticle(new ObstacleDestructionParticle(nx * mapSize - ny * t2, ny * mapSize + nx * t2));
+                        particleSystem.addParticle(new ObstacleDestructionParticle(nx * mapSize.value - ny * t2, ny * mapSize.value + nx * t2));
                     }, Math.min(100, dt) * 0.12);
                 }
             };

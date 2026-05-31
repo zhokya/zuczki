@@ -11,7 +11,6 @@ import type { Projectile } from "./entities/projectile.js";
 import { Tournament } from "./tournament.js";
 
 const maxSize = parseFloat(env('VITE_MAX_SIZE'));
-const mapSize = parseInt(env('VITE_MAP_SIZE'));
 
 export class Game {
     beetles: Map<string, Beetle> = new Map();
@@ -36,11 +35,11 @@ export class Game {
 
     particles: Particle[] = [];
 
+    mapSize = parseInt(env('VITE_MAP_SIZE'));
     url: string;
-
     tournament: null | Tournament;
 
-    constructor(url: string, isTournament: boolean = true) {
+    constructor(url: string, isTournament: boolean = false) {
         this.url = url;
         this.tournament = isTournament ? new Tournament(this) : null;
     }
@@ -54,7 +53,7 @@ export class Game {
 
     distanceFromObjects(x: number, y: number): number {
         // initialize with distance to world edge
-        let distance = mapSize - Math.sqrt(x * x + y * y);
+        let distance = this.mapSize - Math.sqrt(x * x + y * y);
 
         this.beetles.forEach(beetle => {
             const dx = beetle.x - x;
@@ -70,7 +69,7 @@ export class Game {
     }
 
     getSpawnPointWithMargin(worldMargin: number = 0, centerMargin: number = 0): [number, number] {
-        const maxR = mapSize - worldMargin;
+        const maxR = this.mapSize - worldMargin;
         let bestX = 0;
         let bestY = 0;
         let bestMinDist = -1;
@@ -100,7 +99,7 @@ export class Game {
 
         this.obstacles.forEach(obstacle => {
             obstacle.update();
-            if (obstacle.getDistanceTo(0, 0) - obstacle.size > mapSize + 2) {
+            if (obstacle.getDistanceTo(0, 0) - obstacle.size > this.mapSize + 2) {
                 obstacle.onDead();
                 this.obstacles.delete(obstacle.id);
                 return;

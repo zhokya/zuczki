@@ -80,6 +80,7 @@ export const headerEncoder = new Encoder({
     motionBlur: new UintEncoder(8),
     cameraX: positionEncoder,
     cameraY: positionEncoder,
+    mapSize: new RangeEncoder(16, 0, 100),
     
     numBeetles: new UintEncoder(8),
     numRubys: new UintEncoder(16),

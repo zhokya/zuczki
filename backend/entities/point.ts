@@ -5,8 +5,6 @@ import type { Beetle } from "./beetle.js";
 
 const pointEatingMargin = 2.5;
 const pointCreationMargin = 6;
-const mapSize = parseInt(env('VITE_MAP_SIZE'));
-const targetNumPoints = parseFloat(env('TARGET_POINT_DENSITY')) * Math.PI * mapSize * mapSize;
 
 export class Point {
     id: number;
@@ -56,9 +54,12 @@ export class Point {
     }
 }
 
+const targetPointDensity = 0.05;
 export function spawnNewPoints(game: Game, numPointsMultiplier: number = 1) {
+    const targetNumPoints = targetPointDensity * Math.PI * game.mapSize * game.mapSize;
+
     for (let i = 0; i < Math.ceil((targetNumPoints * numPointsMultiplier - game.numEnvironmentDensityPoints) * 0.1); i++) {
-        const [x, y] = samplePointInCircle(mapSize - 2);
+        const [x, y] = samplePointInCircle(game.mapSize - 2);
         let isCorrect = true;
         game.beetles.forEach(b => {
             const dx = b.x - x;
