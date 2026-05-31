@@ -8,6 +8,7 @@ import { Obstacle, spawnNewObstacles } from "./entities/obstacle.js";
 import type { PointCreation, PointRemoval } from "../shared/dataEncoders.js";
 import type { Particle } from "./entities/particle.js";
 import type { Projectile } from "./entities/projectile.js";
+import { Tournament } from "./tournament.js";
 
 const maxSize = parseFloat(env('VITE_MAX_SIZE'));
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
@@ -37,8 +38,11 @@ export class Game {
 
     url: string;
 
-    constructor(url: string) {
+    tournament: null | Tournament;
+
+    constructor(url: string, isTournament: boolean = true) {
         this.url = url;
+        this.tournament = isTournament ? new Tournament(this) : null;
     }
 
     afterSendingMessages() {
@@ -65,14 +69,14 @@ export class Game {
         return distance;
     }
 
-    getSpawnPointWithMargin(worldMargin: number): [number, number] {
+    getSpawnPointWithMargin(worldMargin: number = 0, centerMargin: number = 0): [number, number] {
         const maxR = mapSize - worldMargin;
         let bestX = 0;
         let bestY = 0;
         let bestMinDist = -1;
 
         for (let i = 0; i < 1000; i++) {
-            const [x, y] = samplePointInCircle(maxR);
+            const [x, y] = samplePointInCircle(maxR, centerMargin);
             const dist = this.distanceFromObjects(x, y);
             if (dist > bestMinDist) {
                 bestMinDist = dist;
@@ -101,9 +105,11 @@ export class Game {
                 this.obstacles.delete(obstacle.id);
                 return;
             }
-            this.obstacles.forEach(otherObstacle => {
-                obstacle.pushAwayFrom(otherObstacle);
-            });
+            if(this.tournament === null || this.tournament.started) {
+                this.obstacles.forEach(otherObstacle => {
+                    obstacle.pushAwayFrom(otherObstacle);
+                });
+            }
         });
 
         this.beetles.forEach(beetle => {
@@ -141,12 +147,20 @@ export class Game {
         });
 
         this.projectiles.forEach(projectile => {
-            if(projectile.isDead) {
+            if (projectile.isDead) {
                 this.projectiles.delete(projectile.id);
             }
         });
 
-        spawnNewPoints(this);
-        spawnNewObstacles(this);
+        if (this.tournament === null) {
+            spawnNewPoints(this);
+            spawnNewObstacles(this);
+        } else {
+            this.tournament.update();
+        }
+
+        this.beetles.forEach(beetle => {
+            beetle.clicked = false;
+        })
     }
 }

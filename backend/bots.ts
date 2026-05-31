@@ -5,6 +5,8 @@ import env from "./env.js";
 import type { Game } from "./game.js";
 
 export function updateBots(game: Game) {
+    if(game.tournament !== null) return;
+
     const t = performance.now();
 
     game.beetles.forEach(b => {

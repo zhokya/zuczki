@@ -29,7 +29,7 @@ const jsonQueue: string[] = [];
 const messageListeners: ((data: any, isFirstMessage: boolean) => void)[] = [];
 
 export function rejoin() {
-    globalWs = new WebSocket(import.meta.env.VITE_WEBSOCKET_PATH);
+    globalWs = new WebSocket(import.meta.env.VITE_WEBSOCKET_PATH + window.location.pathname + window.location.search + window.location.hash);
     globalWs.binaryType = 'arraybuffer';
     isFirstMessage = true;
 

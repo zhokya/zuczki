@@ -32,16 +32,6 @@ export class Camera {
         return Math.sqrt(dx * dx + dy * dy);
     }
 
-    updateWithoutBeetle() {
-        while (this.distanceToTarget() < 5) {
-            [this.targetX, this.targetY] = samplePointInCircle(maxRadius);
-        }
-        const angleSpeed = lerp(0.04, 0.2, Math.sqrt(this.x * this.x + this.y * this.y) / maxRadius);
-        this.angle = rotateAngleTowards(this.angle, this.angleToTarget(), angleSpeed);
-        this.x += Math.cos(this.angle) * cameraSpeed;
-        this.y += Math.sin(this.angle) * cameraSpeed;
-    }
-
     update(beetle: Beetle | undefined) {
         if (beetle !== undefined) {
             this.x = beetle.x;
@@ -59,6 +49,39 @@ export class Camera {
             this.angle = rotateAngleTowards(this.angle, this.angleToTarget(), angleSpeed);
             this.x += Math.cos(this.angle) * speed;
             this.y += Math.sin(this.angle) * speed;
+        }
+    }
+}
+
+export class TournamentCamera {
+    x: number;
+    y: number;
+    theta: number;
+    unaliveT = 1e9;
+
+    constructor() {
+        this.theta = Math.random() * Math.PI * 2;
+        [this.x, this.y] = this.getTargetPosition();
+    }
+
+    getTargetPosition(): [number, number] {
+        return [Math.cos(this.theta) * 10, Math.sin(this.theta) * 10];
+    }
+
+    update(beetle: Beetle | undefined) {
+        if (beetle !== undefined) {
+            this.x = beetle.x;
+            this.y = beetle.y;
+            this.unaliveT = 0;
+        } else {
+            this.unaliveT++;
+
+            this.theta += 0.01;
+            
+            const speed = this.unaliveT <= ticksToStartMovingAfterDeath ? 0 : Math.min(1, (this.unaliveT / ticksToStartMovingAfterDeath - 1) / 20);
+            const [targetX, targetY] = this.getTargetPosition();
+            this.x = lerp(this.x, targetX, speed);
+            this.y = lerp(this.y, targetY, speed);
         }
     }
 }

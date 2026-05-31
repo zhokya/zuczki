@@ -86,7 +86,7 @@ export class Beetle {
     globId: number;
 
     constructor(id: string, isBot: boolean, game: Game, powerupNumber?: number, looks?: Looks) {
-        const [x, y] = game.getSpawnPointWithMargin(4);
+        const [x, y] = game.tournament === null ? game.getSpawnPointWithMargin(4) : game.getSpawnPointWithMargin(50, 5);
         this.x = x;
         this.y = y;
 
@@ -174,7 +174,6 @@ export class Beetle {
 
         // Dashing
         if (this.clicked && !this.poweruping && this.freezedTicks == 0) {
-            this.clicked = false;
             if (magnitude < magnitude1) {
                 this.vx += Math.cos(dashAngle) * speedMultBySize * vectorMagnitudes.click.position;
                 this.vy += Math.sin(dashAngle) * speedMultBySize * vectorMagnitudes.click.position;

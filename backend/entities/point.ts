@@ -56,8 +56,8 @@ export class Point {
     }
 }
 
-export function spawnNewPoints(game: Game) {
-    for (let i = 0; i < Math.ceil((targetNumPoints - game.numEnvironmentDensityPoints) * 0.1); i++) {
+export function spawnNewPoints(game: Game, numPointsMultiplier: number = 1) {
+    for (let i = 0; i < Math.ceil((targetNumPoints * numPointsMultiplier - game.numEnvironmentDensityPoints) * 0.1); i++) {
         const [x, y] = samplePointInCircle(mapSize - 2);
         let isCorrect = true;
         game.beetles.forEach(b => {

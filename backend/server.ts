@@ -17,7 +17,7 @@ import { PointedDataView } from "../shared/encoder/types.js";
 import { utf8ByteLength } from "../shared/encoder/stringEncoder.js";
 import { getVisionBoundsFromCenter } from "../shared/visionBounds.js";
 import { defaultAspect, getVisibleArea } from "../shared/getVisibleArea.js";
-import { Camera } from "./entities/camera.js";
+import { Camera, TournamentCamera } from "./entities/camera.js";
 
 function filterMapValues<T>(map: Map<any, T>, filterFn: (element: T) => boolean): T[] {
     const result: T[] = [];
@@ -59,11 +59,28 @@ export class GameServer {
 
     getLeaderboardData(game: Game): LeaderboardEntry[] {
         const opts: { globId: number, score: number }[] = [];
-        game.beetles.forEach(b => {
-            opts.push({ globId: b.globId, score: b.score });
-        });
+
+        let numPlaces;
+        if(game.tournament === null || !game.tournament.initiated) {
+            game.beetles.forEach(b => {
+                opts.push({ globId: b.globId, score: b.score });
+            });
+            numPlaces = 10;
+        } else {
+            game.tournament.groups.forEach(group => {
+                for(let i = 0; i < group.homes.length; i++) {
+                    const b = group.homes[i].beetle;
+                    if(b !== null) {
+                        opts.push({ globId: b.globId, score: group.score });
+                        return;
+                    }
+                }
+            });
+            numPlaces = opts.length;
+        }
+
         opts.sort((a, b) => b.score - a.score);
-        return opts.slice(0, 10).map((o, idx) => {
+        return opts.slice(0, numPlaces).map((o, idx) => {
             return { place: idx + 1, globId: o.globId, score: o.score };
         });
     }
@@ -81,7 +98,7 @@ export class GameServer {
         var game = game_;
 
         var beetleId: string | null = null;
-        const camera = new Camera();
+        const camera = game.tournament === null ? new Camera() : new TournamentCamera();
 
         ws.on('message', (rawData, isBinary) => {
             try {
@@ -106,6 +123,7 @@ export class GameServer {
                     const msg = clientPlayEncoder.readFromBuffer(view);
 
                     if (beetleId === null) return;
+                    if(game.tournament !== null && game.tournament.initiated) return;
                     if(game.beetles.has(beetleId)) return;
 
                     const beetle = new Beetle(beetleId, false, game, msg.powerupType, msg.looks);

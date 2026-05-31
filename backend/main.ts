@@ -7,7 +7,7 @@ const TPS = parseInt(env('TPS'));
 const warmupTicks = parseInt(env('WARMUP_TICKS'))
 const port = parseInt(env('WEBSOCKET_PORT'));
 
-const games = [new Game('/')];
+const games = [new Game('/'), new Game('/tournament')];
 const server = new GameServer(port, games);
 
 const tickRunner = new TickRunner(server, games);
