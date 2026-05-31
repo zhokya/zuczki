@@ -57,7 +57,7 @@ export class Ruby {
         this.protectionTicks = Math.max(0, this.protectionTicks - 1);
         
         if (this.hp > decreaseHpThreshold) {
-            this.hp -= decreaseHpSpeed;
+            this.hp -= decreaseHpSpeed / (this.baseSize * this.baseSize);
         }
 
         // Collision with world edge
