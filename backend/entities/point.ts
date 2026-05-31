@@ -28,6 +28,26 @@ export class Point {
         }
     }
 
+    update(): boolean {
+        const maxR = this.game.mapSize + 1.5;
+        if (this.x * this.x + this.y * this.y < maxR * maxR) return false;
+
+        this.game.pointRemovals.push({
+            id: this.id,
+            x: this.x,
+            y: this.y
+        });
+        if (this.isEnv) {
+            this.game.numEnvironmentDensityPoints--;
+        } else {
+            this.game.numBeetleDeathPoints--;
+        }
+
+        this.game.pointId.unregister(this.id);
+
+        return true;
+    }
+
     handleEating(beetle: Beetle): boolean {
         const dx = this.x - beetle.x;
         const dy = this.y - beetle.y;

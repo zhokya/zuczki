@@ -89,8 +89,13 @@ export class Game {
 
     update() {
         // Remove points first, so that there are no points that are created and removed in the same tick
-        this.beetles.forEach(beetle => {
-            this.points.forEach((point, id) => {
+        this.points.forEach((point, id) => {
+            if(point.update()) {
+                this.points.delete(id);
+                return;
+            }
+            
+            this.beetles.forEach(beetle => {
                 if (point.handleEating(beetle)) {
                     this.points.delete(id);
                 }
