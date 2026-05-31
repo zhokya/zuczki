@@ -36,7 +36,10 @@ let prevT = -1;
 export let isAlive = false;
 let prevDelayedIsAlive = false;
 let unaliveStartT: number | null = -1e9;
+let prevCanJoin = true;
+
 let selfGlobId = -1;
+
 const motionBlurAmount = new Interpolator(0, false);
 let cameraX = new Interpolator(0, false);
 let cameraY = new Interpolator(0, false);
@@ -83,8 +86,11 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
         unaliveStartT = performance.now();
     }
     const delayedIsAlive = unaliveStartT === null || performance.now() - unaliveStartT < 3000;
-    if (delayedIsAlive !== prevDelayedIsAlive) {
-        if (isAlive) {
+    if(delayedIsAlive !== prevDelayedIsAlive && !isAlive) {
+        onDead();
+    }
+    if (delayedIsAlive !== prevDelayedIsAlive || header.canJoin !== prevCanJoin) {
+        if (delayedIsAlive || !header.canJoin) {
             mainCanvas.style = 'filter: none; opacity: 1;';
             menu.style = 'opacity: 0; pointer-events: none;'
             gameInfoElement.style = 'opacity: 1;';
@@ -92,9 +98,9 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
             mainCanvas.style = 'filter: blur(10px); opacity: 0.5;';
             menu.style = 'opacity: 1; pointer-events: all;';
             gameInfoElement.style = 'opacity: 0;';
-            onDead();
         }
     }
+    prevCanJoin = header.canJoin;
     prevDelayedIsAlive = delayedIsAlive;
 
     if(isFirstMessage) {

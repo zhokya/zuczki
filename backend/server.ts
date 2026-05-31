@@ -194,6 +194,7 @@ export class GameServer {
                 cameraX: camera.x,
                 cameraY: camera.y,
                 mapSize: game.mapSize,
+                canJoin: game.tournament === null || !game.tournament.initiated,
 
                 numBeetles: beetlesToSend.length,
                 numRubys: rubysToSend.length,

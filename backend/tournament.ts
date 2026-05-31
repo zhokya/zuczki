@@ -9,7 +9,7 @@ import type { Game } from "./game.js";
 
 const adminId = env('ADMIN_ID');
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
-const tournamentDuration = (1 * 60 + 0) * 24;
+const tournamentDuration = (0 * 60 + 15) * 24;
 
 class Home {
     edges: Obstacle[] = [];
@@ -63,8 +63,8 @@ class Home {
         this.game.beetles.forEach(b => {
             if (this.beetle !== null) return;
             if (this.tournament.assignedBeetleIds.has(b.globId)) return;
-            if(this.ticksSinceChange < 24) return;
-            if(this.tournament.initiated) return;
+            if (this.ticksSinceChange < 24) return;
+            if (this.tournament.initiated) return;
             const dx = x - b.x;
             const dy = y - b.y;
             if (dx * dx + dy * dy < homeSize * homeSize / 2) {
@@ -78,7 +78,7 @@ class Home {
         if (this.beetle !== null) {
             this.beetle.x = lerp(this.beetle.x, x, 1 - Math.exp(-0.2 * this.ticksSinceChange));
             this.beetle.y = lerp(this.beetle.y, y, 1 - Math.exp(-0.2 * this.ticksSinceChange));
-            if(this.beetle.powerupTicks !== null && this.beetle.powerupTicks > 48 && this.beetle.looks.nickname == adminId) {
+            if (this.beetle.powerupTicks !== null && this.beetle.powerupTicks > 48 && this.beetle.looks.nickname == adminId) {
                 this.tournament.initiate();
             }
             if (this.beetle.clicked && !this.tournament.initiated) {
@@ -137,6 +137,7 @@ export class Tournament {
     ticksToStart = -1;
     tournamentTicks = 0;
     groups: Group[] = [];
+    leaderboardGroups: Group[] = [];
     assignedBeetleIds = new Set<number>();
     initiatedT = 0;
 
@@ -145,7 +146,12 @@ export class Tournament {
     }
 
     update() {
-        if(this.started) {
+        if(this.started || this.initiated) {
+            this.leaderboardGroups = this.groups;
+        }
+
+        if (this.started) {
+
             spawnNewPoints(this.game);
             spawnNewObstacles(this.game);
 
@@ -158,14 +164,18 @@ export class Tournament {
                         edge.x2 += edge.x2 / norm * 0.4;
                         edge.y2 += edge.y2 / norm * 0.4;
                     });
-                    if(home.beetle !== null) {
+                    if (home.beetle !== null) {
                         group.score = Math.max(group.score, home.beetle.score);
                     }
                 });
             });
 
             this.tournamentTicks++;
-            this.game.mapSize = lerp(mapSize, 10, Math.min(1, this.tournamentTicks / tournamentDuration));
+            this.game.mapSize = lerp(mapSize, 0, Math.min(1, this.tournamentTicks / tournamentDuration));
+
+            if (this.tournamentTicks > tournamentDuration) {
+                this.end();
+            }
 
             return;
         }
@@ -175,10 +185,9 @@ export class Tournament {
         this.tournamentTicks = 0;
         this.game.mapSize = mapSize;
 
-        if(this.initiated) {
-            this.initiatedT ++;
-
-            if(this.initiatedT > 120 && Math.random() < 0.05) {
+        if (this.initiated) {
+            this.initiatedT++;
+            if (this.initiatedT > 120 && Math.random() < 0.05) {
                 this.start();
             }
         }
@@ -203,7 +212,7 @@ export class Tournament {
             });
         }
 
-        const numPairs = Math.ceil(this.game.beetles.size / 2);
+        const numPairs = Math.ceil(this.game.beetles.size / 2) + 2;
 
         while (this.groups.length > numPairs) {
             let deleteIndex = 0;
@@ -238,12 +247,12 @@ export class Tournament {
     }
 
     initiate() {
-        if(this.initiated) return;
+        if (this.initiated) return;
         this.initiated = true;
         this.initiatedT = 0;
 
         this.game.beetles.forEach(beetle => {
-            if(!this.assignedBeetleIds.has(beetle.globId)) {
+            if (!this.assignedBeetleIds.has(beetle.globId)) {
                 this.kickBeetle(beetle);
             }
         });
@@ -251,7 +260,7 @@ export class Tournament {
         this.groups.forEach(group => {
             const nicknames: string[] = [];
             group.homes.forEach(home => {
-                if(home.beetle !== null) {
+                if (home.beetle !== null) {
                     nicknames.push(home.beetle.looks.nickname);
                 }
             });
@@ -259,7 +268,7 @@ export class Tournament {
             const nickname = nicknames.join(' & ');
             const looks = getRandomLook(nickname);
             group.homes.forEach(home => {
-                if(home.beetle !== null) {
+                if (home.beetle !== null) {
                     home.beetle.looks = looks;
                     this.game.looksMapIdEdits.push(home.beetle.id);
                 }
@@ -268,7 +277,7 @@ export class Tournament {
     }
 
     start() {
-        if(this.started) return;
+        if (this.started) return;
         this.started = true;
 
         this.game.beetles.forEach(beetle => {
@@ -283,5 +292,40 @@ export class Tournament {
         this.game.projectiles.forEach(projectile => {
             projectile.onDead();
         });
+    }
+
+    end() {
+        console.log('=== Tournament round finished after ' + this.tournamentTicks + ' ticks ===');
+        const opts: { beetles: Beetle[], score: number }[] = [];
+        this.groups.forEach(group => {
+            const beetles: Beetle[] = [];
+            group.homes.forEach(home => {
+                if (home.beetle !== null) beetles.push(home.beetle);
+            });
+            if (beetles.length != 0) {
+                opts.push({ beetles, score: group.score });
+            }
+        });
+        opts.sort((a, b) => b.score - a.score);
+        opts.forEach((opt, idx) => {
+            console.log((idx + 1) + '. ' + opt.beetles.map(beetle => beetle.looks.nickname + ' (' + beetle.score + ')').join(' & '));
+        });
+
+        this.initiated = false;
+        this.started = false;
+        this.ticksToStart = -1;
+        this.tournamentTicks = 0;
+        this.leaderboardGroups = this.groups;
+        this.groups = [];
+        this.assignedBeetleIds.clear();
+        this.initiatedT = 0;
+
+        this.game.points.forEach(p => {
+            this.game.pointRemovals.push(p);
+        });
+        this.game.points.clear();
+
+        this.game.obstacles.clear();
+        this.game.beetles.clear();
     }
 }

@@ -81,6 +81,7 @@ export const headerEncoder = new Encoder({
     cameraX: positionEncoder,
     cameraY: positionEncoder,
     mapSize: new RangeEncoder(16, 0, 100),
+    canJoin: booleanEncoder,
     
     numBeetles: new UintEncoder(8),
     numRubys: new UintEncoder(16),
