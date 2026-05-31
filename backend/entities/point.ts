@@ -28,15 +28,13 @@ export class Point {
         }
     }
 
-    update(): boolean {
-        const maxR = this.game.mapSize + 1.5;
-        if (this.x * this.x + this.y * this.y < maxR * maxR) return false;
-
+    onDead(x?: number, y?: number) {
         this.game.pointRemovals.push({
             id: this.id,
-            x: this.x,
-            y: this.y
+            x: x === undefined ? this.x : x,
+            y: y === undefined ? this.y : y
         });
+
         if (this.isEnv) {
             this.game.numEnvironmentDensityPoints--;
         } else {
@@ -44,7 +42,13 @@ export class Point {
         }
 
         this.game.pointId.unregister(this.id);
+    }
 
+    update(): boolean {
+        const maxR = this.game.mapSize + 1.5;
+        if (this.x * this.x + this.y * this.y < maxR * maxR) return false;
+        
+        this.onDead();
         return true;
     }
 
@@ -55,20 +59,7 @@ export class Point {
         if (dx * dx + dy * dy > beetle.size * beetle.size * pointEatingMargin) return false;
 
         beetle.score++;
-
-        this.game.pointRemovals.push({
-            id: this.id,
-            x: beetle.x + dx * 0.5,
-            y: beetle.y + dy * 0.5
-        });
-        if (this.isEnv) {
-            this.game.numEnvironmentDensityPoints--;
-        } else {
-            this.game.numBeetleDeathPoints--;
-        }
-
-        this.game.pointId.unregister(this.id);
-
+        this.onDead();
         return true;
     }
 }

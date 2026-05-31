@@ -100,6 +100,7 @@ class Home {
 class Group {
     score: number = 0;
     homes: Home[] = [];
+    nickname = '';
     game: Game;
     tournament: Tournament;
 
@@ -134,6 +135,17 @@ class Group {
 
     numBeetles() {
         return this.homes.reduce((v, h) => v + (h.beetle === null ? 0 : 1), 0);
+    }
+
+    updateNickname() {
+        const nicknames: string[] = [];
+        this.homes.forEach(home => {
+            if (home.beetle !== null) {
+                nicknames.push(home.beetle.looks.nickname);
+            }
+        });
+
+        this.nickname = nicknames.join(' & ');
     }
 }
 
@@ -263,15 +275,9 @@ export class Tournament {
         });
 
         this.groups.forEach(group => {
-            const nicknames: string[] = [];
-            group.homes.forEach(home => {
-                if (home.beetle !== null) {
-                    nicknames.push(home.beetle.looks.nickname);
-                }
-            });
+            group.updateNickname();
 
-            const nickname = nicknames.join(' & ');
-            const looks = getRandomLook(nickname);
+            const looks = getRandomLook(group.nickname);
             group.homes.forEach(home => {
                 if (home.beetle !== null) {
                     home.beetle.looks = looks;
@@ -301,19 +307,9 @@ export class Tournament {
 
     end() {
         console.log('=== Tournament round finished after ' + this.tournamentTicks + ' ticks ===');
-        const opts: { beetles: Beetle[], score: number }[] = [];
-        this.groups.forEach(group => {
-            const beetles: Beetle[] = [];
-            group.homes.forEach(home => {
-                if (home.beetle !== null) beetles.push(home.beetle);
-            });
-            if (beetles.length != 0) {
-                opts.push({ beetles, score: group.score });
-            }
-        });
-        opts.sort((a, b) => b.score - a.score);
-        opts.forEach((opt, idx) => {
-            console.log((idx + 1) + '. ' + opt.beetles.map(beetle => beetle.looks.nickname + ' (' + beetle.score + ')').join(' & '));
+        this.groups.sort((a, b) => b.score - a.score);
+        this.groups.forEach((group, idx) => {
+            console.log((idx + 1) + '. ' + group.nickname + ' (' + group.score + ')');
         });
 
         this.initiated = false;
@@ -325,12 +321,12 @@ export class Tournament {
         this.assignedBeetleIds.clear();
         this.initiatedT = 0;
 
-        this.game.points.forEach(p => {
-            this.game.pointRemovals.push(p);
-        });
+        this.game.points.forEach(point => point.onDead());
         this.game.points.clear();
 
+        this.game.obstacles.forEach(obstacle => obstacle.onDead());
         this.game.obstacles.clear();
-        this.game.beetles.clear();
+
+        this.game.beetles.forEach(beetle => this.kickBeetle(beetle));
     }
 }
