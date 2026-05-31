@@ -112,11 +112,13 @@ export class FloatEncoder implements IFieldEncoder<number> {
 export class RangeEncoder extends UintEncoder {
     min: number;
     max: number;
+    precision: number;
 
     constructor(bits: 8 | 16 | 32, min: number = 0, max: number = 1) {
         super(bits);
         this.min = min;
         this.max = max;
+        this.precision = (this.max - this.min) / Math.pow(2, bits);
     }
 
     writeToBuffer(view: PointedDataView, value: number) {
