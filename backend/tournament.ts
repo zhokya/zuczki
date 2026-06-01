@@ -9,7 +9,7 @@ import type { Game } from "./game.js";
 
 const adminId = env('ADMIN_ID');
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
-const maxTournamentDuration = (1 * 60 + 0) * 24;
+const maxTournamentDuration = (5 * 60 + 0) * 24;
 const minTournamentDuration = (1 * 60 + 0) * 24;
 const tournamentIntroductionDuration = (0 * 60 + 10) * 24;
 const maxLinearDecreaseSpeed = 0.1;
@@ -89,7 +89,7 @@ class Home {
         if (this.beetle !== null) {
             this.beetle.x = lerp(this.beetle.x, this.center.x, 1 - Math.exp(-0.2 * this.ticksSinceChange));
             this.beetle.y = lerp(this.beetle.y, this.center.y, 1 - Math.exp(-0.2 * this.ticksSinceChange));
-            if (this.beetle.powerupTicks !== null && this.beetle.powerupTicks > 48 && this.beetle.looks.nickname == adminId) {
+            if (this.beetle.powerupTicks !== null && this.beetle.powerupTicks > 48 && this.beetle.id == adminId) {
                 this.tournament.initiate();
             }
             if (this.beetle.clicked && !this.tournament.initiated) {
@@ -241,6 +241,9 @@ export class Tournament {
         });
 
         if (this.game.rubys.size != 1) {
+            this.game.rubys.forEach(ruby => {
+                ruby.onDead();
+            });
             this.game.rubys.clear();
             const ruby = new Ruby(0, 0, 0, 0, 1.5, this.game);
             this.game.rubys.set(ruby.id, ruby);
