@@ -12,11 +12,8 @@ export class NumericIdGenerator {
     maxId: number;
 
     constructor(maxId: number) {
-        // first few ids for special use (id = 0 used as 'null', required by data encoders)
-        for (let id = 4; id < maxId; id++) {
-            this.queue1.push(id);
-        }
         this.maxId = maxId;
+        this.reset();
     }
 
     next() {
@@ -39,6 +36,15 @@ export class NumericIdGenerator {
 
     unregister(id: number) {
         this.queue2.push(id);
+    }
+
+    reset() {
+        // first few ids for special use (id = 0 used as 'null', required by data encoders)
+        this.queue1 = [];
+        this.queue2 = [];
+        for (let id = 4; id < this.maxId; id++) {
+            this.queue1.push(id);
+        }
     }
 }
 
