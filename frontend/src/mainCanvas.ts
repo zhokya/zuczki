@@ -2,7 +2,7 @@ import { onMessage } from "./wsManager";
 import { LocalBeetle } from "./entities/beetle";
 import { LocalPoint } from "./entities/point";
 import { LocalRuby } from "./entities/ruby";
-import { aliveT, onDead } from "./menu";
+import { onDead } from "./menu/looks";
 import { renderSizeWarning } from "./visuals/sizeWarning";
 import { renderMinimap } from "./visuals/minimap";
 import type { RenderInfo } from "./types";
@@ -34,6 +34,7 @@ let prevH = -1;
 let prevT = -1;
 
 export let isAlive = false;
+export let aliveT = 0;
 let prevDelayedIsAlive = false;
 let unaliveStartT: number | null = -1e9;
 let prevCanJoin = true;
@@ -357,6 +358,12 @@ export function mainCanvasRenderLoop(t: number) {
 
     if (prevT === -1) {
         prevT = t;
+    }
+    
+    if (isAlive) {
+        aliveT += t - prevT;
+    } else {
+        aliveT = 0;
     }
 
     for (const b of localBeetles.values()) {

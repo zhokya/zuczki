@@ -1,7 +1,7 @@
 import { colors } from "../../../shared/looks";
 import type { LocalBeetle } from "../entities/beetle";
 import { mapSize } from "../mainCanvas";
-import { chosenLooks } from "../menu";
+import { chosenLooks } from "../menu/looks";
 import type { RenderInfo } from "../types";
 
 export function renderMinimap(renderInfo: RenderInfo, selfBeetle: LocalBeetle) {

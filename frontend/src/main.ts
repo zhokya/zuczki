@@ -1,6 +1,6 @@
 import { rejoin } from './wsManager';
 import { updateSendingLoop } from './controls';
-import { menuRenderLoop } from './menu';
+import { menuRenderLoop } from './menu/smallCanvas';
 import { mainCanvasRenderLoop } from './mainCanvas';
 import './visuals/fullscreen';
 
