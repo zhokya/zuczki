@@ -16,7 +16,7 @@ export function renderProjectile(rednerInfo: RenderInfo, prx: number, pry: numbe
     ctx.stroke();
 }
 
-export class LocalProjectile {
+export class Projectile {
     id: number;
     x: Interpolator;
     y: Interpolator;

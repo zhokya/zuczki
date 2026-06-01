@@ -3,7 +3,7 @@ import { expLerp, lerp } from "../../../shared/utils";
 import { Interpolator } from "../interpolator";
 import type { RenderInfo } from "../types";
 
-export class LocalRuby {
+export class Ruby {
     id: number;
 
     x: Interpolator;
@@ -50,6 +50,10 @@ export class LocalRuby {
 
         this.hp = el.hp;
         this.baseSize = el.baseSize;
+    }
+
+    canRemove() {
+        return this.removed && this.visibleHp < 0.01;
     }
 
     render(renderInfo: RenderInfo) {

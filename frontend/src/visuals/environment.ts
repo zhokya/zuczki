@@ -1,4 +1,4 @@
-import { mapSize } from "../mainCanvas";
+import { mapSize } from "../mainLoop";
 import type { RenderInfo } from "../types";
 
 const redAreaSize = 20;

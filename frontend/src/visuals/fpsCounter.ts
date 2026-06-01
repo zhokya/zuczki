@@ -1,3 +1,5 @@
+import { onMessage } from "../wsManager";
+
 const fpsCounterElement = document.getElementById('fps-counter') as HTMLElement;
 
 const allStats = true;
@@ -8,9 +10,9 @@ let totalFrames = 0;
 let maxFrameDelay = 0;
 
 let totalWebsocketBytesReceived = 0;
-export function registerWebsocketDataReceived(bytes: number) {
-    totalWebsocketBytesReceived += bytes;
-}
+onMessage((data: ArrayBuffer) => {
+    totalWebsocketBytesReceived += data.byteLength;
+});
 
 let prevUpdate = -1;
 let prevTime = -1;

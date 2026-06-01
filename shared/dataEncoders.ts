@@ -11,7 +11,7 @@ const booleanEncoder = new BooleanEncoder();
 const scoreEncoder = new UintEncoder(32);
 
 export const beetleEncoder = new Encoder({
-    globId: new UintEncoder(8),
+    id: new UintEncoder(8),
     x: positionEncoder,
     y: positionEncoder,
     angle: angleEncoder,

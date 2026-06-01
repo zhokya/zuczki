@@ -1,11 +1,11 @@
 import type { MessageObstacle } from "../../../shared/dataEncoders";
 import { lerp } from "../../../shared/utils";
 import { Interpolator } from "../interpolator";
-import { mapSize } from "../mainCanvas";
+import { mapSize } from "../mainLoop";
 import type { RenderInfo } from "../types";
 import { ObstacleDestructionParticle, randomRepeat, type ParticleSystem } from "../visuals/particleSystem";
 
-export class LocalObstacle {
+export class Obstacle {
     id: number;
     isAggressive: boolean;
     isCircle: boolean;

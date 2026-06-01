@@ -1,4 +1,5 @@
-import { lerp } from "../../../shared/utils";
+import type { particleEncoder } from "../../../shared/dataEncoders";
+import { lerp, samplePointInCircle } from "../../../shared/utils";
 import type { RenderInfo } from "../types";
 
 export function randomRepeat(fn: () => any, times: number) {
@@ -253,5 +254,39 @@ export class ParticleSystem {
 
     addParticle(particle: IParticle) {
         this.particles.push(particle);
+    }
+
+    spawnMessageParticle(particle: typeof particleEncoder.type) {
+        if(particle.type == 'death') {
+            randomRepeat(() => {
+                const [dx, dy] = samplePointInCircle(particle.size);
+                this.addParticle(new DeathParticle(particle.x + dx, particle.y + dy));
+            }, particle.size * 50);
+        } else if(particle.type == 'nonRuby') {
+            randomRepeat(() => {
+                if(particle.size < 0) {
+                    this.addParticle(new SizeDecreaseParticle(particle.x, particle.y, 1 + Math.abs(particle.size * 8)));
+                } else if(particle.size > 0) {
+                    this.addParticle(new SizeIncreaseParticle(particle.x, particle.y, 1 + Math.abs(particle.size * 4)));
+                }
+            }, Math.abs(particle.size * 100) + 4);
+        } else {
+            randomRepeat(() => {
+                this.addParticle(new RubyParticle(particle.x, particle.y, 1 + Math.abs(particle.size * 4), particle.type == 'rubyRemoval'));
+            }, Math.abs(particle.size * 100) + 4);
+        }
+        randomRepeat(() => {
+            if(particle.type == 'death') {
+
+            } else if(particle.type == 'nonRuby') {
+                if(particle.size < 0) {
+                    this.addParticle(new SizeDecreaseParticle(particle.x, particle.y, 1 + Math.abs(particle.size * 8)));
+                } else if(particle.size > 0) {
+                    this.addParticle(new SizeIncreaseParticle(particle.x, particle.y, 1 + Math.abs(particle.size * 4)));
+                }
+            } else {
+                this.addParticle(new RubyParticle(particle.x, particle.y, 1 + Math.abs(particle.size * 4), particle.type == 'rubyRemoval'));
+            }
+        }, Math.abs(particle.size * 100) + 4);
     }
 }

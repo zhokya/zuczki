@@ -1,9 +1,9 @@
 import { VisionBounds } from "../../../shared/visionBounds";
-import { LocalBeetle } from "../entities/beetle";
-import { aliveT } from "../mainCanvas";
+import { Beetle } from "../entities/beetle";
 import type { RenderInfo } from "../types";
 import { ParticleSystem } from "../visuals/particleSystem";
 import { chosenLooks } from "./looks";
+import { aliveT } from "./menu";
 
 const c = document.getElementById('small-canvas') as HTMLCanvasElement;
 const ctx = c.getContext('2d') as CanvasRenderingContext2D;
@@ -14,7 +14,7 @@ const h = c.height;
 let prevT: number | null = null;
 export 
 const particleSystem = new ParticleSystem();
-const menuBeetle = new LocalBeetle({
+const menuBeetle = new Beetle({
     x: w * 0.5,
     y: h * 0.64,
     size: w * 0.33,
@@ -22,11 +22,11 @@ const menuBeetle = new LocalBeetle({
     targetAngle:  -Math.PI / 2,
     powerupTicks: 0,
     score: 0,
-    globId: -1,
+    id: -1,
     powerupNumber: -1
 });
-export function menuRenderLoop(t: number) {
-    requestAnimationFrame(menuRenderLoop);
+export function smallCanvasRenderLoop(t: number) {
+    requestAnimationFrame(smallCanvasRenderLoop);
 
     if (prevT === null) {
         prevT = t;

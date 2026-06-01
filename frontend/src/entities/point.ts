@@ -2,7 +2,7 @@ import type { PointCreation, PointRemoval } from "../../../shared/dataEncoders";
 import { expLerp, lerp } from "../../../shared/utils";
 import type { RenderInfo } from "../types";
 
-export class LocalPoint {
+export class Point {
     id: number;
 
     tx: number;
@@ -48,6 +48,10 @@ export class LocalPoint {
         this.ty = el.y;
         this.to = 0;
         this.removed = true;
+    }
+
+    canRemove() {
+        return this.removedTime > 1000;
     }
 
     render(renderInfo: RenderInfo) {

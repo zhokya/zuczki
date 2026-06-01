@@ -358,7 +358,7 @@ export class Beetle {
             size: this.size,
             score: this.score,
             targetAngle: this.targetAngle,
-            globId: this.globId,
+            id: this.globId,
             powerupNumber: this.powerupNumber,
             powerupTicks: this.powerupTicks === null ? 0 : Math.min(255, this.powerupTicks)
         });

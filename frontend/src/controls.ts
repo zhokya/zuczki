@@ -1,6 +1,6 @@
 import { clientUpdateEncoder, clientUpdateId } from "../../shared/dataEncoders";
 import { moduloAngle } from "../../shared/utils";
-import { isAlive } from "./mainCanvas";
+import { isAlive } from "./menu/menu";
 import { send } from "./wsManager";
 
 let targetAngle = Math.random() * Math.PI * 2;

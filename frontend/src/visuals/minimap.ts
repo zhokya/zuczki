@@ -1,10 +1,10 @@
 import { colors } from "../../../shared/looks";
-import type { LocalBeetle } from "../entities/beetle";
-import { mapSize } from "../mainCanvas";
+import type { Beetle } from "../entities/beetle";
+import { mapSize } from "../mainLoop";
 import { chosenLooks } from "../menu/looks";
 import type { RenderInfo } from "../types";
 
-export function renderMinimap(renderInfo: RenderInfo, selfBeetle: LocalBeetle) {
+export function renderMinimap(renderInfo: RenderInfo, selfBeetle: Beetle) {
     const { ctx, w } = renderInfo;
 
     ctx.strokeStyle = 'rgba(90,70,80,.7)';

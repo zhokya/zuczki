@@ -43,7 +43,7 @@ function insideSize(timestep: number) {
     return Math.sqrt(area);
 }
 
-export class LocalBeetle {
+export class Beetle {
     x: Interpolator;
     y: Interpolator;
     size: Interpolator;
@@ -52,7 +52,7 @@ export class LocalBeetle {
     powerupTicks: Interpolator;
     score: number;
 
-    globId: number;
+    id: number;
     powerupNumber: number;
 
     accumWingTimestep = 0;
@@ -66,7 +66,7 @@ export class LocalBeetle {
         this.powerupTicks = new Interpolator(b.powerupTicks, false);
         this.score = b.score;
 
-        this.globId = b.globId;
+        this.id = b.id;
         this.powerupNumber = b.powerupNumber;
     }
 
@@ -79,7 +79,7 @@ export class LocalBeetle {
         this.powerupTicks.update(b.powerupTicks);
         this.score = b.score;
 
-        this.globId = b.globId;
+        this.id = b.id;
         this.powerupNumber = b.powerupNumber;
     }
 
