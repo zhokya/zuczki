@@ -59,7 +59,7 @@ export class Point {
         if (dx * dx + dy * dy > beetle.size * beetle.size * pointEatingMargin) return false;
 
         beetle.score++;
-        this.onDead();
+        this.onDead(beetle.x + dx * 0.5, beetle.y + dy * 0.5);
         return true;
     }
 }
