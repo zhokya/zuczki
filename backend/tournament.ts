@@ -9,7 +9,11 @@ import type { Game } from "./game.js";
 
 const adminId = env('ADMIN_ID');
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
-const tournamentDuration = (0 * 60 + 15) * 24;
+const maxTournamentDuration = (1 * 60 + 0) * 24;
+const minTournamentDuration = (1 * 60 + 0) * 24;
+const tournamentIntroductionDuration = (0 * 60 + 10) * 24;
+const maxLinearDecreaseSpeed = 0.1;
+const minMapSize = 10;
 
 class Home {
     edges: Obstacle[] = [];
@@ -159,6 +163,7 @@ export class Tournament {
     leaderboardGroups: Group[] = [];
     assignedBeetleIds = new Set<number>();
     initiatedT = 0;
+    initialNumBeetles = 0;
 
     constructor(game: Game) {
         this.game = game;
@@ -189,9 +194,28 @@ export class Tournament {
             });
 
             this.tournamentTicks++;
-            this.game.mapSize = lerp(mapSize, 0, Math.min(1, this.tournamentTicks / tournamentDuration));
 
-            if (this.tournamentTicks > tournamentDuration) {
+            if(this.tournamentTicks > tournamentIntroductionDuration) {
+                const maxArea = mapSize * mapSize;
+                const minArea = minMapSize * minMapSize;
+                const currArea = this.game.mapSize * this.game.mapSize;
+
+                const tt1 = 1 - this.game.beetles.size / this.initialNumBeetles;
+                const tt2 = (this.tournamentTicks - tournamentIntroductionDuration) / (maxTournamentDuration - tournamentIntroductionDuration);
+                const targetArea = lerp(maxArea, minArea, Math.min(1, Math.max(0, tt1, tt2)));
+
+                const maxDecreaseSpeed = currArea - Math.pow(this.game.mapSize - maxLinearDecreaseSpeed, 2);
+                const defaultDecreaseSpeed = (currArea - minArea) / Math.max(1, maxTournamentDuration - this.tournamentTicks);
+                const decreaseSpeed = Math.min(
+                    maxDecreaseSpeed, 
+                    defaultDecreaseSpeed * (tt1 > tt2 ? maxTournamentDuration / minTournamentDuration : 1)
+                );
+
+                const newArea = Math.max(targetArea, currArea - decreaseSpeed);
+                this.game.mapSize = Math.sqrt(newArea);
+            }
+
+            if (this.game.beetles.size == 0) {
                 this.end();
             }
 
@@ -228,8 +252,7 @@ export class Tournament {
             });
         }
 
-        // const numPairs = Math.ceil(this.game.beetles.size / 2) + 2;
-        const numPairs = 10;
+        const numPairs = Math.max(3, Math.ceil(this.game.beetles.size / 2) + 2);
 
         while (this.groups.length > numPairs) {
             let deleteIndex = 0;
@@ -273,6 +296,8 @@ export class Tournament {
                 this.kickBeetle(beetle);
             }
         });
+
+        this.initialNumBeetles = this.game.beetles.size;
 
         this.groups.forEach(group => {
             group.updateNickname();
