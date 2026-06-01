@@ -307,6 +307,7 @@ export class Tournament {
 
     end() {
         console.log('=== Tournament round finished after ' + this.tournamentTicks + ' ticks ===');
+        this.groups = this.groups.filter(group => group.numBeetles() > 0);
         this.groups.sort((a, b) => b.score - a.score);
         this.groups.forEach((group, idx) => {
             console.log((idx + 1) + '. ' + group.nickname + ' (' + group.score + ')');
