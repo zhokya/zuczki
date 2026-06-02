@@ -1,6 +1,7 @@
 import type { particleEncoder } from "../../../shared/dataEncoders";
 import { lerp, samplePointInCircle } from "../../../shared/utils";
-import type { RenderInfo } from "../types";
+import { quality } from "../menu/quality";
+import type { RenderInfo } from "../renderInfo";
 
 export function randomRepeat(fn: () => any, times: number) {
     if (Math.random() < times % 1) {
@@ -54,8 +55,11 @@ abstract class ParticleBase implements IParticle {
         ctx.globalAlpha = this.getOpacity(fract);
         this.subRender(renderInfo, fract);
         ctx.globalAlpha = 1;
-        ctx.shadowColor = 'rgba(0,0,0,0)';
-        ctx.shadowBlur = 0;
+
+        if(quality == 2) {
+            ctx.shadowColor = 'rgba(0,0,0,0)';
+            ctx.shadowBlur = 0;
+        }
 
         return false;
     }
@@ -77,9 +81,12 @@ export class ObstacleDestructionParticle extends ParticleBase {
     subRender(renderInfo: RenderInfo) {
         const { ctx, scale } = renderInfo;
 
-        ctx.shadowColor = 'rgba(230,30,40,' + (1 - this.aliveT / 0.6) + ')';
+        if(quality == 2) {
+            ctx.shadowColor = 'rgba(230,30,40,' + (1 - this.aliveT / 0.6) + ')';
+            ctx.shadowBlur = scale * 0.6;
+        }
+
         ctx.strokeStyle = 'rgba(255,110,80,' + (1 - this.aliveT / 0.6) + ')';
-        ctx.shadowBlur = scale * 0.6;
         ctx.lineWidth = 0.1;
         ctx.lineCap = 'round';
         ctx.beginPath();
@@ -114,14 +121,21 @@ export class RubyParticle extends ParticleBase {
     subRender(renderInfo: RenderInfo) {
         const { ctx, scale } = renderInfo;
 
+        if(quality == 2) {
+            if (this.removal) {
+                ctx.shadowColor = 'rgb(50,90,250)';
+            } else {
+                ctx.shadowColor = 'rgb(230,80,170)';
+            }
+            ctx.shadowBlur = scale * 0.6;
+        }
+
         if (this.removal) {
-            ctx.shadowColor = 'rgb(50,90,250)';
             ctx.strokeStyle = 'rgb(140,170,250)';
         } else {
-            ctx.shadowColor = 'rgb(230,80,170)';
             ctx.strokeStyle = 'rgb(255,30,190)';
         }
-        ctx.shadowBlur = scale * 0.6;
+
         ctx.lineWidth = 0.1;
         ctx.lineCap = 'round';
         ctx.beginPath();
@@ -189,9 +203,12 @@ export class SizeIncreaseParticle extends ParticleBase {
 
         const size = this.size * fract * (1 - fract);
 
-        ctx.shadowColor = 'rgb(190,60,40)';
+        if(quality == 2) {
+            ctx.shadowColor = 'rgb(190,60,40)';
+            ctx.shadowBlur = scale * 0.6;
+        }
+
         ctx.strokeStyle = 'rgb(250,60,40)';
-        ctx.shadowBlur = scale * 0.6;
         ctx.lineWidth = size;
         ctx.lineCap = 'round';
         ctx.beginPath();
@@ -224,9 +241,12 @@ export class SizeDecreaseParticle extends ParticleBase {
 
         const size = this.size * fract * (1 - fract);
 
-        ctx.shadowColor = 'rgb(40,190,60)';
+        if(quality == 2) {
+            ctx.shadowColor = 'rgb(40,190,60)';
+            ctx.shadowBlur = scale * 0.8;
+        }
+
         ctx.strokeStyle = 'rgb(40,250,60)';
-        ctx.shadowBlur = scale * 0.8;
         ctx.lineWidth = size;
         ctx.lineCap = 'round';
         ctx.beginPath();
@@ -257,11 +277,12 @@ export class ParticleSystem {
     }
 
     spawnMessageParticle(particle: typeof particleEncoder.type) {
+        const qualityMult = quality == 0 ? 0.75 : 1;
         if(particle.type == 'death') {
             randomRepeat(() => {
                 const [dx, dy] = samplePointInCircle(particle.size);
                 this.addParticle(new DeathParticle(particle.x + dx, particle.y + dy));
-            }, particle.size * 50);
+            }, particle.size * 50 * qualityMult);
         } else if(particle.type == 'nonRuby') {
             randomRepeat(() => {
                 if(particle.size < 0) {
@@ -269,11 +290,11 @@ export class ParticleSystem {
                 } else if(particle.size > 0) {
                     this.addParticle(new SizeIncreaseParticle(particle.x, particle.y, 1 + Math.abs(particle.size * 4)));
                 }
-            }, Math.abs(particle.size * 100) + 4);
+            }, Math.abs(particle.size * 100 * qualityMult) + 4);
         } else {
             randomRepeat(() => {
                 this.addParticle(new RubyParticle(particle.x, particle.y, 1 + Math.abs(particle.size * 4), particle.type == 'rubyRemoval'));
-            }, Math.abs(particle.size * 100) + 4);
+            }, Math.abs(particle.size * 100 * qualityMult) + 4);
         }
         randomRepeat(() => {
             if(particle.type == 'death') {
@@ -287,6 +308,6 @@ export class ParticleSystem {
             } else {
                 this.addParticle(new RubyParticle(particle.x, particle.y, 1 + Math.abs(particle.size * 4), particle.type == 'rubyRemoval'));
             }
-        }, Math.abs(particle.size * 100) + 4);
+        }, Math.abs(particle.size * 100 * qualityMult) + 4);
     }
 }

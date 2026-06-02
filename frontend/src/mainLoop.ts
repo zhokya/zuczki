@@ -4,7 +4,7 @@ import { Point } from "./entities/point";
 import { Ruby } from "./entities/ruby";
 import { Obstacle } from "./entities/obstacle";
 import { Projectile } from "./entities/projectile";
-import type { RenderInfo } from "./types";
+import { RenderInfo } from "./renderInfo";
 import { updateFpsCounter } from "./visuals/fpsCounter";
 import { getVisionBoundsFromCenter } from "../../shared/visionBounds";
 import { looksEntryEncoder, type Looks } from "../../shared/looks";
@@ -19,6 +19,7 @@ import { ParticleSystem } from "./visuals/particleSystem";
 import { Interpolator } from "./interpolator";
 import { aliveT, onRenderIsAlive, updateIsAlive } from "./menu/menu";
 import { render } from "./visuals/mainRenderer";
+import { quality } from "./menu/quality";
 
 const mainCanvas = document.getElementById('main-canvas') as HTMLCanvasElement;
 const mainCanvasCtx = mainCanvas.getContext('2d') as CanvasRenderingContext2D;
@@ -169,14 +170,14 @@ export function mainCanvasRenderLoop(t: number) {
     [points, rubys, projectiles].forEach(entityMap => {
         entityMap.forEach(entity => {
             if (entity.canRemove()) {
-                points.delete(entity.id);
+                entityMap.delete(entity.id);
             }
         });
     });
 
     motionBlurAmount.onRender();
     const motionBlurOpacity = 1 - motionBlurAmount.value / 255 * 0.9;
-    const renderMotionBlurEffect = motionBlurOpacity < 0.99;
+    const renderMotionBlurEffect = motionBlurOpacity < 0.99 && quality > 0;
 
     mapSize.onRender();
 
@@ -197,10 +198,10 @@ export function mainCanvasRenderLoop(t: number) {
     const scale = Math.max(h / visibleArea, w / defaultAspect / visibleArea);
 
     const bounds = getVisionBoundsFromCenter(centerX, centerY, w, h, scale);
-    const renderInfo: RenderInfo = {
-        ctx: renderMotionBlurEffect ? effectCanvasCtx : mainCanvasCtx,
-        w, h, t, prevT, scale, bounds, particleSystem, centerX, centerY
-    };
+    const renderInfo = new RenderInfo(
+        renderMotionBlurEffect ? effectCanvasCtx : mainCanvasCtx,
+        prevT, t, w, h, scale, centerX, centerY, bounds, particleSystem
+    );
 
     render(renderInfo, selfBeetle, looksMap, beetles, rubys, obstacles, projectiles, points);
 

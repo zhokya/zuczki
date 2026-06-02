@@ -2,7 +2,7 @@ import { colors } from "../../../shared/looks";
 import type { Beetle } from "../entities/beetle";
 import { mapSize } from "../mainLoop";
 import { chosenLooks } from "../menu/looks";
-import type { RenderInfo } from "../types";
+import type { RenderInfo } from "../renderInfo";
 
 export function renderMinimap(renderInfo: RenderInfo, selfBeetle: Beetle) {
     const { ctx, w } = renderInfo;

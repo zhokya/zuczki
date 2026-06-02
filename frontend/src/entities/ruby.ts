@@ -1,7 +1,7 @@
 import type { MessageRuby } from "../../../shared/dataEncoders";
 import { expLerp, lerp } from "../../../shared/utils";
 import { Interpolator } from "../interpolator";
-import type { RenderInfo } from "../types";
+import type { RenderInfo } from "../renderInfo";
 
 export class Ruby {
     id: number;

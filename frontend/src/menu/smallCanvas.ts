@@ -1,6 +1,6 @@
 import { VisionBounds } from "../../../shared/visionBounds";
 import { Beetle } from "../entities/beetle";
-import type { RenderInfo } from "../types";
+import { RenderInfo } from "../renderInfo";
 import { ParticleSystem } from "../visuals/particleSystem";
 import { chosenLooks } from "./looks";
 import { aliveT } from "./menu";
@@ -12,12 +12,11 @@ const w = c.width;
 const h = c.height;
 
 let prevT: number | null = null;
-export 
 const particleSystem = new ParticleSystem();
 const menuBeetle = new Beetle({
     x: w * 0.5,
-    y: h * 0.64,
-    size: w * 0.33,
+    y: h * 0.58,
+    size: w * 0.36,
     angle: -Math.PI / 2,
     targetAngle:  -Math.PI / 2,
     powerupTicks: 0,
@@ -36,7 +35,10 @@ export function smallCanvasRenderLoop(t: number) {
         ctx.clearRect(0, 0, w, h);
 
         const bounds = new VisionBounds(0, 0, w, h);
-        const renderInfo: RenderInfo = { ctx, w, h, prevT, t, scale: 1, bounds, particleSystem, centerX: w / 2, centerY: h / 2 };
+        const scale = 1;
+        const centerX = w / 2;
+        const centerY = h / 2;
+        const renderInfo = new RenderInfo(ctx, prevT, t, w, h, scale, centerX, centerY, bounds, particleSystem);
         menuBeetle.render(renderInfo, chosenLooks);
     }
 

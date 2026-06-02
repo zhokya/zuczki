@@ -2,7 +2,7 @@ import type { MessageObstacle } from "../../../shared/dataEncoders";
 import { lerp } from "../../../shared/utils";
 import { Interpolator } from "../interpolator";
 import { mapSize } from "../mainLoop";
-import type { RenderInfo } from "../types";
+import type { RenderInfo } from "../renderInfo";
 import { ObstacleDestructionParticle, randomRepeat, type ParticleSystem } from "../visuals/particleSystem";
 
 export class Obstacle {

@@ -1,6 +1,6 @@
 import type { MessageProjectile } from "../../../shared/dataEncoders";
 import { Interpolator } from "../interpolator";
-import type { RenderInfo } from "../types";
+import type { RenderInfo } from "../renderInfo";
 
 export function renderProjectile(rednerInfo: RenderInfo, prx: number, pry: number, angle: number, alpha: number) {
     const { ctx } = rednerInfo;

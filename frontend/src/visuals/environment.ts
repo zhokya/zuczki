@@ -1,5 +1,5 @@
 import { mapSize } from "../mainLoop";
-import type { RenderInfo } from "../types";
+import type { RenderInfo } from "../renderInfo";
 
 const redAreaSize = 20;
 const redAreaColor = 'rgb(240,170,190)';

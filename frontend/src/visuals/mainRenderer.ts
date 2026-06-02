@@ -4,7 +4,7 @@ import type { Obstacle } from "../entities/obstacle";
 import type { Point } from "../entities/point";
 import type { Projectile } from "../entities/projectile";
 import type { Ruby } from "../entities/ruby";
-import type { RenderInfo } from "../types";
+import type { RenderInfo } from "../renderInfo";
 import { renderBeforeTransform, renderEnvironment, renderWorldEdge } from "./environment";
 import { renderMinimap } from "./minimap";
 import { renderSizeWarning } from "./sizeWarning";

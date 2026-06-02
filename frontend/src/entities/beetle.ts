@@ -3,7 +3,7 @@ import { type Looks, colors } from "../../../shared/looks";
 import { powerups } from "../../../shared/powerups";
 import { angleDifference, lerp } from "../../../shared/utils";
 import { Interpolator } from "../interpolator";
-import type { RenderInfo } from "../types";
+import type { RenderInfo } from "../renderInfo";
 import { renderProjectile } from "./projectile";
 
 const motionBlurSteps = 10;
