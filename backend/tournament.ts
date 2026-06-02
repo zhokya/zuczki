@@ -331,6 +331,9 @@ export class Tournament {
         this.game.projectiles.forEach(projectile => {
             projectile.onDead();
         });
+
+        this.game.points.forEach(point => point.onDead());
+        this.game.points.clear();
     }
 
     end() {
