@@ -84,10 +84,16 @@ export class Beetle {
     looks: Looks;
     globId: number;
 
+    prevX: number;
+    prevY: number;
+    lastPositionDelta: number = 0;
+
     constructor(id: string, isBot: boolean, game: Game, powerupNumber?: number, looks?: Looks) {
         const [x, y] = game.tournament === null ? game.getSpawnPointWithMargin(4) : game.getSpawnPointWithMargin(50, 5);
         this.x = x;
         this.y = y;
+        this.prevX = x;
+        this.prevY = y;
 
         const initialAngle = Math.random() * Math.PI * 2;
         this.angle = initialAngle;
@@ -181,9 +187,9 @@ export class Beetle {
         }
 
         // General movement
-        this.angle = rotateAngleTowards(this.angle, this.targetAngle, rotationSpeed);
-
         for(let i = 0; i < movementSubTicks; i ++) {
+            this.angle = rotateAngleTowards(this.angle, this.targetAngle, rotationSpeed / movementSubTicks);
+
             const speedMultByVector = Math.max(0, Math.min(1, (magnitude - magnitude1) / (magnitude2 - magnitude1)));
             const speed = minSpeed * speedMultBySize * speedMultByVector * speedMultByPowerup;
 
@@ -226,6 +232,10 @@ export class Beetle {
                 this.irrelevants.splice(i, 1);
             }
         }
+        
+        this.lastPositionDelta = Math.hypot(this.prevX - this.x, this.prevY - this.y);
+        this.prevX = this.x;
+        this.prevY = this.y;
     }
 
     onDead() {
@@ -340,7 +350,7 @@ export class Beetle {
     }
 
     getUint8MotionBlur() {
-        const magnitude = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        const magnitude = this.lastPositionDelta;
         const speed = minSpeed * this.getSpeedMultBySize();
         if(magnitude <= speed) return 0;
         const motionBlur = 1 - 1 / (1 + 2 * (magnitude - speed));
