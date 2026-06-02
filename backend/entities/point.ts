@@ -64,9 +64,9 @@ export class Point {
     }
 }
 
-const targetPointDensity = 0.05;
+const targetPointDensity = 0.04;
 export function spawnNewPoints(game: Game, isTournamentLobby: boolean = false) {
-    const targetNumPoints = targetPointDensity * Math.PI * game.mapSize * game.mapSize * (isTournamentLobby ? 0.1 : 1);
+    const targetNumPoints = targetPointDensity * Math.PI * game.mapSize * game.mapSize * (isTournamentLobby ? 0.15 : 1);
 
     for (let i = 0; i < Math.ceil((targetNumPoints - game.numEnvironmentDensityPoints) * 0.1); i++) {
         let x, y;
