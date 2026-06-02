@@ -5,6 +5,7 @@ import type { Point } from "../entities/point";
 import type { Projectile } from "../entities/projectile";
 import type { Ruby } from "../entities/ruby";
 import type { RenderInfo } from "../renderInfo";
+import type { SizeDelta } from "./sizeDelta";
 import { renderBeforeTransform, renderEnvironment, renderWorldEdge } from "./environment";
 import { renderMinimap } from "./minimap";
 import { renderSizeWarning } from "./sizeWarning";
@@ -18,6 +19,7 @@ interface Text {
 export function render(
     renderInfo: RenderInfo, 
     selfBeetle: Beetle | undefined,
+    sizeDelta: SizeDelta,
     looksMap: Map<number, Looks>,
     beetles: Map<number, Beetle>,
     rubys: Map<number, Ruby>,
@@ -74,5 +76,6 @@ export function render(
     if (selfBeetle !== undefined) {
         renderMinimap(renderInfo, selfBeetle);
         renderSizeWarning(renderInfo, selfBeetle.size.value);
+        sizeDelta.render(renderInfo);
     }
 }

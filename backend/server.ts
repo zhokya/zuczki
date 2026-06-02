@@ -191,6 +191,7 @@ export class GameServer {
             const header: Header = {
                 globId: beetle ? beetle.globId : 0,
                 motionBlur: beetle ? beetle.getUint8MotionBlur() : 0,
+                vsize: beetle ? beetle.vsize : 0,
                 cameraX: camera.x,
                 cameraY: camera.y,
                 mapSize: game.mapSize,

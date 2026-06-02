@@ -78,6 +78,7 @@ export const leaderboardEntryEncoder = new Encoder({
 export const headerEncoder = new Encoder({
     globId: new UintEncoder(8),
     motionBlur: new UintEncoder(8),
+    vsize: new RangeEncoder(16, -0.1, 0.1),
     cameraX: positionEncoder,
     cameraY: positionEncoder,
     mapSize: new RangeEncoder(16, 0, 100),

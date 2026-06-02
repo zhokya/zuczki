@@ -20,6 +20,7 @@ import { Interpolator } from "./interpolator";
 import { aliveT, onRenderIsAlive, updateIsAlive } from "./menu/menu";
 import { render } from "./visuals/mainRenderer";
 import { quality } from "./menu/quality";
+import { SizeDelta } from "./visuals/sizeDelta";
 
 const mainCanvas = document.getElementById('main-canvas') as HTMLCanvasElement;
 const mainCanvasCtx = mainCanvas.getContext('2d') as CanvasRenderingContext2D;
@@ -36,6 +37,7 @@ let prevT = -1;
 let selfGlobId = -1;
 
 const motionBlurAmount = new Interpolator(0, false);
+const sizeDelta = new SizeDelta();
 let cameraX = new Interpolator(0, false);
 let cameraY = new Interpolator(0, false);
 export const mapSize = new Interpolator(parseInt(import.meta.env.VITE_MAP_SIZE), false);
@@ -80,6 +82,7 @@ onMessage((data: ArrayBuffer, isFirstMessage: boolean) => {
     const header = headerEncoder.readFromBuffer(view);
     selfGlobId = header.globId;
     motionBlurAmount.update(header.motionBlur);
+    sizeDelta.update(header.vsize);
     mapSize.update(header.mapSize);
 
     if (isFirstMessage) {
@@ -203,7 +206,7 @@ export function mainCanvasRenderLoop(t: number) {
         prevT, t, w, h, scale, centerX, centerY, bounds, particleSystem
     );
 
-    render(renderInfo, selfBeetle, looksMap, beetles, rubys, obstacles, projectiles, points);
+    render(renderInfo, selfBeetle, sizeDelta, looksMap, beetles, rubys, obstacles, projectiles, points);
 
     if (renderMotionBlurEffect) {
         mainCanvasCtx.globalAlpha = motionBlurOpacity;
