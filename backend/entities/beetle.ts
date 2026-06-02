@@ -306,13 +306,13 @@ export class Beetle {
         const deltaB = this.sizeDeltaWithProtection(-vectorMagnitudes.beetleCollision.size * scoreB);
         const deltaO = other.sizeDeltaWithProtection(-vectorMagnitudes.beetleCollision.size * scoreO);
 
-        this.vx -= vectorMagnitudes.beetleCollision.position * ndx;
-        this.vy -= vectorMagnitudes.beetleCollision.position * ndy;
+        this.vx = -vectorMagnitudes.beetleCollision.position * ndx;
+        this.vy = -vectorMagnitudes.beetleCollision.position * ndy;
         this.vsize += deltaB;
         this.score += Math.max(0, Math.round(67.4 * scoreB));
 
-        other.vx += vectorMagnitudes.beetleCollision.position * ndx;
-        other.vy += vectorMagnitudes.beetleCollision.position * ndy;
+        other.vx = vectorMagnitudes.beetleCollision.position * ndx;
+        other.vy = vectorMagnitudes.beetleCollision.position * ndy;
         other.vsize += deltaO;
         other.score += Math.max(0, Math.round(67.4 * scoreO));
 

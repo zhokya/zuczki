@@ -191,8 +191,8 @@ export class Obstacle {
     }
 
     applyCollisionVector(other: Beetle | Ruby, ndx: number, ndy: number, vector: { size: number, position: number }) {
-        other.vx += ndx * vector.position;
-        other.vy += ndy * vector.position;
+        other.vx = ndx * vector.position;
+        other.vy = ndy * vector.position;
         if (other instanceof Beetle) {
             other.vsize += vector.size;
         } else if(this.isAggressive) {

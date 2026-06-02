@@ -105,8 +105,8 @@ export class Ruby {
             this.vx += ndx * rubyVectorMagnitude;
             this.vy += ndy * rubyVectorMagnitude;
 
-            b.vx -= ndx * vectorMagnitudes.ruby.position * hpTakenPerHit;
-            b.vy -= ndy * vectorMagnitudes.ruby.position * hpTakenPerHit;
+            b.vx = -ndx * vectorMagnitudes.ruby.position * hpTakenPerHit;
+            b.vy = -ndy * vectorMagnitudes.ruby.position * hpTakenPerHit;
             b.vsize += vectorMagnitudes.ruby.size * hpTakenPerHit;
             b.score += Math.round(100 * hpTakenPerHit * this.baseSize * this.baseSize);
 
