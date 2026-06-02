@@ -182,8 +182,6 @@ export class Beetle {
 
         // General movement
         this.angle = rotateAngleTowards(this.angle, this.targetAngle, rotationSpeed);
-        this.size = Math.max(minPossibleSize, this.size + sizeIncreaseSpeed + this.vsize);
-        this.vsize *= vectorDecay;
 
         for(let i = 0; i < movementSubTicks; i ++) {
             const speedMultByVector = Math.max(0, Math.min(1, (magnitude - magnitude1) / (magnitude2 - magnitude1)));
@@ -191,12 +189,15 @@ export class Beetle {
 
             this.x += (speed * Math.cos(this.angle) + this.vx) / movementSubTicks * speedMultByFreeze;
             this.y += (speed * Math.sin(this.angle) + this.vy) / movementSubTicks * speedMultByFreeze;
+            this.size += this.vsize / movementSubTicks;
 
             this.vx *= subVectorDecay;
             this.vy *= subVectorDecay;
+            this.vsize *= subVectorDecay;
 
             magnitude = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         }
+        this.size = Math.max(minPossibleSize, this.size + sizeIncreaseSpeed);
 
         // Collision with world edge
         const maxr = this.game.mapSize - this.size;
