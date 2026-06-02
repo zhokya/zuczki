@@ -227,7 +227,7 @@ export class Tournament {
 
         if (this.initiated) {
             this.initiatedT++;
-            if (this.initiatedT > 120 && Math.random() < 0.05) {
+            if (this.initiatedT > 130 && Math.random() < 0.03) {
                 this.start();
             }
         }
