@@ -108,19 +108,6 @@ export function expLerp(a: number, b: number, dt: number, decay: number) {
     return b + (a - b) * Math.exp(-decay * dt);
 }
 
-export function formatPoints(pkt: number) {
-    if (pkt == 1) {
-        return "punkt";
-    }
-    if (12 <= pkt % 100 && pkt % 100 <= 14) {
-        return "punktów";
-    }
-    if (2 <= pkt % 10 && pkt % 10 <= 4) {
-        return "punkty";
-    }
-    return "punktów";
-}
-
 export function binarySearch(fn: (x: number) => number, y: number, xMin: number, xMax: number): { x: number, error: number } {
     let a = xMin;
     let b = xMax;

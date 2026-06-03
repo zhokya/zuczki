@@ -13,7 +13,6 @@ import {
     pointRemovalEncoder, projectileEncoder, rubyEncoder
 } from "../../shared/dataEncoders";
 import { PointedDataView } from "../../shared/encoder/types";
-import { formatPoints } from "../../shared/utils";
 import { defaultAspect, getVisibleArea } from "../../shared/getVisibleArea";
 import { ParticleSystem } from "./visuals/particleSystem";
 import { Interpolator } from "./interpolator";
@@ -195,7 +194,7 @@ export function mainCanvasRenderLoop(t: number) {
         centerY = selfBeetle.y.value;
         visibleArea = getVisibleArea(selfBeetle.size.value);
         if (aliveT > 1000) {
-            finalScoreElement.innerText = selfBeetle.score + ' ' + formatPoints(selfBeetle.score);
+            finalScoreElement.innerText = selfBeetle.score + ' ' + (selfBeetle.score == 1 ? 'point' : 'points');
         }
     }
     const scale = Math.max(h / visibleArea, w / defaultAspect / visibleArea);
