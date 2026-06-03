@@ -65,8 +65,6 @@ export class Point {
         if (this.removed) {
             this.removedTime += dt;
         }
-        
-        if(!bounds.isInsideWithMargin(this.x, this.y, quality == 0 ? 0.3 : 1.1)) return;
 
         // this.x = expLerp(this.x, this.tx, dt, 0.005);
         // this.y = expLerp(this.y, this.ty, dt, 0.005);
@@ -74,6 +72,8 @@ export class Point {
         this.x = this.tx + (this.x - this.tx) * exp005;
         this.y = this.ty + (this.y - this.ty) * exp005;
         this.o = this.to + (this.o - this.to) * exp02;
+        
+        if(!bounds.isInsideWithMargin(this.x, this.y, quality == 0 ? 0.3 : 1.1)) return;
 
         this.phase += dt * this.speed;
         const pt = (Math.sin(this.phase) + 1) / 2;
