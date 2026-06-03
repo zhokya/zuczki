@@ -228,7 +228,7 @@ export class SizeDecreaseParticle extends ParticleBase {
 
         this.x = x;
         this.y = y;
-        this.size = lerp(0.4, 0.6, Math.random());
+        this.size = lerp(0.6, 0.8, Math.random());
 
         [this.vx, this.vy] = this.init(lerp(0, 3 * strength, Math.sqrt(Math.random())));
         [this.ax, this.ay] = this.init(lerp(0, 2 * strength, Math.random()));
@@ -242,11 +242,13 @@ export class SizeDecreaseParticle extends ParticleBase {
         const size = this.size * fract * (1 - fract);
 
         if(quality == 2) {
-            ctx.shadowColor = 'rgb(40,190,60)';
+            ctx.shadowColor = 'rgb(25, 102, 36)';
+            ctx.strokeStyle = 'rgb(105, 252, 120)';
             ctx.shadowBlur = scale * 0.8;
+        } else {
+            ctx.strokeStyle = 'rgb(40,250,60)';
         }
 
-        ctx.strokeStyle = 'rgb(40,250,60)';
         ctx.lineWidth = size;
         ctx.lineCap = 'round';
         ctx.beginPath();
