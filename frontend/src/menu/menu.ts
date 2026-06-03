@@ -52,12 +52,12 @@ export function updateIsAlive(newIsAlive: boolean, canJoin: boolean) {
             menu.style = 'opacity: 0; pointer-events: none;'
             gameInfoElement.style = 'opacity: 1;';
         } else {
-            mainCanvas.style = 'filter: blur(10px); opacity: 0.5;';
+            mainCanvas.style = 'filter: blur(8px); opacity: 0.5;';
             menu.style = 'opacity: 1; pointer-events: all;';
             gameInfoElement.style = 'opacity: 0;';
         }
     }
-    
+
     prevCanJoin = canJoin;
     prevDelayedIsAlive = delayedIsAlive;
 }

@@ -20,7 +20,7 @@
             height: 100%;
             transition: 0.4s;
             opacity: 0.5;
-            filter: blur(10px);
+            filter: blur(8px);
         }
         #game-info {
             transition: 0.5s;
@@ -175,15 +175,29 @@
             box-sizing: border-box;
         }
         #play {
-            margin: 0;
-            padding: 0;
-            width: 200px;
-            height: 32px;
-            border: 2px solid lightgray;
-            border-radius: 8px;
-            box-sizing: border-box;
+            position: relative;
+            border: none;
+            outline: none;
             cursor: pointer;
+            padding: 16px 32px;
+            border-radius: 16px;
             font-size: 20px;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 0 8px rgba(0, 0, 0, 0.411);
+            background: rgba(0,0,0,0.14);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.267), inset 0 1px 0 rgba(255,255,255,.15);
+            transition: 0.6s cubic-bezier(.22,1,.36,1);
+        }
+        #play:hover {
+            transform: scale(1.03) translateY(-2px);
+            background: rgba(180, 152, 99, 0.295);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.267), inset 0 1px 0 rgba(255,255,255,.2);
+        }
+        #play:active {
+            transform: translateY(-1px);
         }
 
 
@@ -432,8 +446,8 @@
         <div id="not-looks">
             <span id="final-score"></span>
             <div id="powerup-icons"></div>
-            <input id="nickname" type="text" placeholder="nazwa" maxlength="18" />
-            <button id="play">Graj</button>
+            <input id="nickname" type="text" placeholder="name" maxlength="18" />
+            <button id="play">Play</button>
             <a id="github" href="https://github.com/zhokya/zuczki" target="_blank">
                 <img src="github.png" />
             </a>
