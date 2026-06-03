@@ -53,8 +53,8 @@ export function render(
         b.render(renderInfo, look);
 
         texts.push({
-            x: Math.round(matrix.a * b.x.value + matrix.c * (b.y.value + b.size.value * 1.2) + matrix.e),
-            y: Math.round(matrix.b * b.x.value + matrix.d * (b.y.value + b.size.value * 1.2) + matrix.f),
+            x: matrix.a * b.x.value + matrix.c * (b.y.value + b.size.value * 1.05 + 14 / scale) + matrix.e,
+            y: matrix.b * b.x.value + matrix.d * (b.y.value + b.size.value * 1.05 + 14 / scale) + matrix.f,
             text: (look === undefined || look.nickname === '' ? '' : look.nickname + ' ') + '(' + b.score + ')'
         });
     });
