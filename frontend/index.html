@@ -128,6 +128,31 @@
             width: 52px;
             height: 52px;
         }
+        #quality-button {
+            user-select: none;
+            position: fixed;
+            bottom: 8px;
+            right: 64px;
+            transition: 0.2s;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        #quality-button:hover {
+            transform: scale(1.07);
+        }
+        #quality-button-img {
+            width: 52px;
+            height: 52px;
+        }
+        #quality-button-text {
+            position: absolute;
+            bottom: 0px;
+            left: 0;
+            font-size: 17px;
+            text-align: center;
+            width: 100%;
+            font-weight: bold;
+        }
 
         #final-score {
             width: 100%;
@@ -451,6 +476,10 @@
             <a id="github" href="https://github.com/zhokya/zuczki" target="_blank">
                 <img src="github.png" />
             </a>
+            <div id="quality-button" title="Quality">
+                <canvas id="quality-button-img" width="64" height="64"></canvas>
+                <div id="quality-button-text"></div>
+            </div>
         </div>
 
         <div id="looks">
