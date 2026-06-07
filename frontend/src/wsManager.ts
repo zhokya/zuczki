@@ -9,11 +9,11 @@ const idLength = parseInt(import.meta.env.VITE_ID_LENGTH);
 function getBeetleId(): string {
     // TODO: uncomment to make automatic rejoining work
 
-    // const localStorageId = localStorage.getItem('zuczki_id');
+    const localStorageId = localStorage.getItem('zuczki_id');
 
-    // if (localStorageId !== null && localStorageId.length === idLength) {
-    //     return localStorageId;
-    // }
+    if (localStorageId !== null && localStorageId.length === idLength) {
+        return localStorageId;
+    }
 
     const newId = generateId(idLength);
     localStorage.setItem('zuczki_id', newId);
