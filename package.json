@@ -2,7 +2,7 @@
   "devDependencies": {
     "@types/node": "^25.6.0",
     "@types/ws": "^8.18.1",
-    "concurrently": "^9.2.1",
+    "concurrently": "^10.0.3",
     "nodemon": "^3.1.14",
     "serve": "^14.2.6",
     "ts-node": "^10.9.2",
@@ -57,11 +57,9 @@
     "dev": "concurrently -n server,client -c green,blue \"npm:dev:server\" \"npm:dev:client\"",
     "dev:server": "nodemon --watch backend --watch shared --watch .env --exec tsx backend/main.ts",
     "dev:client": "npm --prefix frontend run dev",
-
     "build": "npm run build:client && npm run build:server",
     "build:client": "npm --prefix frontend run build",
     "build:server": "tsc",
-
     "start": "concurrently -n backend,frontend -c green,blue \"npm:start:server\" \"npm:start:client\"",
     "start:server": "node dist/backend/main.js",
     "start:client": "npm --prefix frontend run preview -- --host"
