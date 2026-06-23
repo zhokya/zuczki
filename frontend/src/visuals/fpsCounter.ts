@@ -2,7 +2,7 @@ import { onMessage } from "../wsManager";
 
 const fpsCounterElement = document.getElementById('fps-counter') as HTMLElement;
 
-const allStats = true;
+const allStats = false;
 
 let totalRenderingTime = 0;
 let maxRenderingTime = 0;
