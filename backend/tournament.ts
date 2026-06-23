@@ -9,11 +9,11 @@ import type { Game } from "./game.js";
 
 const adminId = env('ADMIN_ID');
 const mapSize = parseInt(env('VITE_MAP_SIZE'));
-const maxTournamentDuration = 5 * 60 * 24;
-const minTournamentDuration = 1 * 60 * 24;
+const maxTournamentDuration = 70 * 24;
+const minTournamentDuration = 20 * 24;
 const tournamentIntroductionDuration = 10 * 24;
 const maxLinearDecreaseSpeed = 0.1;
-const minMapSize = 10;
+const minMapSize = 3;
 
 class Home {
     edges: Obstacle[] = [];
