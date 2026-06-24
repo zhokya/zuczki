@@ -95,9 +95,12 @@ export class Game {
                 return;
             }
             
+            let isDeleted = false;
             this.beetles.forEach(beetle => {
+                if(isDeleted) return;
                 if (point.handleEating(beetle)) {
                     this.points.delete(id);
+                    isDeleted = true;
                 }
             });
         });
