@@ -87,8 +87,7 @@ export class TickRunner {
             (this.logicTotalTime / this.ticksSincePrint).toFixed(1) + 'ms logic + ' +
             (this.msgTotalTime / this.ticksSincePrint).toFixed(1) + 'ms messages, ' +
             this.totalTicks + ' ticks, ' +
-            this.games.reduce((n, g) => n + g.beetles.size, 0) + ' total players, ' + 
-            this.games[0].numBeetleDeathPoints + ', ' + this.games[0].numEnvironmentDensityPoints
+            this.games.reduce((n, g) => n + g.beetles.size, 0) + ' total players'
         );
 
         this.botTotalTime = 0;
