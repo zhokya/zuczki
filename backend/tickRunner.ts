@@ -32,10 +32,12 @@ export class TickRunner {
         }
         this.logMessage();
         this.lastStatPrint = performance.now();
+        const elapsed = performance.now() - startT;
         console.log(
             'Running ' + warmupTicks + ' warmup ticks ' +
             '(equivalent to ' + (warmupTicks / this.TPS).toFixed(2) + 's of gameplay) ' +
-            'took ' + Math.round(performance.now() - startT) + 'ms'
+            'took ' + Math.round(elapsed) + 'ms ' + 
+            '(' + (warmupTicks / this.TPS / (elapsed / 1000)).toFixed(2) + ' speedup over realtime)'
         );
 
         const interval = 1000 / TPS;
@@ -85,7 +87,8 @@ export class TickRunner {
             (this.logicTotalTime / this.ticksSincePrint).toFixed(1) + 'ms logic + ' +
             (this.msgTotalTime / this.ticksSincePrint).toFixed(1) + 'ms messages, ' +
             this.totalTicks + ' ticks, ' +
-            this.games.reduce((n, g) => n + g.beetles.size, 0) + ' total players'
+            this.games.reduce((n, g) => n + g.beetles.size, 0) + ' total players, ' + 
+            this.games[0].numBeetleDeathPoints + ', ' + this.games[0].numEnvironmentDensityPoints
         );
 
         this.botTotalTime = 0;
