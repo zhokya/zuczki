@@ -83,6 +83,7 @@ export class Beetle {
     lastBrainActive: number;
     looks: Looks;
     globId: number;
+    lifetimeTicks: number = 0;
 
     prevX: number;
     prevY: number;
@@ -124,6 +125,8 @@ export class Beetle {
     }
 
     update() {
+        this.lifetimeTicks++;
+
         let magnitude = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
         const speedMultBySize = this.getSpeedMultBySize();
         const speedMultByPowerup = 1 - this.getPowerupLoad(0.22);
