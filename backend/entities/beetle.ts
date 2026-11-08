@@ -55,6 +55,7 @@ function getHitQuality(dot: number) {
 }
 
 export class Beetle {
+    rubyHits = 0;
     // state
     x: number;
     y: number;
@@ -319,6 +320,8 @@ export class Beetle {
 
         const deltaB = this.sizeDeltaWithProtection(-vectorMagnitudes.beetleCollision.size * scoreB);
         const deltaO = other.sizeDeltaWithProtection(-vectorMagnitudes.beetleCollision.size * scoreO);
+        this.rubyHits += scoreB;
+        other.rubyHits += scoreO;
 
         this.vx = -vectorMagnitudes.beetleCollision.position * ndx;
         this.vy = -vectorMagnitudes.beetleCollision.position * ndy;

@@ -1,5 +1,5 @@
 import type { Game } from "./game.js";
-import { updateBots } from "./bots.js";
+import { updateBots } from "./bots/bots.js";
 import env from "./env.js";
 import type { GameServer } from "./server.js";
 
@@ -23,12 +23,12 @@ export class TickRunner {
         this.lastStatPrint = performance.now();
     }
 
-    start(TPS: number, warmupTicks: number) {
+    async start(TPS: number, warmupTicks: number) {
         this.TPS = TPS;
 
         const startT = performance.now();
         for (let i = 0; i < warmupTicks; i++) {
-            this.runTickVerbose();
+            await this.runTickVerbose();
         }
         this.logMessage();
         this.lastStatPrint = performance.now();
@@ -49,9 +49,9 @@ export class TickRunner {
             return start + n * interval - performance.now();
         }
 
-        function tick() {
+        async function tick() {
             if (timeUntilNextTick() < 0) {
-                that.runTickVerbose();
+                await that.runTickVerbose();
                 n++;
             }
 
@@ -65,11 +65,11 @@ export class TickRunner {
         tick();
     }
 
-    runTick() {
-        this.games.forEach(game => {
-            updateBots(game);
-            game.update();
-        });
+    async runTick() {
+        for(let i = 0; i < this.games.length; i ++) {
+            await updateBots(this.games[i]);
+            this.games[i].update();
+        }
 
         this.server.sendMessages();
 
@@ -96,11 +96,11 @@ export class TickRunner {
         this.ticksSincePrint = 0;
     }
 
-    runTickVerbose() {
+    async runTickVerbose() {
         const t1 = performance.now();
-        this.games.forEach(game => {
-            updateBots(game);
-        });
+        for(let i = 0; i < this.games.length; i ++) {
+            await updateBots(this.games[i]);
+        }
 
         const t2 = performance.now();
         this.games.forEach(game => {

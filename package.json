@@ -3,6 +3,7 @@
     "@types/node": "^25.6.0",
     "@types/ws": "^8.18.1",
     "concurrently": "^10.0.3",
+    "copyfiles": "^2.4.1",
     "nodemon": "^3.1.14",
     "serve": "^14.2.6",
     "ts-node": "^10.9.2",
@@ -59,10 +60,11 @@
     "dev:client": "npm --prefix frontend run dev",
     "build": "npm run build:client && npm run build:server",
     "build:client": "npm --prefix frontend run build",
-    "build:server": "tsc",
+    "build:server": "tsc && copyfiles -u 1 backend/**/*.py dist/backend",
     "start": "concurrently -n backend,frontend -c green,blue \"npm:start:server\" \"npm:start:client\"",
     "start:server": "node dist/backend/main.js",
-    "start:client": "npm --prefix frontend run preview -- --host"
+    "start:client": "npm --prefix frontend run preview -- --host",
+    "start:training": "npm run build:server && node dist/backend/bots/training.js"
   },
   "repository": {
     "type": "git",

@@ -9,6 +9,8 @@ import type { SizeDelta } from "./sizeDelta";
 import { renderBeforeTransform, renderEnvironment, renderWorldEdge } from "./environment";
 import { renderMinimap } from "./minimap";
 import { renderSizeWarning } from "./sizeWarning";
+import { renderSizeCircles } from "./sizeCircles";
+// import { renderRaycasting } from "./rayCasting";
 
 interface Text {
     x: number;
@@ -45,6 +47,8 @@ export function render(
         entityMap.forEach(entity => entity.render(renderInfo));
     });
 
+    renderSizeCircles(renderInfo);
+
     renderWorldEdge(renderInfo);
 
     beetles.forEach(b => {
@@ -62,6 +66,8 @@ export function render(
     rubys.forEach(r => r.renderHpBar(renderInfo));
 
     particleSystem.render(renderInfo);
+    
+    // renderRaycasting(renderInfo, selfBeetle, beetles, rubys, obstacles);
 
     ctx.restore();
 
